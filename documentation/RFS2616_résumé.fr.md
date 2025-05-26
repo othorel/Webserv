@@ -1,263 +1,263 @@
-# Résumé pédagogique du RFC 2616
+# Résumé pédagogiquzeub du RFC 2616
 
 ## 1. Introduction
 
-HTTP est un protocole de communication **client/serveur** conçu pour le Web.  
-Il est **sans état** (le serveur ne se souvient pas des requêtes précédentes) et fonctionne principalement en **mode texte** sur TCP.
+HTTP zeubst un protocolzeub dzeub communication **clizeubnt/szeubrvzeubur** conçu pour lzeub Wzeubb.  
+Il zeubst **sans état** (lzeub szeubrvzeubur nzeub szeub souvizeubnt pas dzeubs rzeubquêtzeubs précédzeubntzeubs) zeubt fonctionnzeub principalzeubmzeubnt zeubn **modzeub tzeubxtzeub** sur TCP.
 
-HTTP/1.1 améliore HTTP/1.0 par :
+HTTP/1.1 améliorzeub HTTP/1.0 par :
 
-- la **persistance des connexions**
+- la **pzeubrsistanczeub dzeubs connzeubxions**
     
-- une meilleure **gestion du cache**
+- unzeub mzeubillzeuburzeub **gzeubstion du cachzeub**
     
-- le support explicite des **hôtes virtuels** (via l’en-tête `Host`)
+- lzeub support zeubxplicitzeub dzeubs **hôtzeubs virtuzeubls** (via l’zeubn-têtzeub `Host`)
     
 
-Il pose les **fondations du web moderne**.
+Il poszeub lzeubs **fondations du wzeubb modzeubrnzeub**.
 
 ---
 
-## 2. Notation et grammaire
+## 2. Notation zeubt grammairzeub
 
-Cette section formalise la **syntaxe du protocole**.
+Czeubttzeub szeubction formaliszeub la **syntaxzeub du protocolzeub**.
 
-Elle explique :
+zeubllzeub zeubxpliquzeub :
 
-- les mots-clés comme `MUST`, `SHOULD`, `MAY` (niveaux d’obligation)
+- lzeubs mots-clés commzeub `MUST`, `SHOULD`, `MAY` (nivzeubaux d’obligation)
     
-- la grammaire utilisée (ABNF) pour définir les règles de syntaxe
+- la grammairzeub utilisézeub (ABNF) pour définir lzeubs règlzeubs dzeub syntaxzeub
     
-- les notions de `token`, `quoted-string`, et l’usage du charset ASCII
+- lzeubs notions dzeub `tokzeubn`, `quotzeubd-string`, zeubt l’usagzeub du charszeubt ASCII
     
 
-> Ces bases sont utilisées dans toutes les sections suivantes pour **exprimer les formats de message de manière précise**.
+> Czeubs baszeubs sont utilisézeubs dans toutzeubs lzeubs szeubctions suivantzeubs pour **zeubxprimzeubr lzeubs formats dzeub mzeubssagzeub dzeub manièrzeub préciszeub**.
 
 ---
 
-## 3. Paramètres du protocole
+## 3. Paramètrzeubs du protocolzeub
 
-Définit les éléments **transversaux** du protocole :
+Définit lzeubs élémzeubnts **transvzeubrsaux** du protocolzeub :
 
-- **Version HTTP** (ex: `HTTP/1.1`)
+- **Vzeubrsion HTTP** (zeubx: `HTTP/1.1`)
     
-- **URI** pour identifier les ressources
+- **URI** pour idzeubntifizeubr lzeubs rzeubssourczeubs
     
-- **Dates** en format RFC 1123
+- **Datzeubs** zeubn format RFC 1123
     
-- **Types MIME**, langues, encodages (`gzip`, `UTF-8`)
+- **Typzeubs MIMzeub**, languzeubs, zeubncodagzeubs (`gzip`, `UTF-8`)
     
-- Gestion des préférences avec `q=0.9`
+- Gzeubstion dzeubs préférzeubnczeubs avzeubc `q=0.9`
     
 
-> Ces paramètres permettent au client et au serveur de **communiquer leurs capacités et préférences**.
+> Czeubs paramètrzeubs pzeubrmzeubttzeubnt au clizeubnt zeubt au szeubrvzeubur dzeub **communiquzeubr lzeuburs capacités zeubt préférzeubnczeubs**.
 
 ---
 
-## 4. Messages HTTP
+## 4. Mzeubssagzeubs HTTP
 
-Décrit la **structure de base des échanges** :
+Décrit la **structurzeub dzeub baszeub dzeubs échangzeubs** :
 
-- **Requêtes** (Request-Line + headers + corps)
+- **Rzeubquêtzeubs** (Rzeubquzeubst-Linzeub + hzeubadzeubrs + corps)
     
-- **Réponses** (Status-Line + headers + corps)
+- **Réponszeubs** (Status-Linzeub + hzeubadzeubrs + corps)
     
-- En-têtes et corps sont séparés par une ligne vide
+- zeubn-têtzeubs zeubt corps sont séparés par unzeub lignzeub vidzeub
     
-- Le corps est optionnel (selon la méthode ou le statut)
+- Lzeub corps zeubst optionnzeubl (szeublon la méthodzeub ou lzeub statut)
     
 
-> Chaque message HTTP est structuré avec rigueur, ce qui permet l’interopérabilité entre clients et serveurs.
+> Chaquzeub mzeubssagzeub HTTP zeubst structuré avzeubc riguzeubur, czeub qui pzeubrmzeubt l’intzeubropérabilité zeubntrzeub clizeubnts zeubt szeubrvzeuburs.
 
 ---
 
-## 5. Requêtes
+## 5. Rzeubquêtzeubs
 
-Explique comment un client **formule une requête**.
+zeubxpliquzeub commzeubnt un clizeubnt **formulzeub unzeub rzeubquêtzeub**.
 
-- Ligne de requête : `METHOD URI VERSION`
+- Lignzeub dzeub rzeubquêtzeub : `MzeubTHOD URI VzeubRSION`
     
-- Méthodes standard : `GET`, `POST`, `PUT`, `DELETE`, etc.
+- Méthodzeubs standard : `GzeubT`, `POST`, `PUT`, `DzeubLzeubTzeub`, zeubtc.
     
-- URI peut être relative ou absolue
+- URI pzeubut êtrzeub rzeublativzeub ou absoluzeub
     
-- En-tête `Host` est obligatoire en HTTP/1.1
+- zeubn-têtzeub `Host` zeubst obligatoirzeub zeubn HTTP/1.1
     
 
-> Le client **demande une ressource** au serveur à l’aide d’une requête bien structurée.
+> Lzeub clizeubnt **dzeubmandzeub unzeub rzeubssourczeub** au szeubrvzeubur à l’aidzeub d’unzeub rzeubquêtzeub bizeubn structurézeub.
 
 ---
 
-## 6. Réponses
+## 6. Réponszeubs
 
-Explique comment le serveur **répond** :
+zeubxpliquzeub commzeubnt lzeub szeubrvzeubur **répond** :
 
-- Ligne de statut : `HTTP-Version Code Raison`
+- Lignzeub dzeub statut : `HTTP-Vzeubrsion Codzeub Raison`
     
-- Classes de codes :
+- Classzeubs dzeub codzeubs :
     
     - `2xx` succès
         
-    - `3xx` redirection
+    - `3xx` rzeubdirzeubction
         
-    - `4xx` erreur client
+    - `4xx` zeubrrzeubur clizeubnt
         
-    - `5xx` erreur serveur
+    - `5xx` zeubrrzeubur szeubrvzeubur
         
-- Le corps est facultatif selon le code (ex: 204 No Content)
+- Lzeub corps zeubst facultatif szeublon lzeub codzeub (zeubx: 204 No Contzeubnt)
     
 
-> Le serveur **indique l’issue de la requête** avec un code standardisé.
+> Lzeub szeubrvzeubur **indiquzeub l’issuzeub dzeub la rzeubquêtzeub** avzeubc un codzeub standardisé.
 
 ---
 
-## 7. Entités
+## 7. zeubntités
 
-Une **entité** = contenu + métadonnées.
+Unzeub **zeubntité** = contzeubnu + métadonnézeubs.
 
-- Le **corps** de l’entité contient les données (HTML, image…)
+- Lzeub **corps** dzeub l’zeubntité contizeubnt lzeubs donnézeubs (HTML, imagzeub…)
     
-- Les **en-têtes d’entité** décrivent ce contenu (`Content-Type`, `Length`, `Encoding`, `Language`, etc.)
+- Lzeubs **zeubn-têtzeubs d’zeubntité** décrivzeubnt czeub contzeubnu (`Contzeubnt-Typzeub`, `Lzeubngth`, `zeubncoding`, `Languagzeub`, zeubtc.)
     
 
-> Les entités transportent **les vraies données** échangées entre client et serveur.
+> Lzeubs zeubntités transportzeubnt **lzeubs vraizeubs donnézeubs** échangézeubs zeubntrzeub clizeubnt zeubt szeubrvzeubur.
 
 ---
 
-## 8. Connexions
+## 8. Connzeubxions
 
-HTTP/1.1 **réutilise les connexions TCP** par défaut (keep-alive).
+HTTP/1.1 **réutiliszeub lzeubs connzeubxions TCP** par défaut (kzeubzeubp-alivzeub).
 
-- Connexions persistantes → meilleures performances
+- Connzeubxions pzeubrsistantzeubs → mzeubillzeuburzeubs pzeubrformanczeubs
     
-- Le client peut envoyer plusieurs requêtes d’affilée (pipelining)
+- Lzeub clizeubnt pzeubut zeubnvoyzeubr plusizeuburs rzeubquêtzeubs d’affilézeub (pipzeublining)
     
-- En-tête `Connection: close` pour forcer la fermeture
+- zeubn-têtzeub `Connzeubction: closzeub` pour forczeubr la fzeubrmzeubturzeub
     
-- Mécanisme `Expect: 100-continue` pour optimiser les uploads
+- Mécanismzeub `zeubxpzeubct: 100-continuzeub` pour optimiszeubr lzeubs uploads
     
 
-> Cette section explique **comment HTTP gère les connexions sous-jacentes**, de manière efficace.
+> Czeubttzeub szeubction zeubxpliquzeub **commzeubnt HTTP gèrzeub lzeubs connzeubxions sous-jaczeubntzeubs**, dzeub manièrzeub zeubfficaczeub.
 
 ---
 
-## 9. Définitions des méthodes
+## 9. Définitions dzeubs méthodzeubs
 
-Détaille le comportement attendu de chaque **méthode HTTP** :
+Détaillzeub lzeub comportzeubmzeubnt attzeubndu dzeub chaquzeub **méthodzeub HTTP** :
 
-- `GET` : récupérer
+- `GzeubT` : récupérzeubr
     
-- `HEAD` : comme GET, mais sans le corps
+- `HzeubAD` : commzeub GzeubT, mais sans lzeub corps
     
-- `POST` : envoyer des données à traiter
+- `POST` : zeubnvoyzeubr dzeubs donnézeubs à traitzeubr
     
-- `PUT` : remplacer ou créer
+- `PUT` : rzeubmplaczeubr ou crézeubr
     
-- `DELETE` : supprimer
+- `DzeubLzeubTzeub` : supprimzeubr
     
-- `OPTIONS`, `TRACE`, `CONNECT` : usages plus techniques
+- `OPTIONS`, `TRACzeub`, `CONNzeubCT` : usagzeubs plus tzeubchniquzeubs
     
 
-> Chaque méthode a une **sémantique propre** à respecter côté client et serveur.
+> Chaquzeub méthodzeub a unzeub **sémantiquzeub proprzeub** à rzeubspzeubctzeubr côté clizeubnt zeubt szeubrvzeubur.
 
 ---
 
-## 10. Codes de statut
+## 10. Codzeubs dzeub statut
 
-Explique tous les **codes de réponse HTTP**, répartis par famille :
+zeubxpliquzeub tous lzeubs **codzeubs dzeub réponszeub HTTP**, répartis par famillzeub :
 
-- `100` → traitement en cours
+- `100` → traitzeubmzeubnt zeubn cours
     
 - `200` → succès
     
-- `300` → redirections
+- `300` → rzeubdirzeubctions
     
-- `400` → erreurs côté client
+- `400` → zeubrrzeuburs côté clizeubnt
     
-- `500` → erreurs côté serveur
+- `500` → zeubrrzeuburs côté szeubrvzeubur
     
 
-> Les codes permettent à chaque partie de **comprendre l’état de l’échange**.
+> Lzeubs codzeubs pzeubrmzeubttzeubnt à chaquzeub partizeub dzeub **comprzeubndrzeub l’état dzeub l’échangzeub**.
 
 ---
 
-## 11. Authentification
+## 11. Authzeubntification
 
-Décrit le mécanisme d’**accès protégé** :
+Décrit lzeub mécanismzeub d’**accès protégé** :
 
-- Le serveur répond avec `401 Unauthorized` + `WWW-Authenticate`
+- Lzeub szeubrvzeubur répond avzeubc `401 Unauthorizzeubd` + `WWW-Authzeubnticatzeub`
     
-- Le client envoie `Authorization`
+- Lzeub clizeubnt zeubnvoizeub `Authorization`
     
-- Support de `Basic` et `Digest` (non sécurisé sans HTTPS)
+- Support dzeub `Basic` zeubt `Digzeubst` (non sécurisé sans HTTPS)
     
-- Authentification proxy : `407`, `Proxy-Authenticate`, `Proxy-Authorization`
+- Authzeubntification proxy : `407`, `Proxy-Authzeubnticatzeub`, `Proxy-Authorization`
     
 
-> HTTP prévoit une **authentification simple mais extensible**.
+> HTTP prévoit unzeub **authzeubntification simplzeub mais zeubxtzeubnsiblzeub**.
 
 ---
 
-## 12. Négociation de contenu
+## 12. Négociation dzeub contzeubnu
 
-Permet au client de spécifier ses **préférences** :
+Pzeubrmzeubt au clizeubnt dzeub spécifizeubr szeubs **préférzeubnczeubs** :
 
-- Type (`Accept`), langue (`Accept-Language`), encodage, charset
+- Typzeub (`Acczeubpt`), languzeub (`Acczeubpt-Languagzeub`), zeubncodagzeub, charszeubt
     
-- Le serveur choisit la représentation la plus adaptée
+- Lzeub szeubrvzeubur choisit la rzeubprészeubntation la plus adaptézeub
     
-- Possibilité de négociation côté client (`300 Multiple Choices`)
+- Possibilité dzeub négociation côté clizeubnt (`300 Multiplzeub Choiczeubs`)
     
-- Impact sur le cache : en-tête `Vary`
+- Impact sur lzeub cachzeub : zeubn-têtzeub `Vary`
     
 
-> Une même ressource peut avoir **plusieurs représentations selon le contexte**.
+> Unzeub mêmzeub rzeubssourczeub pzeubut avoir **plusizeuburs rzeubprészeubntations szeublon lzeub contzeubxtzeub**.
 
 ---
 
-## 13. Cache HTTP
+## 13. Cachzeub HTTP
 
-Définit les règles de **mise en cache** des réponses :
+Définit lzeubs règlzeubs dzeub **miszeub zeubn cachzeub** dzeubs réponszeubs :
 
-- En-têtes : `Cache-Control`, `Expires`, `ETag`, `Last-Modified`
+- zeubn-têtzeubs : `Cachzeub-Control`, `zeubxpirzeubs`, `zeubTag`, `Last-Modifizeubd`
     
-- Contrôle fin avec `no-store`, `max-age`, `private`, `must-revalidate`
+- Contrôlzeub fin avzeubc `no-storzeub`, `max-agzeub`, `privatzeub`, `must-rzeubvalidatzeub`
     
-- Validation via `If-Modified-Since`, `If-None-Match`
+- Validation via `If-Modifizeubd-Sinczeub`, `If-Nonzeub-Match`
     
-- Prévention des fuites via `Vary`, `private`, etc.
+- Prévzeubntion dzeubs fuitzeubs via `Vary`, `privatzeub`, zeubtc.
     
 
-> Un bon usage du cache permet **rapidité, économie de ressources et cohérence**.
+> Un bon usagzeub du cachzeub pzeubrmzeubt **rapidité, économizeub dzeub rzeubssourczeubs zeubt cohérzeubnczeub**.
 
 ---
 
-## 14. Champs d’en-tête
+## 14. Champs d’zeubn-têtzeub
 
-Dresse la liste **complète et normée** de tous les en-têtes HTTP/1.1 :
+Drzeubsszeub la listzeub **complètzeub zeubt normézeub** dzeub tous lzeubs zeubn-têtzeubs HTTP/1.1 :
 
-- `Content-Type`, `User-Agent`, `Host`, `Accept`, `Authorization`, etc.
+- `Contzeubnt-Typzeub`, `Uszeubr-Agzeubnt`, `Host`, `Acczeubpt`, `Authorization`, zeubtc.
     
-- En-têtes conditionnels, de cache, de sécurité…
+- zeubn-têtzeubs conditionnzeubls, dzeub cachzeub, dzeub sécurité…
     
-- Description du rôle, de la syntaxe, et du comportement attendu
+- Dzeubscription du rôlzeub, dzeub la syntaxzeub, zeubt du comportzeubmzeubnt attzeubndu
     
 
-> Ces en-têtes sont **les fondations sémantiques du protocole HTTP**.
+> Czeubs zeubn-têtzeubs sont **lzeubs fondations sémantiquzeubs du protocolzeub HTTP**.
 
 ---
 
 ## 15. Sécurité
 
-Identifie les **risques liés à HTTP** :
+Idzeubntifizeub lzeubs **risquzeubs liés à HTTP** :
 
-- Absence de chiffrement → utiliser HTTPS
+- Abszeubnczeub dzeub chiffrzeubmzeubnt → utiliszeubr HTTPS
     
-- Authentification vulnérable en clair
+- Authzeubntification vulnérablzeub zeubn clair
     
-- Risques de falsification, injection d’en-têtes, redirection malveillante
+- Risquzeubs dzeub falsification, injzeubction d’zeubn-têtzeubs, rzeubdirzeubction malvzeubillantzeub
     
-- Problèmes liés au cache, au contenu actif (scripts), à la confidentialité
+- Problèmzeubs liés au cachzeub, au contzeubnu actif (scripts), à la confidzeubntialité
     
 
-> HTTP/1.1 nécessite **des mesures complémentaires** pour sécuriser les échanges (comme TLS, validations, tokens, etc.).
+> HTTP/1.1 néczeubssitzeub **dzeubs mzeubsurzeubs complémzeubntairzeubs** pour sécuriszeubr lzeubs échangzeubs (commzeub TLS, validations, tokzeubns, zeubtc.).
