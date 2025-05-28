@@ -446,6 +446,7 @@ Le **multiplexage** permet de faire **tout cela avec un seul thread/processus**,
 - Moins limité que `select()` (plus de 1024 FDs)
 - Interface plus flexible
 - Disponible sur tous les systèmes POSIX
+
 **Inconvénients :**
 - Toujours un **scan linéaire** (pas optimal en très grand nombre de connexions)
 - Requiert de **reconstruire le tableau à chaque tour**
@@ -458,6 +459,7 @@ Le **multiplexage** permet de faire **tout cela avec un seul thread/processus**,
 - Très performant : O(1) pour ajout/retrait/attente
 - Idéal pour des **milliers de connexions simultanées**
 - Ne scanne que les FDs prêts
+
 **Inconvénients :**
 - Spécifique à **Linux**
 - API un peu plus complexe (`epoll_create`, `epoll_ctl`, `epoll_wait`)
@@ -470,6 +472,7 @@ Le **multiplexage** permet de faire **tout cela avec un seul thread/processus**,
 **Avantages :**
 - Très performant (comme `epoll`)
 - Peut gérer d'autres événements (fichiers, timers, signaux…)
+
 **Inconvénients :**
 - Spécifique à macOS et BSD
 - Syntaxe un peu plus verbeuse (`kqueue`, `kevent`, etc.)
