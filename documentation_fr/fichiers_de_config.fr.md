@@ -18,7 +18,7 @@ Exemple :
 ./webserv                  // utilise le fichier de configuration par défaut
 ```
 
-##### Contenu du fichier de configuration
+## Contenu du fichier de configuration
 
 Le fichier de configuration suit une **structure hiérarchique**. Il est composé de :
 
@@ -26,7 +26,7 @@ Le fichier de configuration suit une **structure hiérarchique**. Il est compos�
 2. Un ou plusieurs blocs `location { ... }` à l’intérieur de chaque serveur : Le bloc `location` contient des directives avec les règles qui s'appliquent aux requêtes HTTP dont l'URL commence par le chemin indiqué.
 3. Une **directive**, c’est une **ligne de configuration** qui donne une information au serveur sur **comment se comporter**. Elle contient le nom de la directive, et un un plusieurs arguments, séparés par des espaces. Elle se termine par `;`
 
-##### Exemple 
+#### Exemple 
 
 ```Nginx
 server {
@@ -56,7 +56,7 @@ server {
 
 ## Contenu du bloc `server`
 
-##### Directive `listen`
+### Directive `listen`
 
 **La directive `listen` est obligatoire**, puisqu'elle définit
 - le port à écouter
@@ -79,7 +79,7 @@ server {
 - `192.168.x.x` ou `10.x.x.x` → réseau local (ex : machine dans le réseau Wi-Fi)
 - Adresse publique
 
-##### Directive `server_name` 
+### Directive `server_name` 
 
 La directive `server_name` est optionnelle, mais elle permet de :
 - **distinguer plusieurs serveurs virtuels** (`server { ... }`) qui écoutent sur le **même couple IP:port**
@@ -106,7 +106,7 @@ Serveurs virtuels :
 - Le nom comparé est sensible à la **casse et au format exact** (pas d’espaces, pas de slashs).
 - On peut définir **plusieurs noms** pour un même serveur (`server_name site.com www.site.com localhost;`).
 
-##### Directive `root`
+### Directive `root`
 
 **La directive `root` est obligatoire**, car elle donne le chemin vers un répertoire sur le système de fichiers du serveur, qui est utilisé comme **point de départ** (racine) pour rechercher les fichiers demandés dans les requêtes HTTP.
 
@@ -131,7 +131,7 @@ Lorsqu’une requête est reçue (par exemple `GET /index.html`), le serveur con
 - Centraliser les fichiers statiques (HTML, CSS, JS, images…) dans des répertoires bien organisés
 - Définir une `root` par `location` uniquement si nécessaire, pour éviter les confusions
 
-##### Directive `error_page`
+### Directive `error_page`
 
 **La directive `error_page` est obligatoire** dans Webserv, car elle permet de définir **des pages personnalisées** à afficher en cas d’erreur HTTP (au minimum pour le code 404, selon le sujet).
 
@@ -157,7 +157,7 @@ Lorsqu’une requête est reçue (par exemple `GET /index.html`), le serveur con
 - Le fichier pointé doit exister et être accessible, sinon on risque une **cascade d’erreurs** (ex : 404 qui mène à une autre 404).
 - Le serveur **ne modifie pas le code HTTP** : il retourne le **même code**, mais avec le **contenu personnalisé**.
 
-##### Bloc `location`
+### Bloc `location`
 
 Le bloc `location` est obligatoire**, car c’est lui qui permet de définir **les règles spécifiques à appliquer pour un chemin donné de l’URL** (URI).
 Un bloc `location` est **imbriqué dans un bloc `server`** et délimité par des accolades `{ ... }`.
@@ -179,7 +179,7 @@ Un bloc `location` est **imbriqué dans un bloc `server`** et délimité par des
 - Le bloc `location /` est souvent utilisé comme **fallback général** (c'est ce bloc qui sera utilisé si aucune autre `locatopn` ne correspond à la requête).
 
 ## Contenu du bloc `server`
-##### Directive `methods`
+### Directive `methods`
 
 **La directive `methods` est obligatoire dans chaque bloc `location`**, car elle définit **quelles méthodes HTTP** sont **autorisées** pour les requêtes correspondant à cette `location`.
 
@@ -203,7 +203,7 @@ Un bloc `location` est **imbriqué dans un bloc `server`** et délimité par des
 - Si aucune méthode n’est précisée (erreur de config), le comportement du serveur est **non défini**, mais dans Webserv, cela doit déclencher une **erreur de parsing**.
 - Il faut valider les noms : toute méthode autre que `GET`, `POST`, `DELETE` est à **rejeter explicitement**.
 
-##### Directive `index`
+### Directive `index`
 
 **La directive `index` est obligatoire dans chaque bloc `location`**, car elle permet de définir **le ou les fichiers à renvoyer** lorsqu’une requête vise un dossier (URI se terminant par `/`).
 
@@ -229,7 +229,7 @@ Un bloc `location` est **imbriqué dans un bloc `server`** et délimité par des
 - Il est possible de spécifier plusieurs fichiers (fallbacks).
 - Ne pas confondre `index` (fichier de bienvenue) avec `root` (chemin de base).
 
-##### Directive `autoindex`
+### Directive `autoindex`
 
 **La directive `autoindex` est obligatoire dans chaque bloc `location`**, car elle contrôle si le serveur doit ou non **générer automatiquement un listing du contenu d’un dossier** lorsque :
 - une requête vise un répertoire,
@@ -263,7 +263,7 @@ Webserv génère une page HTML listant les fichiers de `/var/www/assets/`.
 - Ne pas confondre `autoindex` (listing automatique) avec `index` (fichier à afficher par défaut).
 Parfait ! Voici la fiche pour la directive `cgi_pass`, qui clôture les directives du bloc `location` :
 
-##### Directive `cgi_pass`
+### Directive `cgi_pass`
 
 **La directive `cgi_pass` est obligatoire dans un bloc `location` uniquement si ce chemin est destiné à exécuter des scripts CGI** (par exemple `.py`, `.php`, etc.).  
 Elle indique **le chemin absolu de l’interpréteur** utilisé pour exécuter les scripts CGI correspondants.
@@ -300,7 +300,7 @@ location /cgi-bin/ {
 }
 ```
 
-### Validations à faire au parsing du fichier de configuration
+## Validations à faire au parsing du fichier de configuration
 
 |Champ|Vérification à faire|
 |---|---|
