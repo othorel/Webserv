@@ -674,7 +674,7 @@ Il est interdit d'utiliser `fork()`, à part pour exécuter un script CGI (ex : 
 
 Servir un site **statique** signifie que **Webserv n’a pas besoin d’exécuter du code serveur ni de générer du contenu dynamique**.
 
->**Pour la partie obligatoire** de Webserv, on se concentre uniquement sur : **lire, interpréter, et envoyer des fichiers existants**, comme le ferait un serveur `nginx` minimal.
+>**Pour la partie obligatoire** de Webserv, on se concentre principalement sur : **lire, interpréter, et envoyer des fichiers existants**, comme le ferait un serveur `nginx` minimal. Webserv doit toutefois être capable d’exécuter un script (par exemple Python) via CGI (dans la partie obligatoire), mais pas besoin de parser ou interpréter soi-même le Python ou PHP. C’est l’interpréteur (python, php, etc.) qui s’en charge.
 
 Le serveur doit savoir :
 
@@ -686,7 +686,6 @@ Le serveur doit savoir :
 
 Mais pas de :
 
-- PHP, Python, Node.js…
 - Base de données, back-end, SQL…
 - Sessions, cookies, formulaires avec traitement
 - Authentification, login, registre…
