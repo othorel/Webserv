@@ -295,10 +295,3 @@ Header2: value\r\n
 
 >Contrairement aux en-têtes, **aucune ligne vide n’est nécessaire après le corps**, car **le client et le serveur savent exactement quand le corps se termine** grâce à l’en-tête `Content-Length` (ou `Transfer-Encoding: chunked`, dans les cas avancés).
 >Ainsi, **la ligne vide obligatoire ne sert qu’à séparer les en-têtes du corps**, jamais à marquer la fin de la requête ou de la réponse.
-
-
-
->Contrairement aux en-têtes, **aucune ligne vide n’est nécessaire après le corps**, car **le client et le serveur savent exactement quand le corps se termine** grâce à l’en-tête `Content-Length` (ou `Transfer-Encoding: chunked`, dans les cas avancés).
->Ainsi, **la ligne vide obligatoire ne sert qu’à séparer les en-têtes du corps**, jamais à marquer la fin de la requête ou de la réponse.
-
-
