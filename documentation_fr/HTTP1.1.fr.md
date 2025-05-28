@@ -127,12 +127,12 @@ Exemple :
 ```
 HTTP/1.1 200 OK                                   // ligne de statut
 Content-Type: text/html                           // header
-Content-Length: 57                                // header
+Content-Length: 46                                // header
 Connection: close                                 // header
 Date: Mon, 27 May 2024 17:30:00 GMT               // header
 Server: Webserv/1.0                               // header
 
-<html><body><h1>Bienvenue !</h1></body></html>.   // corps
+<html><body><h1>Bienvenue !</h1></body></html>   // corps
 ```
 
 ### 2.1 Ligne de statut (obligatoire)
@@ -175,7 +175,7 @@ Codes de statut HTTP  à gérer dans Webserv :
 | 201  | Created    | Fichier ou ressource créée (ex : upload POST)  |
 | 204  | No Content | Réussite sans corps (ex : DELETE sans réponse) |
 
-- **3xx — Redirection** : ⚠️ Si le serveur redirige, il doit envoyer un en-tête `Location:`**
+- **3xx — Redirection** : ⚠️ Si le serveur redirige, il doit envoyer un en-tête `Location:`
 
 |Code|Phrase|Quand l’utiliser|
 |---|---|---|
