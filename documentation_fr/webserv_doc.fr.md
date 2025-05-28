@@ -309,6 +309,80 @@ Le sujet de Webserv autorise d'utiliser tout ce qui est compatible C++98, sans B
 
 ---
 
+
+# Cycle de vie d’une connexion HTTP dans Webserv
+
+## 1. **Initialisation du serveur**
+
+- `socket()` → crée une socket d’écoute (`SOCK_STREAM`)
+- `setsockopt()` → active `SO_REUSEADDR`
+- `bind()` → lie la socket à un `host:port`
+- `listen()` → met la socket en écoute
+- `epoll_create()` / `poll()` → prépare la boucle événementielle
+
+## 2. **Attente de connexions (événement `EPOLLIN` ou `POLLIN`)**
+
+- `accept()` → accepte une connexion entrante
+- `epoll_ctl(ADD)` → ajoute la nouvelle socket client à la surveillance
+- socket client configurée **non bloquante**
+
+## 3. **Réception de la requête HTTP**
+
+- `recv()` → lit la requête depuis la socket client
+- `parse()` → analyse :
+    - méthode (GET, POST…)
+    - URI / chemin
+    - headers (Host, Content-Length…)
+    - corps éventuel (POST)        
+
+## 4. **Traitement de la requête**
+
+- **Fichier statique :**
+    - `access()` → vérifie existence et droits
+    - `stat()` → lit taille/type
+    - `open()` + `read()` → lit le fichier demandé
+    - construit une **réponse HTTP complète**
+        
+- **Script CGI :**
+    - `fork()` → nouveau processus
+    - `pipe()` / `socketpair()` → communication avec le CGI
+    - `dup2()` → redirige `stdin` / `stdout`
+    - `execve()` → exécute le script
+    - `waitpid()` → attend la fin
+    - `read()` la sortie CGI
+    - parse et **injecte dans la réponse HTTP**
+
+## 5. **Envoi de la réponse**
+
+- `send()` → envoie l’en-tête + corps de la réponse HTTP
+- (éventuellement, bascule du `EPOLLIN` au `EPOLLOUT` si non bloquant)
+
+## 6. **Fermeture de la connexion**
+
+- `close()` → ferme la socket client (ou `epoll_ctl(DEL)`)
+- (ou **garde-alive** selon `Connection: keep-alive` et timeout)
+
+## Résumé du chemin de traitement
+
+```text
+client connect → accept() → recv() → parse()
+          ↓
+  [fichier statique]         [script CGI]
+        ↓                          ↓
+   access/stat/open         fork → execve
+        ↓                          ↓
+      read()                      pipe/read
+        ↓                          ↓
+   HTTP response           HTTP response
+          ↓
+        send()
+          ↓
+        close()
+```
+
+
+---
+
 # Multiplexage
 
 ## Définition du Multiplexage (ou **I/O Multiplexing**)
@@ -1003,4 +1077,7 @@ Dans Webserv, **préférence forte pour les classes instanciables**, sauf pour :
 Handler* h = HandlerFactory::getHandler(req);
 Response res = h->handle(req, route);
 ```
+
+
+---
 
