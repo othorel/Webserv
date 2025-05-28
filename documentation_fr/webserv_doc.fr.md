@@ -12,7 +12,7 @@ Dans le répertoire `/documentation` vous trouverez d'autres fiches qui approfon
 
 # Un serveur web en C++
 
-#### Définition
+## Définition
 
 Un serveur web est un programme qui :
 
@@ -23,7 +23,7 @@ Un serveur web est un programme qui :
 
 > En résumé, un serveur web c'est un traducteur entre un client qui pose une question, et un système de fichiers ou d'exécution qui fournit une réponse.
 
-#### Fichier de configuration
+## Fichier de configuration
 
 Le programme Webserv doit être lancé avec en argument un chemin vers un fichier de configuration : C’est un **fichier texte**, généralement avec l’extension `.conf`, qui décrit **comment le serveur Web doit se comporter**, et qui devra être parsé à l'éxécution.
 Le programme doit **lire ce fichier**, puis **configurer dynamiquement le serveur** en fonction de ce qu’il contient.
@@ -38,11 +38,11 @@ Il n'existe pas de grammaire imposée pour organiser un fichier de configuration
 
 ***-> Les fichiers de cobfiguration sont abordées en détail dans le fichier `fichiers_de_config.fr.md`***
 
-#### 1. Ecouter
+## 1. Ecouter
 
 Le serveur ouvre une **socket** TCP sur un **port** (généralement 80 ou 8080) pour attendre les connexions entrantes.
 
-#### 2. Accepter
+## 2. Accepter
 
 Le serveur accepte une connexion et reçoit une requête HTP, par exemple:
 
@@ -50,7 +50,7 @@ Le serveur accepte une connexion et reçoit une requête HTP, par exemple:
 GET /index.html HTTP/1.1
 Host: localhost
 ```
-#### 3. Interpréter
+## 3. Interpréter
 
 Le serveur analyse la requête:
 
@@ -58,7 +58,7 @@ Le serveur analyse la requête:
 - chemin (`/index.html`)
 - en-têtes (`Host`, `Content-Type`, etc.)
 
-#### 4 Répondre
+## 4 Répondre
 
 Le serveur construit une réponse HTTP avec:
 
@@ -66,11 +66,11 @@ Le serveur construit une réponse HTTP avec:
 - des **en-têtes** (`Content-Type`, `Content-Length`, etc.)
 - un **corps** (souvent du HTML, JSON, ou une image)
 
-#### 5. Gérer plusieurs clients
+## 5. Gérer plusieurs clients
 
 Il doit pouvoir gérer **plusieurs connexions en parallèle**, sans bloquer.
 
-#### 6. Lancer des scripts (CGI)
+## 6. Lancer des scripts (CGI)
 
 Si la requête cible un script (ex : `.py`, `.php`), il doit :
 
@@ -79,7 +79,7 @@ Si la requête cible un script (ex : `.py`, `.php`), il doit :
 - récupérer sa sortie
 - l’envoyer comme réponse
 
-#### Webserv en résumé
+## Webserv en résumé
 
 En résumé, le programme Webserv va devoir:
 
@@ -96,7 +96,7 @@ En résumé, le programme Webserv va devoir:
 
 # Quelques définitions de base
 
-#### Client
+## Client
 
 > Un **client** est un programme (souvent un **navigateur web**) qui envoie une **requête HTTP** à un serveur web pour demander une **ressource** (page HTML, image, fichier, script…).
 
@@ -106,7 +106,7 @@ Dans le cadre de Webserv :
 - il envoie une requête
 - il attend une réponse HTTP
 
-#### Requête HTTP
+## Requête HTTP
 
 > Une **requête HTTP** est un **message textuel** envoyé par un client à un serveur pour demander ou envoyer des données, structuré d'un manière précise.
 
@@ -122,7 +122,7 @@ Le serveur lit la requête, la comprend, et envoie une **réponse HTTP** structu
 
 ***-> Les requêtes HTTP sont abordées en détail dans le fichier `HTTP1.1.fr.md`***
 
-#### HTML (HyperText Markup Language)
+## HTML (HyperText Markup Language)
 
 > Le **HTML** est un **langage de balisage** utilisé pour structurer et afficher les pages web.
 
@@ -139,7 +139,7 @@ Exemple simple :
 
 Le serveur Webserv n’analyse pas le HTML : **il l’envoie tel quel**. C’est le navigateur qui l’interprète.
 
-#### Socket
+## Socket
 
 > Une **socket** est une **interface logicielle** (une *portion de code* à l'intérieur d'un programme) qui permet à un programme de **communiquer via le réseau**, en s'appuyant sur des protocoles comme UDP ou TCP.
 
@@ -152,7 +152,7 @@ Dans Webserv :
 
 En C/C++, une socket est représentée par un **descripteur de fichier** (un int), ce qui permet d’utiliser les fonctions classiques comme `read()` et `write()` pour communiquer.
 
-#### Port
+## Port
 
 > Un **port** est un **numéro logique** utilisé pour identifier **une application** sur une machine.
 
@@ -164,7 +164,7 @@ En C/C++, une socket est représentée par un **descripteur de fichier** (un int
 
 >  Le serveur Webserv écoute sur un port (ex : `8080`) pour recevoir les connexions HTTP.
 
-#### TCP (Transmission Control Protocol)
+## TCP (Transmission Control Protocol)
 
 > **TCP** est un **protocole de transport fiable**, utilisé pour transmettre des données entre deux machines sur un réseau, en garantissant que les données :
 
@@ -182,7 +182,7 @@ HTTP repose sur TCP, ce qui signifie que :
 
 > Grâce à TCP, le serveur peut lire une requête HTTP **de manière sûre**, sans devoir vérifier manuellement la cohérence ou l'ordre des paquets.
 
-#### UDP (User Datagram Protocol)
+## UDP (User Datagram Protocol)
 
 > **UDP** est un **protocole de transport rapide mais non fiable**, utilisé pour envoyer des **petits paquets de données** sans établir de connexion préalable.
 
@@ -209,7 +209,7 @@ Ce protocole est souvent utilisé pour :
 
 > En résumé, **UDP sacrifie la fiabilité pour la vitesse**, ce qui le rend adapté aux communications **où la réactivité est plus importante que la perfection**.
 
-#### CGI (Common Gateway Interface)
+## CGI (Common Gateway Interface)
 
 > Le **CGI** est une **interface standardisée** qui permet à un serveur web d’**exécuter un programme externe** (comme un script PHP ou Python) et de **renvoyer sa sortie comme réponse HTTP**.
 
@@ -230,7 +230,7 @@ Webserv doit :
 
 Le sujet de Webserv autorise d'utiliser tout ce qui est compatible C++98, sans Boost ou autre bibliothèque externe, et il cite de nombreuses fonctions utilise, qu'on peut regrouper par catégories :
 
-#### Gestion de processus et exécution
+## Gestion de processus et exécution
 
 > Ces fonctions permettent de **lancer des programmes externes (comme les CGI)**, de **gérer les processus enfants**, ou de **rediriger leurs entrées/sorties**.
 
@@ -244,7 +244,7 @@ Le sujet de Webserv autorise d'utiliser tout ce qui est compatible C++98, sans B
 | `errno`    | Variable globale contenant le code d'erreur système  |     |
 | `strerror` | Donne le message lisible associé à `errno`           |     |
 
-#### Redirections et duplication de descripteurs
+## Redirections et duplication de descripteurs
 
 > Utilisées pour **rediriger l’entrée/sortie** d’un processus (exécution CGI, gestion des pipes).
 
@@ -254,7 +254,7 @@ Le sujet de Webserv autorise d'utiliser tout ce qui est compatible C++98, sans B
 |`dup2`|Duplique vers un descripteur précis|
 |`pipe`|Crée une paire de descripteurs pour la communication|
 
-#### Réseau — **Sockets**
+## Réseau — **Sockets**
 
 > Ce sont les fonctions centrales pour créer le **serveur web TCP**, accepter des connexions, envoyer/recevoir des requêtes.
 
@@ -271,7 +271,7 @@ Le sujet de Webserv autorise d'utiliser tout ce qui est compatible C++98, sans B
 | `getsockname` | Récupère l’adresse locale de la socket                                              |
 | `socketpair`  | Crée une paire de sockets connectées (ex : pipe bidirectionnel entre processus CGI) |
 
-#### Multiplexage I/O — **Gérer plusieurs connexions à la fois**
+## Multiplexage I/O — **Gérer plusieurs connexions à la fois**
 
 > Ces fonctions permettent de **surveiller plusieurs sockets en même temps** pour savoir laquelle est prête à lire ou écrire, sans thread.
 
@@ -282,7 +282,7 @@ Le sujet de Webserv autorise d'utiliser tout ce qui est compatible C++98, sans B
 | `epoll`   | Pour Linux : `epoll_create`, `epoll_ctl`, `epoll_wait` |
 | `kqueue`  | Pour macOS : `kqueue`, `kevent`                        |
 
-#### Résolution de noms et gestion réseau
+## Résolution de noms et gestion réseau
 
 > Ces fonctions servent à **traduire des noms en adresses IP**, configurer les ports, etc.
 
@@ -294,7 +294,7 @@ Le sujet de Webserv autorise d'utiliser tout ce qui est compatible C++98, sans B
 |`htons`, `htonl`|Convertit des entiers en format réseau|
 |`ntohs`, `ntohl`|Convertit des entiers **depuis** le format réseau|
 
-#### Accès fichiers et systèmes de fichiers
+## Accès fichiers et systèmes de fichiers
 
 > Pour **servir des fichiers HTML, images, etc.**, gérer les `stat`, ouvrir des fichiers ou des répertoires.
 
@@ -311,7 +311,7 @@ Le sujet de Webserv autorise d'utiliser tout ce qui est compatible C++98, sans B
 
 # Multiplexage
 
-#### Définition du Multiplexage (ou **I/O Multiplexing**)
+## Définition du Multiplexage (ou **I/O Multiplexing**)
 
 > Le **multiplexage** désigne la capacité d’un programme à **surveiller plusieurs entrées/sorties à la fois**, sans bloquer, et à réagir **dès qu’au moins l’une d’elles devient active** (par exemple : une socket prête à lire ou écrire).
 
@@ -327,7 +327,7 @@ et **attendre bloqué sur chaque socket**, on demande au système :
 
 > « Préviens-moi dès que **l’une d’elles** a quelque chose à dire. »
 
-#### Muliplexage dans Webserv
+## Muliplexage dans Webserv
 
 Le serveur doit :
 
@@ -340,7 +340,7 @@ Le **multiplexage** permet de faire **tout cela avec un seul thread/processus**,
 >Il est en effet explicitement interdit dans le sujet d'employer du multithreading avec `pthread()` ou du multiprocessus avec `fork()` à cet effet ) : 
 >*"Vous ne pouvez pas utiliser fork pour autre chose que CGI (comme PHP ou Python, etc)."*
 
-#### Outils typiques de multiplexage
+## Outils typiques de multiplexage
 
 >Le sujet laisse le choix parmi plusieurs mécanismes pour faire du multiplexage. Il faut en choisir **un seul** et t’y tenir. Ne **jamais** appeler `read()` ou `write()` sans qu’un de ces mécanismes ait validé que le FD est prêt.
 
@@ -351,7 +351,7 @@ Le **multiplexage** permet de faire **tout cela avec un seul thread/processus**,
 |`epoll()`|Linux uniquement|Avancé|
 |`kqueue()`|BSD/macOS uniquement|Avancé|
 
-##### 1. `select()`
+### 1. `select()`
 
 > Cette fonction se base sur des **ensembles statiques (`fd_set`)** et des **macros (`FD_SET`, etc.)**
 
@@ -363,7 +363,7 @@ Le **multiplexage** permet de faire **tout cela avec un seul thread/processus**,
 - Peu performant quand beaucoup de sockets (scan linéaire)
 - Syntaxe un peu rigide
 
-#### 2. `poll()`
+### 2. `poll()`
 
 > Cette fonction est basée sur un **tableau dynamique de `pollfd`**. C'est le meilleur compromis pour avoir un code 100% portable.
 
@@ -375,7 +375,7 @@ Le **multiplexage** permet de faire **tout cela avec un seul thread/processus**,
 - Toujours un **scan linéaire** (pas optimal en très grand nombre de connexions)
 - Requiert de **reconstruire le tableau à chaque tour**
 
-#### 3. `epoll()` (Linux uniquement)
+### 3. `epoll()` (Linux uniquement)
 
 > Interface **événementielle** et très performante (non linéaire)
 
@@ -388,7 +388,7 @@ Le **multiplexage** permet de faire **tout cela avec un seul thread/processus**,
 - API un peu plus complexe (`epoll_create`, `epoll_ctl`, `epoll_wait`)
 - Non portable
 
-#### 4. `kqueue()` (macOS / BSD)
+### 4. `kqueue()` (macOS / BSD)
 
 > Équivalent d’`epoll` pour les systèmes BSD/macOS
 
@@ -399,7 +399,7 @@ Le **multiplexage** permet de faire **tout cela avec un seul thread/processus**,
 - Spécifique à macOS et BSD
 - Syntaxe un peu plus verbeuse (`kqueue`, `kevent`, etc.)
 
-#### Contraintes imposées pour le multiplexage
+### Contraintes imposées pour le multiplexage
 
 Le serveur **Webserv** doit fonctionner de manière **non bloquante**, en utilisant **un seul mécanisme de multiplexage** (`poll()`, `select()`, `epoll()`, ou `kqueue`) pour **gérer toutes les opérations I/O**, y compris :
 
@@ -407,7 +407,7 @@ Le serveur **Webserv** doit fonctionner de manière **non bloquante**, en utilis
 - les **sockets clients**
 - les **pipes CGI** éventuels
 
-**Règles obligatoires :**
+#### **Règles obligatoires :**
 
 - Utiliser **une seule boucle principale**, avec **un seul appel à `poll()` (ou équivalent choisi)** par itération.
 - Ce `poll()` doit surveiller **en même temps** :
@@ -441,7 +441,7 @@ Si on choisit d’utiliser **`select()`** comme mécanisme de multiplexage dans 
 - tester les requêtes HTTP **"à la main"**, en combinant `telnet` et `nginx`, pour comprendre ce que contient une requête ou une réponse HTTP, comment le serveur réagit à une mauvaise requête, etc.
 - tester son propre serveur Webserv en lui envoyant des requêtes avec `telnet`
 
-#### Telnet
+## Telnet
 
 > `telnet` est un **client réseau en ligne de commande** qui permet d’**ouvrir une connexion TCP** vers un hôte et un port.  
 > Il est très utile pour **envoyer manuellement des requêtes HTTP** et observer **la réponse brute** du serveur.
@@ -467,7 +467,7 @@ Host: localhost
 
 Si `nginx` (ou un autre serveur, comme Webserv) écoute sur le port visé, il recevra la requête et **renverra une réponse HTTP** que tu verras s’afficher directement dans le terminal.
 
-#### NGINX
+## NGINX
 
 > `nginx` est un **serveur HTTP performant et populaire**, souvent utilisé en production.  
 > Il constitue une référence utile pour comprendre **comment un vrai serveur web réagit** aux requêtes HTTP.
@@ -500,7 +500,7 @@ lsof -i :80      # Linux
 
 Le sujet de Webserv impose plusieurs contraintes et pose plusieurs attentes :
 
-#### Vous ne pouvez pas exécuter un autre serveur web
+## Vous ne pouvez pas exécuter un autre serveur web
 
 Signifie clairement que le programme `webserv` doit être le **seul serveur HTTP actif** pendant l’évaluation : pas le droit de s’appuyer sur un autre serveur existant (comme **nginx**, **Apache**, ou **python -m http.server**).
 
@@ -508,21 +508,21 @@ Signifie clairement que le programme `webserv` doit être le **seul serveur HTTP
 > ouvrir un port, écouter, accepter des connexions, lire la requête, la parser, et générer une réponse.  
 > **Pas question de sous-traiter ça** à un autre serveur ou d’en faire un simple proxy.
 
-Pas autorisé :
+**Pas autorisé :**
 
 - Lancer **nginx** ou **Apache** pour répondre à la place de Webserv
 - Utiliser un programme ou une librairie externe qui **fait le travail de serveur à sa place**
 - Déléguer la gestion des connexions, requêtes ou réponses à un **autre binaire ou processus serveur**
 - Faire des appels à des outils comme `curl localhost:8080 | python -m http.server` dans le code
 
-Autorisé et recommandé :
+**Autorisé et recommandé :**
 
 - Exécuter des **scripts CGI** (comme `./my_script.py`) depuis Webserv
 - Comparer le comportement de Webserv avec **nginx** pour tester
 - Regarder le comportement d’un autre serveur pour **debugger ou t’inspirer**
 - Utiliser des outils clients (`telnet`, `curl`, navigateur, etc.) pour tester ton Webserv
 
-#### Votre serveur ne doit jamais bloquer
+## Votre serveur ne doit jamais bloquer
 
  Le serveur doit pouvoir **gérer plusieurs clients simultanément**, **sans jamais être bloqué** par l’un d’eux, et **répondre de manière correcte et propre** dans tous les cas. Le serveur **doit rester réactif en toutes circonstances**, même si un client :
  
@@ -533,17 +533,16 @@ Autorisé et recommandé :
 >Ne **jamais utiliser `read()` ou `accept()` de manière bloquante**.
 >Gérer les connexions via **`select`, `poll`, `epoll`, ou `kqueue`**, pour ne traiter que les sockets **prêtes**.
 
-Si un client pose problème :
+**Si un client pose problème :**
 
 - Le renvoyer proprement avec une réponse HTTP adaptée :
     - `408 Request Timeout` → s’il ne fait rien
     - `400 Bad Request` → si la requête est malformée
     - `413 Payload Too Large` → si le corps dépasse la limite
     - `405 Method Not Allowed` → méthode non prise en charge
+- Et ensuite **fermer la connexion** sans bloquer le reste du serveur.
 
-Et ensuite **fermer la connexion** sans bloquer le reste du serveur.
-
-#### Votre serveur doit être compatible avec le navigateur web de votre choix
+## Votre serveur doit être compatible avec le navigateur web de votre choix
 
 Le serveur **Webserv** doit pouvoir être testé depuis **un vrai navigateur web** (comme Chrome, Firefox, Safari…), et celui-ci doit être capable de :
 
@@ -553,7 +552,7 @@ Le serveur **Webserv** doit pouvoir être testé depuis **un vrai navigateur web
 > Le serveur doit être **assez conforme au protocole HTTP/1.1** pour être **compris et utilisé directement par un navigateur moderne**.  
 > Il doit **répondre proprement** à une requête standard du navigateur, sans bug ni erreur visible.
 
-Cela implique :
+**Cela implique :**
 
 - Le serveur doit **respecter la norme HTTP/1.1** (RFC 2616)
 - Il doit **répondre aux en-têtes obligatoires** (`Content-Length`, `Content-Type`, etc.)
@@ -563,13 +562,13 @@ Cela implique :
 
 Mais dans tous les cas, c'est le comportement de NGINX qui sert de référence pour savoir si notre serveur Webserv se comporte comme attendu.
 
-#### Votre serveur doit avoir des pages d’erreur par défaut si aucune n’est fournie
+## Votre serveur doit avoir des pages d’erreur par défaut si aucune n’est fournie
 
 Si une requête produit une erreur (comme `404 Not Found`, `403 Forbidden`, `500 Internal Server Error`, etc.), et que le fichier de configuration ne spécifie pas de page personnalisée, alors le serveur doit quand même renvoyer une page HTML lisible par le client.
 
 > Si aucune page d’erreur personnalisée n’est fournie dans la configuration, **Webserv doit générer une page HTML d’erreur générique** pour informer correctement le client du problème. Cela s’applique à tous les **codes d’erreur HTTP** (au moins les plus courants : `400`, `403`, `404`, `500`, etc.)
 
-Exemple :
+**Exemple :**
 
 Si le fichier `.conf` **ne contient pas** :
 
@@ -587,13 +586,13 @@ Alors Webserv doit renvoyer **une page HTML générique par défaut**, comme :
 </html>
 ```
 
-#### Vous ne pouvez pas utiliser fork pour autre chose que CGI (comme PHP ou Python, etc)
+## Vous ne pouvez pas utiliser fork pour autre chose que CGI (comme PHP ou Python, etc)
 
 Il est interdit d'utiliser `fork()`, à part pour exécuter un script CGI (ex : Python, PHP) dans la partie bonus de Webserv.
 
 >Il ne faut **jamais utiliser `fork()` pour gérer un client, créer un thread, ou traiter une requête classique**.
 
-#### Vous devriez pouvoir servir un site web entièrement statique
+## Vous devriez pouvoir servir un site web entièrement statique
 
 Servir un site **statique** signifie que **Webserv n’a pas besoin d’exécuter du code serveur ni de générer du contenu dynamique**.
 
@@ -615,7 +614,7 @@ Mais pas de :
 - Authentification, login, registre…
 - Frameworks comme Laravel, Django, Express, etc
 
-#### Le client devrait pouvoir téléverser des fichiers
+## Le client devrait pouvoir téléverser des fichiers
 
 Le Webserv doit permettre à un client (navigateur, curl...) d’**envoyer un fichier**,  
 qui sera sauvegardécôté serveur. C’est une fonctionnalité essentielle de la méthode **`POST`**, exigée dans la partie obligatoire.
@@ -630,7 +629,7 @@ En pratique :
     - **enregistrer le fichier** dans un dossier configuré (ex: `/uploads`)
     - renvoyer une **réponse HTTP 201 Created** ou `200 OK`
 
-#### Votre serveur doit pouvoir écouter sur plusieurs ports (cf. Fichier de configuration)
+## Votre serveur doit pouvoir écouter sur plusieurs ports (cf. Fichier de configuration)
 
 Le serveur Webserv doit être capable de :
 
@@ -642,7 +641,7 @@ Le serveur Webserv doit être capable de :
 > - Les différencier selon le port (et potentiellement l'adresse IP)
 > - Faire le lien entre **socket → configuration serveur**
 
-Exemple dans un fichier `.conf` :
+**Exemple dans un fichier `.conf` :**
 
 ```nginx
 server {
@@ -656,14 +655,14 @@ server {
 }
 ```
 
-Le serveur Webserv doit alors :
+**Le serveur Webserv doit alors :**
 
 - créer **une socket d’écoute pour chaque port** (`socket()`, `bind()`, `listen()`)
 - les **ajouter toutes à `poll()` (ou équivalent)** dans la boucle principale
 - détecter sur quel port arrive chaque connexion    
 - et diriger la requête vers la bonne configuration `server {}`
 
-#### Pour macOS seulement
+## Pour macOS seulement
 
 Sur **macOS**, le comportement de `write()` en mode non bloquant **n’est pas strictement identique** à celui d’autres systèmes Unix/Linux.
 Cela peut provoquer des **blocages involontaires**, même si tu utilises `poll()` correctement.
@@ -710,7 +709,7 @@ fcntl(fd, F_SETFD, FD_CLOEXEC);
 
 Voici une proposition d'architecture et de classes à implémenter pour réaliser le projet :
 
-### Objectif
+## Objectif
 
 > Implémenter un serveur HTTP/1.1 en C++98, capable de :
 > 
@@ -719,7 +718,7 @@ Voici une proposition d'architecture et de classes à implémenter pour réalise
 > - Prendre en charge la configuration multi-server et multi-port
 > - Répondre à plusieurs clients simultanément via `poll()`
 
-### Structure globale du projet
+## Structure globale du projet
 
 ```
 webserv/
@@ -736,9 +735,9 @@ webserv/
 │   └── ... headers associés
 ```
 
-### Composants principaux et classes à implémenter
+## Composants principaux et classes à implémenter
 
-##### 1. **Server**
+### 1. **Server**
 
 La classe `Server` est le **chef d’orchestre du serveur Web** : elle initialise les sockets d’écoute, configure `poll()` pour surveiller les connexions, et distribue les événements (lecture, écriture, nouvelles connexions) aux objets appropriés.  
 C’est elle qui maintient la boucle principale du serveur et garantit que chaque requête est correctement reçue, traitée et répondue.
@@ -754,7 +753,7 @@ void acceptNewConnection(int fd);
 void handleEvent(pollfd &fd);
 ```
 
-##### 2. **PollManager**
+### 2. **PollManager**
 
 La classe `PollManager` centralise la **gestion des événements d'entrée/sortie** grâce à `poll()`. Elle maintient une liste de descripteurs (`pollfd`), détecte ceux prêts à lire ou écrire, et informe le `Server` de ces événements.  
 Elle permet au serveur de **gérer plusieurs connexions simultanément** sans bloquer.
@@ -768,7 +767,7 @@ void removeSocket(int fd);
 std::vector<pollfd> poll(int timeout);
 ```
 
-##### 3. **Connection**
+### 3. **Connection**
 
 La classe `Connection` représente une **connexion client individuelle** : elle gère la lecture incrémentale des données reçues, l’état de la requête en cours, et l’écriture de la réponse.  
 Elle sert d’interface entre le socket du client et les couches HTTP (`RequestParser`, `ResponseBuilder`), en assurant la **gestion complète du cycle de vie** d’une requête HTTP.
@@ -782,7 +781,7 @@ ssize_t writeToSocket();
 bool isComplete() const;
 ```
 
-##### 4. **RequestParser**
+### 4. **RequestParser**
 
 La classe `RequestParser` analyse les données brutes reçues depuis le socket client pour **reconstruire progressivement une requête HTTP valide**.  
 Elle extrait la méthode, l’URI, la version, les en-têtes et le corps, tout en gérant les cas partiels (requêtes incomplètes) et les protocoles comme `chunked`.
@@ -795,7 +794,7 @@ Request getRequest() const;
 bool isComplete() const;
 ```
 
-##### 5. **Request**
+### 5. **Request**
 
 La classe `Request` représente une **requête HTTP complète** une fois qu’elle a été entièrement parsée : elle contient la méthode (`GET`, `POST`…), l’URI, la version du protocole, les en-têtes, et éventuellement le corps.  
 Elle sert d’objet central à partir duquel la logique du serveur peut **décider comment répondre**.
@@ -810,7 +809,7 @@ std::map<std::string, std::string> headers;
 std::string body;
 ```
 
-##### 6. **Response**
+### 6. **Response**
 
 La classe `Response` représente une **réponse HTTP prête à être envoyée au client** : elle contient le code de statut (comme `200 OK` ou `404 Not Found`), les en-têtes (`Content-Type`, `Content-Length`, etc.), et le corps (HTML, JSON, fichier, etc.).  
 Elle peut être convertie en chaîne brute pour être transmise sur le socket.
@@ -825,7 +824,7 @@ std::string body;
 std::string toRawString() const;
 ```
 
-##### 7. **ResponseBuilder**
+### 7. **ResponseBuilder**
 
 La classe `ResponseBuilder` est chargée de **générer une réponse HTTP adaptée à une requête donnée**, en tenant compte de la configuration du serveur (routes, méthodes autorisées, CGI, etc.).  
 Elle sélectionne le bon `Handler`, gère les erreurs éventuelles, et construit l'objet `Response` à envoyer au client.
@@ -837,7 +836,7 @@ Response buildResponse(const Request&, const Route&);
 Response buildError(int statusCode);
 ```
 
-#### 8. **Handler** _(interface polymorphe)_
+## 8. **Handler** _(interface polymorphe)_
 
 La classe `Handler` est une **interface abstraite** définissant une méthode `handle()` que chaque type de traitement HTTP (GET, POST, DELETE, CGI…) doit implémenter.  
 Elle permet au serveur de **déléguer dynamiquement** le traitement d’une requête à la classe appropriée, grâce au polymorphisme.
@@ -852,7 +851,7 @@ class Handler {
 
 > Sous-classes : `GetHandler`, `PostHandler`, `DeleteHandler`, `CgiHandler`
 
-##### 9. **Config**
+### 9. **Config**
 
 La classe `Config` est responsable de **l’analyse et du stockage de la configuration du serveur**, à partir d’un fichier inspiré de la syntaxe NGINX.  
 Elle structure les données en blocs (serveurs, routes, directives) pour permettre au serveur de savoir **comment répondre à chaque requête selon l’adresse, le port, et le chemin demandé**.
@@ -864,7 +863,7 @@ void parseConfigFile(const std::string&);
 std::vector<ServerConfig> getServers() const;
 ```
 
-##### 10. **Route**
+### 10. **Route**
 
 La classe `Route` décrit le **comportement à adopter pour une URI donnée**, tel que défini dans la configuration : chemin racine (`root`), méthodes HTTP autorisées, activation de l’autoindex, redirections, ou exécution d’un CGI.  
 Elle permet de **faire correspondre une requête à une logique précise** en fonction de son chemin.
@@ -879,7 +878,7 @@ std::vector<std::string> allowedMethods;
 std::string cgiPath;
 ```
 
-### Modules auxiliaires
+## Modules auxiliaires
 
 Voici d'autres fonctionnalités utiles à implémenter.
 
@@ -901,7 +900,7 @@ Certains modules auxiliaires peuvent être implémentés en classes (si besoin d
 
 >D'une manière générale, si le module **a un état propre**, **doit être testé/isolé**, ou **implémente une interface**, il vaut mieux en faire une classe. Sinon, pour des opérations **pures et stateless**, une simple fonction utilitaire suffit.
 
-##### 1. **Opération pure**
+#### 1. **Opération pure**
 
 Une **fonction pure** est une fonction :
 - dont **le résultat dépend uniquement des paramètres fournis**
@@ -914,7 +913,7 @@ std::string getMimeType(const std::string& extension);
 
 Cette fonction, si elle retourne `"text/html"` pour `".html"`, ne fait que consulter une table. Elle **ne modifie rien**, et retourne toujours la même chose pour une même entrée → c’est une fonction **pure**.
 
-##### 2. **Stateless**
+#### 2. **Stateless**
 
 Un module est **stateless** s’il **ne conserve aucune donnée entre deux appels** :
 - pas de variable membre modifiable
@@ -939,16 +938,14 @@ Mais dans le cas d’une fonction pure et stateless :
 - une **fonction libre** (dans un namespace, ou même `static` dans un `.cpp`) est plus simple
 - on évite d’avoir à instancier des objets inutiles
 
----
-
-### Classe instanciable ou statique?
+## Classe instanciable ou statique?
 
 >- Une **classe instanciable** est une classe dont on peut créer des objets, chacun ayant son propre état.
 >- Une **classe statique** est une classe conçue pour ne jamais être instanciée, et qui n’expose que des méthodes ou variables `static` partagées par tout le programme.
 
 Dans **Webserv**, la majorité des classes devraient être **instanciables**, car elles représentent des **entités dynamiques** du serveur (connexions, requêtes, réponses, etc.).
 
-##### Classes **instanciables**
+### Classes **instanciables**
 
 Il faut utiliser des **objets** si la classe :
 
@@ -966,7 +963,7 @@ Il faut utiliser des **objets** si la classe :
 |`Config`, `Route`|✅ Oui|Contiennent les directives propres à chaque contexte|
 |`Logger`|✅ Oui|Peut conserver un état (niveau de log, fichier...)|
 
-##### Classes ou modules avec **méthodes statiques**
+### Classes ou modules avec **méthodes statiques**
 
 Il faut utilise des **méthodes statiques** ou des fonctions libres si :
 
@@ -981,13 +978,13 @@ Il faut utilise des **méthodes statiques** ou des fonctions libres si :
 |`HandlerFactory`|✅ Oui|Fournit un handler sans garder d’état|
 |`Utils` (fonctions diverses)|✅ Oui|Regroupe des fonctions pures, style C|
 
-##### Attention aux abus de `static`
+### Attention aux abus de `static`
 
 - Une classe **entièrement statique** est **rigide** et difficile à tester ou à étendre.
 - **Pas de polymorphisme possible** sur des méthodes statiques.
 - Difficile d’**injecter des dépendances** si tout est figé.
 
-##### Conclusion
+### Conclusion
 
 Dans Webserv, **préférence forte pour les classes instanciables**, sauf pour :
 
@@ -995,7 +992,7 @@ Dans Webserv, **préférence forte pour les classes instanciables**, sauf pour :
 - les **factories** (**classe ou fonction qui encapsule la logique de création d’objets**, notamment lorsqu’il faut **choisir dynamiquement quel type exact instancier**.)
 - les **convertisseurs** simples et universels
 
-### Usage du polymorphisme
+## Usage du polymorphisme
 
 > Le **polymorphisme est recommandé** pour les handlers HTTP (via l'interface `Handler`) :
 > 
