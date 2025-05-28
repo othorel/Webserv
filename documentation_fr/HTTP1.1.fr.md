@@ -10,7 +10,7 @@ On distingue :
 - **La requête :** c'est la demande que le client fait au serveur.
 - **La réponse :** c'est le retour que le serveur fait au client.
 
-##### Ce que contient la RFC 2616 :
+## Ce que contient la RFC 2616 :
 
 Elle décrit **tout ce qui concerne HTTP/1.1** :
 
@@ -35,7 +35,7 @@ Elle décrit **tout ce qui concerne HTTP/1.1** :
 Chaque ligne du protocole HTTP (y compris les lignes vides) doit se terminer par les deux caractères ASCII `\r\n` (retour chariot + saut de ligne) afin d’assurer un **retour en début de ligne suivi d’un passage à la ligne suivante**, ce qui garantit la compatibilité entre **Unix/Linux, Windows et anciens systèmes Mac**.
 On appelle ces deux caractères accolés un CRLF (*Carriage Return + Line Feed*).
 
-#### 1.1 Ligne de requête (obligatoire)
+### 1.1 Ligne de requête (obligatoire)
 
 >C'est la ligne principale, qui contient l'action que le client demande au serveur.
 
@@ -65,7 +65,7 @@ Les méthodes sont les actions demandées par le client au serveur. Dans Webser,
 - **POST** : permet de **transmettre des données au serveur**, souvent pour les traiter ou les stocker (ex : formulaire, envoi de fichier).
 - **DELETE** : permet de **demander au serveur la suppression d’une ressource identifiée par l’URI**.
 
-#### 1.2 En-têtes HTTP
+### 1.2 En-têtes HTTP
 
 >Un **en-tête HTTP** est une **ligne clé/valeur** placée après la ligne de requête ou de statut, qui **fournit des informations supplémentaires** sur la requête ou la réponse (comme le type de contenu, la taille, l’hôte ou les préférences du client).
 
@@ -100,13 +100,13 @@ Accept: text/html
 - `Content-Type:` → type des données envoyées (utile pour `POST`)
 - `Content-Length:` → taille du corps envoyé
 
-#### 1.3 Ligne vide
+### 1.3 Ligne vide
 
 >Une ligne vide (`\r\n`) est **obligatoire** pour séparer les en-têtes du corps.
 
 (Pour la taper la main : appuyer deux fois sur Entrée.)
 
-##### 1.4 Corps (facultatif)
+### 1.4 Corps (facultatif)
 
 >Le **corps HTTP** (ou _body_) est la **partie optionnelle** d’une requête ou d’une réponse qui contient les **données réelles échangées**, comme le contenu d’une page HTML, un fichier, un JSON ou les informations d’un formulaire.
 
@@ -135,7 +135,7 @@ Server: Webserv/1.0                               // header
 <html><body><h1>Bienvenue !</h1></body></html>.   // corps
 ```
 
-#### 2.1 Ligne de statut (obligatoire)
+### 2.1 Ligne de statut (obligatoire)
 
 >La **ligne de statut** est la **première ligne d’une réponse HTTP** ; elle indique la **version du protocole**, un **code d’état** (comme 200 ou 404), et une **phrase descriptive** résumant le résultat du traitement de la requête.
 
@@ -209,7 +209,7 @@ Codes de statut HTTP  à gérer dans Webserv :
 |503|Service Unavailable|Serveur temporairement indisponible|
 |504|Gateway Timeout|CGI ne répond pas à temps|
 
-#### 2.2 En-têtes HTTP
+### 2.2 En-têtes HTTP
 
 >Un **en-tête (*header*) HTTP** est une **ligne clé/valeur** placée après la ligne de requête ou de statut, qui **fournit des informations supplémentaires** sur la requête ou la réponse (comme le type de contenu, la taille, l’hôte ou les préférences du client).
 
@@ -249,7 +249,7 @@ Ces en-têtes doivent être présents **dans toutes les réponses** contenant un
 |`ETag`, `Cache-Control`, `Vary`|Gestion du cache — non demandée dans le sujet|
 |`Trailer`, `Upgrade`, `Via`|Réservés à des usages avancés ou HTTP proxy|
 
-#### 2.3 Ligne vide
+### 2.3 Ligne vide
 
 >Une ligne vide (`\r\n`) est **obligatoire** pour séparer les en-têtes du corps.
 
@@ -263,7 +263,7 @@ Contenu retourné au client : HTML, JSON, image, fichier…
 **Présent pour les réponses 200, 404, etc.**,  
 **Absent pour** : `204 No Content`, `304 Not Modified`, ou une requête `HEAD`.
 
-#### Résumé
+## Résumé
 
 Requête HTTP/1.1 (envoyée par le client) :
 
@@ -292,6 +292,11 @@ Header2: value\r\n
 
 - **Ligne vide** obligatoire avant le corps  
 - **Pas de ligne vide après le corps**
+
+>Contrairement aux en-têtes, **aucune ligne vide n’est nécessaire après le corps**, car **le client et le serveur savent exactement quand le corps se termine** grâce à l’en-tête `Content-Length` (ou `Transfer-Encoding: chunked`, dans les cas avancés).
+>Ainsi, **la ligne vide obligatoire ne sert qu’à séparer les en-têtes du corps**, jamais à marquer la fin de la requête ou de la réponse.
+
+
 
 >Contrairement aux en-têtes, **aucune ligne vide n’est nécessaire après le corps**, car **le client et le serveur savent exactement quand le corps se termine** grâce à l’en-tête `Content-Length` (ou `Transfer-Encoding: chunked`, dans les cas avancés).
 >Ainsi, **la ligne vide obligatoire ne sert qu’à séparer les en-têtes du corps**, jamais à marquer la fin de la requête ou de la réponse.
