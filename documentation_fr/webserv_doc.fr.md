@@ -598,7 +598,7 @@ Signifie clairement que le programme `webserv` doit être le **seul serveur HTTP
 - Exécuter des **scripts CGI** (comme `./my_script.py`) depuis Webserv
 - Comparer le comportement de Webserv avec **nginx** pour tester
 - Regarder le comportement d’un autre serveur pour **debugger ou t’inspirer**
-- Utiliser des outils clients (`telnet`, `curl`, navigateur, etc.) pour tester ton Webserv
+- Utiliser des outils clients (`telnet`, `curl`, navigateur, etc.) pour tester le serveur Webserv
 
 ## Votre serveur ne doit jamais bloquer
 
@@ -625,7 +625,7 @@ Signifie clairement que le programme `webserv` doit être le **seul serveur HTTP
 Le serveur **Webserv** doit pouvoir être testé depuis **un vrai navigateur web** (comme Chrome, Firefox, Safari…), et celui-ci doit être capable de :
 
 - **envoyer une requête HTTP valide** (ex : en tapant `http://localhost:8080`)
-- **recevoir et afficher correctement** la réponse de ton serveur
+- **recevoir et afficher correctement** la réponse du serveur
 
 > Le serveur doit être **assez conforme au protocole HTTP/1.1** pour être **compris et utilisé directement par un navigateur moderne**.  
 > Il doit **répondre proprement** à une requête standard du navigateur, sans bug ni erreur visible.
@@ -638,7 +638,7 @@ Le serveur **Webserv** doit pouvoir être testé depuis **un vrai navigateur web
 - Il doit **retourner une réponse bien formée** (ligne de statut + en-têtes + ligne vide + corps)
 - Pas de comportement bloquant ni de réponse incomplète
 
-Mais dans tous les cas, c'est le comportement de NGINX qui sert de référence pour savoir si notre serveur Webserv se comporte comme attendu.
+Mais dans tous les cas, c'est le comportement de NGINX qui sert de référence pour savoir si le serveur Webserv se comporte comme attendu.
 
 ## Votre serveur doit avoir des pages d’erreur par défaut si aucune n’est fournie
 
