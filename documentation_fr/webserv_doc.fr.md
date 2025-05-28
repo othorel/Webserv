@@ -6,6 +6,7 @@ Dans le répertoire `/documentation` vous trouverez d'autres fiches qui approfon
 - `fichiers_de_config.fr.md`-> à propos des fichiers de configuration
 - `HTTP1.1.fr.md` -> à propos du protocole HTTP version 1.1 tel qu'il apparaît dans le RFC 2616
 - `CGI.fr.md` -> à propos des scripts CGI
+- `fonctions_doc/` -> répertoire contenant plusieurs fichiers à expliquant les fonctions autorisées
 
 
 ---
