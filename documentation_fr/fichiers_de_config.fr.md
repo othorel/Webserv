@@ -63,7 +63,7 @@ server {
 - et éventuellement l'adresse IP qui est **l’interface réseau** sur laquelle le serveur va écouter les connexions entrantes.
 
 - Format attendu : `port` **ou** `IP:port`
-- Exemples valides : `80`, `127.0.0.1:8080`, `0.0.0.0:3000`. On doit accepter les deux formes. Si seul le port est donné, on peut supposer que l'adresse IP est `0.0.0.0`, ce qui signifie que le serveur **écoute sur toutes les interfaces réseau de ta machine**.
+- Exemples valides : `80`, `127.0.0.1:8080`, `0.0.0.0:3000`. On doit accepter les deux formes. Si seul le port est donné, on peut supposer que l'adresse IP est `0.0.0.0`, ce qui signifie que le serveur **écoute sur toutes les interfaces réseau de la machine**.
 
 **Numéro de port :**
 - En principe, n'importe quel port compris entre `1` et `65535`**, tant qu'il est valide, disponible et adapté à tl'usage**.
