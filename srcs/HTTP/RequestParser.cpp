@@ -189,61 +189,53 @@ std::string RequestParser::extractLineAndRemove(std::string & input)
 
 
 
+/** For testing: g++ HttpRequest.cpp RequestParser.cpp httpStatusMessage.cpp **/
 
+// int main()
+// {
+// 	std::string testCases[] = {
+// 		"GET /index.html HTTP/1.1\r\n"
+// 		"Host: localhost\r\n"
+// 		"Connection: keep-alive\r\n"
+// 		"\r\n",
 
+// 		"POST /submit HTTP/1.1\r\n"
+// 		"Host: localhost\r\n"
+// 		"Content-Length: 11\r\n"
+// 		"Content-Type: text/plain\r\n"
+// 		"\r\n"
+// 		"Hello World",
 
+// 		"GET / HTTP/1.1\r\n"
+// 		"Content-Length: 0\r\n"
+// 		"\r\n",
 
+// 		"POST / HTTP/1.1\r\n"
+// 		"Host: localhost\r\n"
+// 		"Content-Length: abc\r\n"
+// 		"\r\n"
+// 		"hello",
 
-#include <iostream>
-#include <string>
-#include "RequestParser.hpp"
+// 		"POST / HTTP/1.1\r\n"
+// 		"Host: localhost\r\n"
+// 		"Content-Length: 20\r\n"
+// 		"\r\n"
+// 		"short"
+// 	};
 
-int main()
-{
-	std::string testCases[] = {
-		"GET /index.html HTTP/1.1\r\n"
-		"Host: localhost\r\n"
-		"Connection: keep-alive\r\n"
-		"\r\n",
+// 	for (size_t i = 0; i < sizeof(testCases) / sizeof(testCases[0]); ++i) {
+// 		std::cout << "\n==============================" << std::endl;
+// 		std::cout << "Test Case #" << i + 1 << std::endl;
+// 		std::cout << "==============================\n" << std::endl;
 
-		"POST /submit HTTP/1.1\r\n"
-		"Host: localhost\r\n"
-		"Content-Length: 11\r\n"
-		"Content-Type: text/plain\r\n"
-		"\r\n"
-		"Hello World",
-
-		"GET / HTTP/1.1\r\n"
-		"Content-Length: 0\r\n"
-		"\r\n",
-
-		"POST / HTTP/1.1\r\n"
-		"Host: localhost\r\n"
-		"Content-Length: abc\r\n"
-		"\r\n"
-		"hello",
-
-		"POST / HTTP/1.1\r\n"
-		"Host: localhost\r\n"
-		"Content-Length: 20\r\n"
-		"\r\n"
-		"short"
-	};
-
-	for (size_t i = 0; i < sizeof(testCases) / sizeof(testCases[0]); ++i) {
-		std::cout << "\n==============================" << std::endl;
-		std::cout << "Test Case #" << i + 1 << std::endl;
-		std::cout << "==============================\n" << std::endl;
-
-		try {
-			RequestParser parser(testCases[i]);
-			parser.getHttpRequest().debug(); // ✅ ta méthode HttpRequest::debug() appelée via wrapper
-		}
-		catch (const RequestParser::InvalidRequestException & e) {
-			std::cerr << "❌ InvalidRequestException (" << e.getStatusCode() << ") : "
-					  << e.what() << std::endl;
-		}
-	}
-	return 0;
-}
-
+// 		try {
+// 			RequestParser parser(testCases[i]);
+// 			parser.getHttpRequest().debug(); // ✅ ta méthode HttpRequest::debug() appelée via wrapper
+// 		}
+// 		catch (const RequestParser::InvalidRequestException & e) {
+// 			std::cerr << "❌ InvalidRequestException (" << e.getStatusCode() << ") : "
+// 					  << e.what() << std::endl;
+// 		}
+// 	}
+// 	return 0;
+// }

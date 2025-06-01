@@ -1,7 +1,7 @@
 #include <string>
 
 // Function that returns an HTTP error message according to an HTTP error code
-std::string getStatusMessage(int code)
+std::string httpStatusMessage(int code)
 {
 	switch (code)
 	{

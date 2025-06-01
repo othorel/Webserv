@@ -6,7 +6,7 @@
 # include <exception>
 # include "HttpRequest.hpp"
 
-std::string getStatusMessage(int code);
+std::string httpStatusMessage(int code);
 
 class RequestParser
 {
@@ -44,7 +44,7 @@ class RequestParser
 
 				InvalidRequestException(int code) :
 					_statusCode(code),
-					_msg(getStatusMessage(code))
+					_msg(httpStatusMessage(code))
 				{}
 
 				virtual const char * what() const throw()
@@ -58,6 +58,5 @@ class RequestParser
 				}
 		};
 };
-
 
 #endif
