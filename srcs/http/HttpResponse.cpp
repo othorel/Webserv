@@ -1,7 +1,7 @@
 #include <string>
 #include <map>
 #include <sstream>
-#include "HttpResponse.hpp"
+#include "../../include/http/HttpResponse.hpp"
 
 std::string httpStatusMessage(int code);
 

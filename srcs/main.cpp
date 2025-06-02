@@ -1,1 +1,1 @@
-zeub
+int zeub()
