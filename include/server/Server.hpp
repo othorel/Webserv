@@ -10,6 +10,8 @@
 # include <algorithm>
 # include <exception>
 # include <arpa/inet.h>
+# include <poll.h>
+# include <unistd.h>
 
 class ConfigParser;
 class Server
@@ -24,20 +26,16 @@ class Server
 		Server & operator=(const Server & other);
 
 		void	Setup();
-		class	ServerSetupException : public std::exception
-		{
-			public:
-				const char * what() const throw()
-				{
-					return ("Error while creating socket");
-				}
-		};
-		
-
+		void	Run();
+		void	dealClient(int fd, int & i);
+		void	addNewConnexion(int fdClient);
+		void	dealExistingClient(int fdClient, int & i);
+		void	dealRequest(int fd);
 		
 	private:
 		// const ConfigParser &						_serv;
 		std::vector<int>							_fdSocketVect;
+		std::vector<struct pollfd>					_fdPollVect;
 		std::vector<std::pair<int, std::string>> 	_listenTab;
 
 		void	addPair(std::pair<int, std::string>);
