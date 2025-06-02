@@ -1,0 +1,42 @@
+#ifndef HTTPREQUEST_HPP
+# define HTTPREQUEST_HPP
+
+# include <string>
+# include <map>
+
+class HttpRequest
+{
+	private :
+
+		std::string							_method;
+		std::string							_uri;
+		std::string							_version;
+		std::map<std::string, std::string>	_headers;
+		std::string							_body;
+		unsigned int						_contentLength;
+		
+	public :
+
+		HttpRequest();
+		HttpRequest(const std::string & method,
+					const std::string & uri,
+					const std::string & version,
+					const std::map<std::string, std::string> & headers,
+					const std::string & body);
+		HttpRequest(const HttpRequest & other);
+		HttpRequest & operator=(const HttpRequest & other);
+		~HttpRequest();
+
+		const std::string & getMethod() const;
+		const std::string & getUri() const;
+		const std::string & getVersion() const;
+		const std::string & getBody() const;
+		const std::map<std::string, std::string>  & getHeaders() const;
+		std::string getHeaderValue(const std::string & key) const;
+		bool		hasHeader(const std::string & key) const;
+		size_t		getBodyLength() const;
+		void		debug() const;
+
+};
+
+#endif
