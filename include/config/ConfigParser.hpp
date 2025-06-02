@@ -10,15 +10,12 @@
 
 class ConfigParser {
 
-	private:
-
-		ConfigParser(const ConfigParser& other);
-		ConfigParser& operator=(const ConfigParser& other);
-
 	public:
-
+	
 		ConfigParser();
 		~ConfigParser();
+		ConfigParser(const ConfigParser& other);
+		ConfigParser& operator=(const ConfigParser& other);
 		static std::vector<ServerConfig> parse(const std::string& filename);
 };
 
