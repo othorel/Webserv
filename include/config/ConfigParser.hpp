@@ -33,7 +33,7 @@ class ConfigParser {
 		ConfigParser(const ConfigParser& other);
 		ConfigParser& operator=(const ConfigParser& other);
 
-		void parse(const std::string& filename);
+		void parsefile(const std::string& filepath);
 		const std::vector<ServerConfig>& getServerConfigVector() const;
 
 	class ParseException : public std::exception {
