@@ -3,7 +3,7 @@
 #include <string>
 #include <map>
 #include <exception>
-#include "RequestParser.hpp"
+#include "../../include/http/RequestParser.hpp"
 
 // Method that creates an HttpRequest object by parsing the whole request
 // throwing invalidRequestException in case of error

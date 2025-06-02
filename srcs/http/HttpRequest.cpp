@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <map>
-#include "HttpRequest.hpp"
+#include "../../include/http/HttpRequest.hpp"
 
 HttpRequest::HttpRequest() :
 	_method(),
