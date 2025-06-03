@@ -67,20 +67,6 @@ void ResponseBuilder::buildRedirect(int code, const std::string & path)
 	_httpResponse = HttpResponse("HTTP/1.1", code, headers, body);
 }
 
-bool HttpResponse::isDirectory(const std::string & path)
-{
-	struct stat s;
-	if (!stat(path.c_str(), &s))
-		return ((s.st_mode & S_IFMT) == S_IFDIR);
-	return (false);
-}
-
-bool HttpResponse::fileExists(const std::string & path)
-{
-	struct stat s;
-	return (stat(path.c_str(), &s) == 0 && S_ISREG(s.st_mode));
-}
-
 std::string HttpResponse::generateAutoIndex(const std::string & dirPath, const std::string & uriPath)
 {
 	DIR* dir = opendir(dirPath.c_str());
@@ -103,9 +89,8 @@ std::string HttpResponse::generateAutoIndex(const std::string & dirPath, const s
 		html << name << "\">" << name << "</a></li>";
 	}
 	closedir(dir);
-
 	html << "</ul></body></html>";
-	return html.str();
+	return (html.str());
 }
 
 const HttpResponse & ResponseBuilder::buildResponse(
@@ -131,7 +116,7 @@ const HttpResponse & ResponseBuilder::buildResponse(
 			std::string indexFile = path + "/index.html";
 			if (fileExists(indexFile))
 				path = indexFile;
-			else if (route.isAutoindexOn(path, request.getTarget())) {
+			else if (route.isAutoIndex()) {
 				std::string body = generateAutoIndex(path, request.getTarget());
 				std::map<std::string, std::string> headers;
 				headers["Content-Type"] = "text/html";
@@ -181,4 +166,18 @@ std::string HttpResponse::intToString(const std::string & body)
 	std::ostringstream oss;
 	oss << body.size();
 	return (oss.str());
+}
+
+bool HttpResponse::isDirectory(const std::string & path)
+{
+	struct stat s;
+	if (!stat(path.c_str(), &s))
+		return ((s.st_mode & S_IFMT) == S_IFDIR);
+	return (false);
+}
+
+bool HttpResponse::fileExists(const std::string & path)
+{
+	struct stat s;
+	return (stat(path.c_str(), &s) == 0 && S_ISREG(s.st_mode));
 }

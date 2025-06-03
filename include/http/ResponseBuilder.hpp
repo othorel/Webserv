@@ -17,6 +17,10 @@ class ResponseBuilder
 				const std::map<std::string, Location> & routes,
 				const std::string & target) const;
 		void buildRedirect(int code, const std::string & path);
+		std::string intToString(const std::string & body);
+		bool isDirectory(const std::string & path);
+		bool fileExists(const std::string & path);
+		std::string generateAutoIndex(const std::string & dirPath, const std::string & uriPath);
 
 	public :
 
