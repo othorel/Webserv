@@ -1,5 +1,8 @@
 #include <string>
 #include <sstream>
+#include <sys/stat.h>
+#include <dirent.h>
+
 #include "../../include/http/ResponseBuilder.hpp"
 #include "../../include/http/HttpRequest.hpp"
 #include "../../include/http/HttpResponse.hpp"
@@ -60,10 +63,49 @@ void ResponseBuilder::buildRedirect(int code, const std::string & path)
 	std::map<std::string, std::string> headers;
 	headers["Location"] = path;
 	headers["Content-Type"] = "text/html";
-	std::ostringstream oss;
-	oss << body.size();
-	headers["Content-Length"] = oss.str();
+	headers["Content-Length"] = intToString(body);
 	_httpResponse = HttpResponse("HTTP/1.1", code, headers, body);
+}
+
+bool HttpResponse::isDirectory(const std::string & path)
+{
+	struct stat s;
+	if (!stat(path.c_str(), &s))
+		return ((s.st_mode & S_IFMT) == S_IFDIR);
+	return (false);
+}
+
+bool HttpResponse::fileExists(const std::string & path)
+{
+	struct stat s;
+	return (stat(path.c_str(), &s) == 0 && S_ISREG(s.st_mode));
+}
+
+std::string HttpResponse::generateAutoIndex(const std::string & dirPath, const std::string & uriPath)
+{
+	DIR* dir = opendir(dirPath.c_str());
+	if (!dir)
+		throw HttpErrorException(500);
+
+	std::ostringstream html;
+	html << "<html><body><h1>Index of " << uriPath << "</h1><ul>";
+
+	struct dirent* entry;
+	while ((entry = readdir(dir)) != NULL)
+	{
+		std::string name = entry->d_name;
+		if (name == "." || name == "..")
+			continue;
+
+		html << "<li><a href=\"" << uriPath;
+		if (!uriPath.empty() && uriPath[uriPath.size() - 1] != '/')
+			html << "/";
+		html << name << "\">" << name << "</a></li>";
+	}
+	closedir(dir);
+
+	html << "</ul></body></html>";
+	return html.str();
 }
 
 const HttpResponse & ResponseBuilder::buildResponse(
@@ -84,19 +126,33 @@ const HttpResponse & ResponseBuilder::buildResponse(
 			buildRedirect(route.getRedirectCode(), route.getRedirectPath());
 			return (_httpResponse);
 		}
-
-		// Autoindex ?
-		// Si le chemin pointe vers un dossier, et que le fichier index.html est absent :
-		// Si autoindex == true, génère une page HTML listant les fichiers
-		// Sinon, retourne 403 Forbidden ou 404 Not Found
-
-
+		// path is directory and autoindex
+		if (isDirectory(path)) {
+			std::string indexFile = path + "/index.html";
+			if (fileExists(indexFile))
+				path = indexFile;
+			else if (route.isAutoindexOn(path, request.getTarget())) {
+				std::string body = generateAutoIndex(path, request.getTarget());
+				std::map<std::string, std::string> headers;
+				headers["Content-Type"] = "text/html";
+				headers["Content-Length"] = intToString(body);
+				_httpResponse = HttpResponse("HTTP/1.1", 200, headers, body);
+				return (_httpResponse);
+			}
+			else
+				throw HttpErrorException(403);
+		}
 		// 5. Gérer le CGI (si activé dans la location)
 		// Si location.getCgiPath() est non vide et que le fichier est un CGI (ex: .py, .php) :
 		// fork()
 		// execve() du script
 		// Récupérer la sortie via pipe
 		// En faire le corps de la HttpResponse
+		if (route.hasCgi()) {
+			handleCgi();
+		}
+
+
 
 		// 6. Lire le fichier demandé
 		// Ouvrir le fichier en lecture binaire
@@ -116,106 +172,13 @@ const HttpResponse & ResponseBuilder::buildResponse(
 	catch (const HttpErrorException & e) {
 		buildError(e.getStatusCode());
 	}
+	_httpResponse = HttpResponse("HTTP/1.1", code, headers, body);
 	return (_httpResponse);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-
-Pour construire ta réponse HTTP dans Webserv, tu dois combiner **les informations fournies par la requête (`HttpRequest`)** avec **les règles définies par la configuration (`Location`)**.
-
-Voici un tableau **complet et structuré** des éléments à récupérer dans chaque objet :
-
----
-
-### 🔵 À récupérer dans `HttpRequest` (la requête client)
-
-| Élément                    | Utilisation                                                      |
-| -------------------------- | ---------------------------------------------------------------- |
-| `request.getMethod()`      | Vérifier si la méthode est autorisée (GET, POST, etc.)           |
-| `request.getPath()`        | Trouver le fichier demandé (à concaténer avec `route.getRoot()`) |
-| `request.getHeaders()`     | Gérer `Host`, `Content-Length`, `Content-Type`, etc.             |
-| `request.getBody()`        | Pour POST ou PUT (envoyer au CGI, écrire un fichier…)            |
-| `request.getQueryString()` | Pour les CGI ou logs (si `?param=value` dans l’URL)              |
-| `request.getVersion()`     | Pour formater correctement la ligne de statut HTTP               |
-
----
-
-### 🟢 À récupérer dans `Location` (la config serveur pour cette URL)
-
-| Élément                     | Utilisation                                               |
-| --------------------------- | --------------------------------------------------------- |
-| `route.getAllowedMethods()` | Vérifier si la méthode est autorisée                      |
-| `route.getRoot()`           | Chemin de base vers les fichiers (à concaténer avec path) |
-| `route.getIndex()`          | Fichier à renvoyer si `path` est un dossier               |
-| `route.getAutoindex()`      | Si true, générer un listing HTML du dossier               |
-| `route.getCgiPath()`        | Si extension `.py` ou `.php`, exécuter le CGI indiqué     |
-| `route.getRedirect()`       | Si non vide, redirection HTTP (3xx)                       |
-| `route.getUploadDir()`      | Pour stocker les fichiers uploadés (POST sur formulaire)  |
-| `route.getErrorPages()`     | Fichier HTML personnalisé pour les erreurs (404, 500…)    |
-
----
-
-### 🧠 Exemple concret de traitement
-
-1. **Vérification méthode HTTP** :
-
-```cpp
-if (!route.isMethodAllowed(request.getMethod()))
-	throw HttpErrorException(405); // Method Not Allowed
-```
-
-2. **Construction du chemin absolu** :
-
-```cpp
-std::string absPath = route.getRoot() + request.getPath();
-```
-
-3. **Redirection ?** :
-
-```cpp
-if (!route.getRedirect().empty()) {
-	response.setStatus(301);
-	response.addHeader("Location", route.getRedirect());
-	return response;
+std::string HttpResponse::intToString(const std::string & body)
+{
+	std::ostringstream oss;
+	oss << body.size();
+	return (oss.str());
 }
-```
-
-4. **CGI ?** :
-
-```cpp
-if (isCgiRequest(request.getPath(), route)) {
-	// Exécute CGI avec execve, récupère la sortie
-}
-```
-
-5. **Génération de la réponse** :
-
-* Ligne de statut : `HTTP/1.1 200 OK`
-* Headers : `Content-Type`, `Content-Length`, etc.
-* Corps : fichier, sortie CGI, ou message d'erreur
-
----
-
-### ✅ En résumé
-
-| Objet         | Tu récupères…                          | Pour…                               |
-| ------------- | -------------------------------------- | ----------------------------------- |
-| `HttpRequest` | Méthode, chemin, headers, corps        | Comprendre ce que le client demande |
-| `Location`       | Root, méthodes autorisées, cgi, index… | Appliquer la logique de ton serveur |
-
----
-
-
-*/
