@@ -68,9 +68,6 @@ void	Server::StartEventLoop()
 	while (1)
 	{
 		_pollManager->pollExec(-1);
-		// if (poll(&_fdPollVect[0], _fdPollVect.size(), -1) == -1)
-		// 	throw std::runtime_error("Poll initialization failed");
-
 		for (int i = 0; i != static_cast<int>(_pollManager->getPollFdVector().size()); i++)
 		{
 			if (_pollManager->getPollFdVector()[i].revents & POLLIN)
@@ -103,23 +100,22 @@ void	Server::acceptNewConnexion(int fd)
 	if (clientFd < 0)
 		return;
 	_pollManager->addSocket(clientFd, POLLIN);
+	_clients.insert(std::make_pair(clientFd, Connexion(clientFd, clientAddr)));
+	std::cout << "New connexion authorized" << std::endl;
 }
 
 void	Server::handleEvent(int fdClient, int & i)
 {
-	char		buf[1024];
-	ssize_t		bytes = recv(fdClient, buf, sizeof(buf), 0);
-
-	if (bytes <= 0)
+	if (_clients[fdClient].readDataFromSocket() <= 0 || _clients[fdClient].isComplete() == true)
 	{
-		std::cout << "je close mon client" << std::endl;
-		close(fdClient);
 		_pollManager->removeSocket(i);
+		_clients.erase(fdClient);
 		i--;
 	}
 	else
 	{
-		dealRequest(fdClient);
+		std::string	msg = "HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\npong";
+		_clients[fdClient].writeDataToSocket(msg);
 	}
 }
 

@@ -29,7 +29,10 @@ PollManager & PollManager::operator=(const PollManager & other)
 
 int	PollManager::pollExec(int timeout)
 {
-	int res = ::poll(_fdPollVect.data(), _fdPollVect.size(), timeout);
+	int res = poll(_fdPollVect.data(), _fdPollVect.size(), timeout);
+
+	std::cout << "Je fais un Poll sur l'esnemble des couples ports-IP a ecouter" <<std::endl;
+	
     if (res < 0)
         throw std::runtime_error("Poll failed");
     return (res);
