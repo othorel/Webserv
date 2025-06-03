@@ -1,78 +1,27 @@
-#ifndef RESPONSE_BUILDER
-# define RESPONSE_BUILDER
-
-# include <exception>
-# include "../../include/http/HttpRequest.hpp"
-# include "../../include/http/HttpResponse.hpp"
-# include "../../include/http/Route.hpp"
-
-class ResponseBuilder
-{
-	private :
-
-		HttpResponse _httpResponse;
-
-	public :
-
-		ResponseBuilder();
-		ResponseBuilder(const HttpRequest& request, const Route& route);
-		ResponseBuilder(const ResponseBuilder & other);
-		ResponseBuilder & operator=(const ResponseBuilder & other);
-		~ResponseBuilder();
-
-		HttpResponse buildResponse(const HttpRequest& request, const Route& route);
-		HttpResponse buildError(int statusCode);
-		const HttpResponse & getResponse() const;
-
-		class HttpErrorException : public std::exception
-		{
-			private:
-
-				int _statusCode;
-
-			public:
-			
-				HttpErrorException(int code) :
-					_statusCode(code)
-				{}
-
-				int getStatusCode() const
-				{
-					return (_statusCode);
-				}
-
-				const char* what() const throw()
-				{
-					return ("HTTP Error Exception");
-				}
-			};
-
-};
-
-#endif
-
-
-
-
-
-# include "../../include/http/HttpRequest.hpp"
-# include "../../include/http/HttpResponse.hpp"
-# include "../../include/http/Route.hpp"
+#include <string>
+#include <stdexcept>
+#include <iostream>
+#include "../../include/http/ResponseBuilder.hpp"
+#include "../../include/http/HttpRequest.hpp"
+#include "../../include/http/HttpResponse.hpp"
+#include "../../include/config/Location.hpp"
 
 ResponseBuilder::ResponseBuilder() :
 	_httpResponse()
 {}
 
-ResponseBuilder::ReponseBuilder(const HttpRequest& request, const Route& route)
+ResponseBuilder::ResponseBuilder(
+		const HttpRequest& request,
+		const std::map<std::string, Location> & routes)
 {
-	_httpResponse = buildResponse(request, route);
+	_httpResponse = buildResponse(request, routes);
 }
 
-ResponseBuilder(const ResponseBuilder & other) :
+ResponseBuilder::ResponseBuilder(const ResponseBuilder & other) :
 	_httpResponse(other._httpResponse)
 {}
 
-ResponseBuilder & operator=(const ResponseBuilder & other)
+ResponseBuilder & ResponseBuilder::operator=(const ResponseBuilder & other)
 {
 	if (&other != this) {
 		this->_httpResponse = other._httpResponse;
@@ -80,8 +29,114 @@ ResponseBuilder & operator=(const ResponseBuilder & other)
 	return (*this);
 }
 
-~ResponseBuilder()
+ResponseBuilder::~ResponseBuilder()
 {}
+
+const Location & ResponseBuilder::findMatchingRoute(
+		const std::map<std::string, Location> & routes,
+		const std::string & target) const
+{
+	std::string bestMatch = "";
+	std::map<std::string, Location>::const_iterator it;
+	for (it = routes.begin(); it != routes.end(); ++it)
+	{
+		const std::string& path = it->first;
+		if (target.compare(0, path.size(), path) == 0)
+		{
+			if (path.size() > bestMatch.size())
+				bestMatch = path;
+		}
+	}
+	if (bestMatch.empty())
+		throw std::runtime_error("No matching route found");
+	return (routes.find(bestMatch)->second);
+}
+
+const HttpResponse & ResponseBuilder::buildResponse(
+		const HttpRequest& request,
+		const std::map<std::string, Location> & routes)
+{
+	// 	1. Trouver la Location correspondant à l’URI
+	// Extraire request.getTarget() (ex: /images/cat.jpg)
+	// Chercher la Location la plus spécifique (par exemple /images plutôt que /)+
+	try {
+		const Location route = findMatchingRoute(routes, request.getTarget());
+	}
+	catch (const std::runtime_error & e) {
+		std::cerr << "Erreur attrapée : " << e.what() << std::endl;
+		_httpResponse = buildError(404);
+		return (_httpResponse);
+	}
+
+
+
+// 2. Vérifier que la méthode HTTP est autorisée
+// Vérifier que request.getMethod() est dans location.getAllowedMethods()
+
+// cpp
+// Copier
+// Modifier
+// if (!location.isAllowedMethod(request.getMethod()))
+//     return buildError(405); // Method Not Allowed
+// 3. Calculer le chemin du fichier à servir
+// Combiner la racine (location.getRoot()) avec le chemin de la requête :
+
+// cpp
+// Copier
+// Modifier
+// std::string fullPath = location.getRoot() + request.getTarget().substr(location.getPath().length());
+// 4. Gérer les cas particuliers
+// a. Redirection
+// Si ta Location définit une redirection (return 301 http://...), construis directement une réponse avec :
+
+// cpp
+// Copier
+// Modifier
+// statusCode = 301;
+// headers["Location"] = "http://...";
+// b. Autoindex
+// Si le chemin pointe vers un dossier, et que le fichier index.html est absent :
+
+// Si autoindex == true, génère une page HTML listant les fichiers
+
+// Sinon, retourne 403 Forbidden ou 404 Not Found
+
+// 5. Gérer le CGI (si activé dans la location)
+// Si location.getCgiPath() est non vide et que le fichier est un CGI (ex: .py, .php) :
+
+// fork()
+
+// execve() du script
+
+// Récupérer la sortie via pipe
+
+// En faire le corps de la HttpResponse
+
+// 6. Lire le fichier demandé
+// Ouvrir le fichier en lecture binaire
+
+// Lire son contenu
+
+// Déduire le type MIME depuis l’extension (ex: .html, .jpg, etc.)
+
+// Remplir :
+
+// _statusCode = 200
+
+// _headers["Content-Type"] = "text/html" (ou autre)
+
+// _headers["Content-Length"] = taille du corps
+
+// _body = contenu du fichier
+
+// 7. Créer la réponse HTTP
+// Construire l’objet :
+
+// cpp
+// Copier
+// Modifier
+// HttpResponse response("HTTP/1.1", 200, headers, body);
+// Appeler response.toRawString() pour envoyer la réponse finale au client
 
 
 
@@ -95,7 +150,7 @@ ResponseBuilder & operator=(const ResponseBuilder & other)
 
 /*
 
-Pour construire ta réponse HTTP dans Webserv, tu dois combiner **les informations fournies par la requête (`HttpRequest`)** avec **les règles définies par la configuration (`Route`)**.
+Pour construire ta réponse HTTP dans Webserv, tu dois combiner **les informations fournies par la requête (`HttpRequest`)** avec **les règles définies par la configuration (`Location`)**.
 
 Voici un tableau **complet et structuré** des éléments à récupérer dans chaque objet :
 
@@ -114,7 +169,7 @@ Voici un tableau **complet et structuré** des éléments à récupérer dans ch
 
 ---
 
-### 🟢 À récupérer dans `Route` (la config serveur pour cette URL)
+### 🟢 À récupérer dans `Location` (la config serveur pour cette URL)
 
 | Élément                     | Utilisation                                               |
 | --------------------------- | --------------------------------------------------------- |
@@ -175,7 +230,7 @@ if (isCgiRequest(request.getPath(), route)) {
 | Objet         | Tu récupères…                          | Pour…                               |
 | ------------- | -------------------------------------- | ----------------------------------- |
 | `HttpRequest` | Méthode, chemin, headers, corps        | Comprendre ce que le client demande |
-| `Route`       | Root, méthodes autorisées, cgi, index… | Appliquer la logique de ton serveur |
+| `Location`       | Root, méthodes autorisées, cgi, index… | Appliquer la logique de ton serveur |
 
 ---
 

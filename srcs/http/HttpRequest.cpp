@@ -5,7 +5,7 @@
 
 HttpRequest::HttpRequest() :
 	_method(),
-	_uri(),
+	_target(),
 	_version(),
 	_headers(),
 	_body(),
@@ -18,7 +18,7 @@ HttpRequest::HttpRequest(const std::string & method,
 						const std::map<std::string, std::string> & headers,
 						const std::string & body) :
 	_method(method),
-	_uri(uri),
+	_target(uri),
 	_version(version),
 	_headers(headers),
 	_body(body),
@@ -32,7 +32,7 @@ HttpRequest::~HttpRequest() {}
  
 HttpRequest::HttpRequest(const HttpRequest & other) :
 	_method(other._method),
-	_uri(other._uri),
+	_target(other._target),
 	_version(other._version),
 	_headers(other._headers),
 	_body(other._body),
@@ -43,7 +43,7 @@ HttpRequest & HttpRequest::operator=(const HttpRequest & other)
 {
 	if (this != &other) {
 		_method = other._method;
-		_uri = other._uri;
+		_target = other._target;
 		_version = other._version;
 		_headers = other._headers;
 		_body = other._body;
@@ -57,9 +57,9 @@ const std::string & HttpRequest::getMethod() const
 	return (_method);
 }
 
-const std::string & HttpRequest::getUri() const
+const std::string & HttpRequest::getTarget() const
 {
-	return (_uri);
+	return (_target);
 }
 
 const std::string & HttpRequest::getVersion() const
@@ -101,7 +101,7 @@ void HttpRequest::debug() const
 	std::cout << "\n______ HttpRequest Debug______" << std::endl;
 
 	std::cout	<< "Method : " << _method << "\n"
-				<< "Uri : " << _uri << "\n"
+				<< "Uri : " << _target << "\n"
 				<< "Http version : " << _version << std::endl;
 
 	std::map<std::string, std::string>::const_iterator cit = _headers.begin();

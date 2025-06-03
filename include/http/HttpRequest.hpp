@@ -9,7 +9,7 @@ class HttpRequest
 	private :
 
 		std::string							_method;
-		std::string							_uri;
+		std::string							_target;
 		std::string							_version;
 		std::map<std::string, std::string>	_headers;
 		std::string							_body;
@@ -28,7 +28,7 @@ class HttpRequest
 		~HttpRequest();
 
 		const std::string & getMethod() const;
-		const std::string & getUri() const;
+		const std::string & getTarget() const;
 		const std::string & getVersion() const;
 		const std::string & getBody() const;
 		const std::map<std::string, std::string>  & getHeaders() const;
