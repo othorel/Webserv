@@ -16,6 +16,7 @@ class ResponseBuilder
 		const Location & findMatchingRoute(
 				const std::map<std::string, Location> & routes,
 				const std::string & target) const;
+		void buildRedirect(int code, const std::string & path);
 
 	public :
 
@@ -29,10 +30,7 @@ class ResponseBuilder
 		const HttpResponse & buildResponse(
 				const HttpRequest& request,
 				const std::map<std::string, Location> & routes);
-		const HttpResponse & buildError(
-				const HttpRequest& request,
-				const std::map<std::string, Location> & routes,
-				int statusCode);
+		const HttpResponse & buildError(int statusCode);
 		const HttpResponse & getResponse() const;
 
 		class HttpErrorException : public std::exception

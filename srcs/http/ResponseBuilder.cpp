@@ -1,10 +1,11 @@
 #include <string>
-#include <stdexcept>
-#include <iostream>
+#include <sstream>
 #include "../../include/http/ResponseBuilder.hpp"
 #include "../../include/http/HttpRequest.hpp"
 #include "../../include/http/HttpResponse.hpp"
 #include "../../include/config/Location.hpp"
+
+std::string httpStatusMessage(int code);
 
 ResponseBuilder::ResponseBuilder() :
 	_httpResponse()
@@ -48,95 +49,77 @@ const Location & ResponseBuilder::findMatchingRoute(
 		}
 	}
 	if (bestMatch.empty())
-		throw std::runtime_error("No matching route found");
+		throw HttpErrorException(404);
 	return (routes.find(bestMatch)->second);
+}
+
+void ResponseBuilder::buildRedirect(int code, const std::string & path)
+{
+	std::string body = "<html><body><h1>" + httpStatusMessage(code) + "</h1>"
+        "<p>Redirecting to <a href=\"" + path + "\">" + path + "</a></p></body></html>";
+	std::map<std::string, std::string> headers;
+	headers["Location"] = path;
+	headers["Content-Type"] = "text/html";
+	std::ostringstream oss;
+	oss << body.size();
+	headers["Content-Length"] = oss.str();
+	_httpResponse = HttpResponse("HTTP/1.1", code, headers, body);
 }
 
 const HttpResponse & ResponseBuilder::buildResponse(
 		const HttpRequest& request,
 		const std::map<std::string, Location> & routes)
 {
-	// 	1. Trouver la Location correspondant à l’URI
-	// Extraire request.getTarget() (ex: /images/cat.jpg)
-	// Chercher la Location la plus spécifique (par exemple /images plutôt que /)+
 	try {
+		// Find location corresponding to target
 		const Location route = findMatchingRoute(routes, request.getTarget());
+		// Check if method is authorised
+		std::string method = request.getMethod();
+		if (!route.isValidMethod(method))
+			throw HttpErrorException(405);
+		// Calculate Path
+		std::string path = route.getRoot() + request.getTarget().substr(route.getPath().length());
+		// Redirection ?
+		if (route.hasRedirect()) {
+			buildRedirect(route.getRedirectCode(), route.getRedirectPath());
+			return (_httpResponse);
+		}
+
+		// Autoindex ?
+		// Si le chemin pointe vers un dossier, et que le fichier index.html est absent :
+		// Si autoindex == true, génère une page HTML listant les fichiers
+		// Sinon, retourne 403 Forbidden ou 404 Not Found
+
+
+		// 5. Gérer le CGI (si activé dans la location)
+		// Si location.getCgiPath() est non vide et que le fichier est un CGI (ex: .py, .php) :
+		// fork()
+		// execve() du script
+		// Récupérer la sortie via pipe
+		// En faire le corps de la HttpResponse
+
+		// 6. Lire le fichier demandé
+		// Ouvrir le fichier en lecture binaire
+		// Lire son contenu
+		// Déduire le type MIME depuis l’extension (ex: .html, .jpg, etc.)
+		// Remplir :
+		// _statusCode = 200
+		// _headers["Content-Type"] = "text/html" (ou autre)
+		// _headers["Content-Length"] = taille du corps
+		// _body = contenu du fichier
+
+		// 7. Créer la réponse HTTP
+		// Construire l’objet :
+		// HttpResponse response("HTTP/1.1", 200, headers, body);
+		// Appeler response.toRawString() pour envoyer la réponse finale au client
 	}
-	catch (const std::runtime_error & e) {
-		std::cerr << "Erreur attrapée : " << e.what() << std::endl;
-		_httpResponse = buildError(404);
-		return (_httpResponse);
+	catch (const HttpErrorException & e) {
+		buildError(e.getStatusCode());
 	}
+	return (_httpResponse);
+}
 
 
-
-// 2. Vérifier que la méthode HTTP est autorisée
-// Vérifier que request.getMethod() est dans location.getAllowedMethods()
-
-// cpp
-// Copier
-// Modifier
-// if (!location.isAllowedMethod(request.getMethod()))
-//     return buildError(405); // Method Not Allowed
-// 3. Calculer le chemin du fichier à servir
-// Combiner la racine (location.getRoot()) avec le chemin de la requête :
-
-// cpp
-// Copier
-// Modifier
-// std::string fullPath = location.getRoot() + request.getTarget().substr(location.getPath().length());
-// 4. Gérer les cas particuliers
-// a. Redirection
-// Si ta Location définit une redirection (return 301 http://...), construis directement une réponse avec :
-
-// cpp
-// Copier
-// Modifier
-// statusCode = 301;
-// headers["Location"] = "http://...";
-// b. Autoindex
-// Si le chemin pointe vers un dossier, et que le fichier index.html est absent :
-
-// Si autoindex == true, génère une page HTML listant les fichiers
-
-// Sinon, retourne 403 Forbidden ou 404 Not Found
-
-// 5. Gérer le CGI (si activé dans la location)
-// Si location.getCgiPath() est non vide et que le fichier est un CGI (ex: .py, .php) :
-
-// fork()
-
-// execve() du script
-
-// Récupérer la sortie via pipe
-
-// En faire le corps de la HttpResponse
-
-// 6. Lire le fichier demandé
-// Ouvrir le fichier en lecture binaire
-
-// Lire son contenu
-
-// Déduire le type MIME depuis l’extension (ex: .html, .jpg, etc.)
-
-// Remplir :
-
-// _statusCode = 200
-
-// _headers["Content-Type"] = "text/html" (ou autre)
-
-// _headers["Content-Length"] = taille du corps
-
-// _body = contenu du fichier
-
-// 7. Créer la réponse HTTP
-// Construire l’objet :
-
-// cpp
-// Copier
-// Modifier
-// HttpResponse response("HTTP/1.1", 200, headers, body);
-// Appeler response.toRawString() pour envoyer la réponse finale au client
 
 
 
