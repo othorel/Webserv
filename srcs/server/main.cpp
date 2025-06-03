@@ -15,7 +15,7 @@ int	main(void)
 	{
 		// ConfigParser config(argv[1]);
 		Server server("debug");
-		server.Run();
+		server.StartEventLoop();
 	}
 	// catch(ConfigParser::ValidationException & e)
 	// {

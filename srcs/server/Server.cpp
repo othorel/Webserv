@@ -1,7 +1,13 @@
 
 #include "../../include/server/Server.hpp"
+#include "../../include/server/PollManager.hpp"
+#include "../../include/server/Connexion.hpp"
 #include "../../include/config/ServerConfig.hpp"
-#include "../../include/config/ConfigParser.hpp"
+// #include "../../include/config/ConfigParser.hpp"
+
+////////////////////////////////////////////////////////////////////////////////
+///                               CANONIC +                                  ///
+////////////////////////////////////////////////////////////////////////////////
 
 Server::Server(){}
 
@@ -16,7 +22,7 @@ Server::Server(){}
 // 	Setup();
 // }
 
-Server::Server(std::string str)
+Server::Server(const std::string str)
 {
 	if (str == "debug")
 	{
@@ -37,27 +43,95 @@ Server & Server::operator=(const Server & other)
 {
 	if (this != &other)
 	{
-		this->_fdPollVect = other._fdPollVect;
+		// this->_fdPollVect = other._fdPollVect;
+		this->_pollManager = other._pollManager;
 		this->_fdSocketVect = other._fdSocketVect;
 		this->_listenTab = other._listenTab;
 	}
 	return (*this);
 }
 
-void	Server::Run()
+////////////////////////////////////////////////////////////////////////////////
+///                                RUNTIME                                   ///
+////////////////////////////////////////////////////////////////////////////////
+
+void	Server::StartEventLoop()
 {
+
 	while (1)
 	{
-		if (poll(&_fdPollVect[0], _fdPollVect.size(), -1) == -1)
-			throw std::runtime_error("Poll initialization failed");
+		_pollManager.pollExec(-1);
+		// if (poll(&_fdPollVect[0], _fdPollVect.size(), -1) == -1)
+		// 	throw std::runtime_error("Poll initialization failed");
 
-		for (int i = 0; i != static_cast<int>(_fdPollVect.size()); i++)
+		for (int i = 0; i != static_cast<int>(_pollManager.getPollFdVector().size()); i++)
 		{
-			if (_fdPollVect[i].revents & POLLIN)
-				dealClient(_fdPollVect[i].fd, i);
+			if (_pollManager.getPollFdVector()[i].revents & POLLIN)
+				dealClient(_pollManager.getPollFdVector()[i].fd, i);
 		}
 	}
 }
+
+void	Server::dealClient(int fd, int & i)
+{
+	std::cout << "je deal client" << std::endl;
+	if (std::find(_fdSocketVect.begin(), _fdSocketVect.end(), fd) != _fdSocketVect.end())
+	{
+		std::cout << "j add new connexion" << std::endl;
+		acceptNewConnexion(fd);
+	}
+	else
+	{
+		std::cout << "je deal existing client" << std::endl;
+		handleEvent(fd, i);
+	}
+}
+
+void	Server::acceptNewConnexion(int fd)
+{
+	struct sockaddr_in clientAddr;
+
+	socklen_t addrLen = sizeof(clientAddr);
+	int clientFd = accept(fd, (struct sockaddr*)&clientAddr, &addrLen);
+	if (clientFd < 0)
+		return;
+	_pollManager.addSocket(clientFd, POLLIN);
+}
+
+void	Server::handleEvent(int fdClient, int & i)
+{
+	char		buf[1024];
+	ssize_t		bytes = recv(fdClient, buf, sizeof(buf), 0);
+
+	if (bytes <= 0)
+	{
+		std::cout << "je close mon client" << std::endl;
+		close(fdClient);
+		_pollManager.removeSocket(i);
+		i--;
+	}
+	else
+	{
+		dealRequest(fdClient);
+	}
+}
+
+void	Server::dealRequest(int fd)
+{
+	const char *response =
+		"HTTP/1.1 200 OK\r\n"
+		"Content-Type: text/plain\r\n"
+		"Content-Length: 13\r\n"
+		"\r\n"
+		"Hello, world!";
+
+	send(fd, response, strlen(response), 0);
+	std::cout << "I just sent a response" << std::endl;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+///                           INITIALIZATION                                 ///
+////////////////////////////////////////////////////////////////////////////////
 
 void	Server::Setup()
 {
@@ -82,65 +156,7 @@ void	Server::Setup()
 
 	std::vector<int>::iterator	itFd = _fdSocketVect.begin();
 	for (; itFd != _fdSocketVect.end(); itFd++)
-	{
-		struct	pollfd	pfd;
-		pfd.fd = *itFd;
-		pfd.events = POLLIN;
-		pfd.revents = 0;
-		_fdPollVect.push_back(pfd);
-	}
-}
-
-
-
-void	Server::dealClient(int fd, int & i)
-{
-	std::cout << "je deal client" << std::endl;
-	if (std::find(_fdSocketVect.begin(), _fdSocketVect.end(), fd) != _fdSocketVect.end())
-	{
-		std::cout << "j add new connexion" << std::endl;
-		addNewConnexion(fd);
-	}
-	else
-	{
-		std::cout << "je deal existing client" << std::endl;
-		dealExistingClient(fd, i);
-	}
-}
-
-void	Server::addNewConnexion(int fd)
-{
-	struct sockaddr_in clientAddr;
-
-	socklen_t addrLen = sizeof(clientAddr);
-	int clientFd = accept(fd, (struct sockaddr*)&clientAddr, &addrLen);
-	if (clientFd < 0)
-		return;
-
-	struct pollfd	clientPoll;
-
-	clientPoll.fd = clientFd;
-	clientPoll.events = POLLIN;
-	clientPoll.revents = 0;
-	_fdPollVect.push_back(clientPoll);
-}
-
-void	Server::dealExistingClient(int fdClient, int & i)
-{
-	char		buf[1024];
-	ssize_t		bytes = recv(fdClient, buf, sizeof(buf), 0);
-
-	if (bytes <= 0)
-	{
-		std::cout << "je close mon client" << std::endl;
-		close(fdClient);
-		_fdPollVect.erase(_fdPollVect.begin() + i);
-		i--;
-	}
-	else
-	{
-		dealRequest(fdClient);
-	}
+		_pollManager.addSocket(*itFd, POLLIN);
 }
 
 void	Server::addPair(std::pair<int, std::string> listen)
@@ -149,10 +165,4 @@ void	Server::addPair(std::pair<int, std::string> listen)
 
 	if (it == _listenTab.end())
 		_listenTab.push_back(listen);
-}
-
-void	Server::dealRequest(int fd)
-{
-	(void)fd;
-	std::cout << "test" <<std::endl;
 }
