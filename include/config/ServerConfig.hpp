@@ -15,6 +15,7 @@ class ServerConfig {
 		std::string _root;
 		std::map<int, std::string> _error_pages;
 		std::map<std::string, Location> _locations;
+		size_t _client_max_body_size;
 
 	public:
 
@@ -23,7 +24,8 @@ class ServerConfig {
 			std::vector<std::string> _server_names,
 			std::string root,
 			std::map<int, std::string> error_pages,
-			std::map<std::string, Location> locations
+			std::map<std::string, Location> locations,
+			size_t client_max_body_size
 		);
 		~ServerConfig();
 		ServerConfig(const ServerConfig& other);
@@ -34,6 +36,7 @@ class ServerConfig {
 		const std::string& getRoot() const;
 		const std::map<int, std::string>& getErrorPages() const;
 		const std::map<std::string, Location>& getLocations() const;
+		size_t getClientMaxBodySize() const;
 };
 
 #endif
