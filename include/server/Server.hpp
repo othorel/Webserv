@@ -33,9 +33,8 @@ class Server
 		
 	private:
 		// Attributes
-		PollManager									_pollManager;
+		PollManager									*_pollManager;
 		std::vector<int>							_fdSocketVect;
-		// std::vector<struct pollfd>				_fdPollVect;
 		std::vector<std::pair<int, std::string> > 	_listenTab;
 
 		// Initialization

@@ -12,6 +12,8 @@ SRC     := $(SRCDIR)/config/ConfigParser.cpp    \
 		   $(SRCDIR)/http/RequestParser.cpp     \
 		   $(SRCDIR)/http/RequestParser.cpp     \
 		   $(SRCDIR)/server/Server.cpp          \
+		   $(SRCDIR)/server/PollManager.cpp     \
+		   $(SRCDIR)/server/Connexion.cpp       \
 		   
 		
 OBJ     := $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRC))

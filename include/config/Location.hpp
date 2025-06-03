@@ -51,6 +51,7 @@ class Location {
 		bool hasRedirect() const;
 		bool isAutoIndex() const;
 		bool isValidMethod(const std::string& method) const;
+		bool hasCgi() const;
 };
 
 #endif
