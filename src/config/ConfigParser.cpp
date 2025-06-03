@@ -142,6 +142,9 @@ void ConfigParser::parsefile(const std::string& filepath) {
 	std::string loc_cgi_extension;
 	std::string loc_root;
 	std::string loc_index;
+	std::string loc_redirect_path;
+	int loc_redirect_code = 0;
+	bool loc_has_redirect = false;
 	bool loc_autoindex = false;
 
 	while (std::getline(file, line)) {
@@ -163,7 +166,7 @@ void ConfigParser::parsefile(const std::string& filepath) {
 			if (inLocation) {
 				if (loc_root.empty())
 					loc_root = root;
-				Location loc(loc_path, loc_methods, loc_upload_path, loc_cgi_extension, loc_root, loc_index, loc_autoindex);
+				Location loc(loc_path, loc_methods, loc_upload_path, loc_cgi_extension, loc_root, loc_index, loc_redirect_path, loc_redirect_code, loc_has_redirect, loc_autoindex);
 				locations[loc_path] = loc;
 				inLocation = false;
 			}
@@ -200,6 +203,9 @@ void ConfigParser::parsefile(const std::string& filepath) {
 			loc_cgi_extension.clear();
 			loc_root.clear();
 			loc_index.clear();
+			loc_redirect_path.clear();
+			loc_redirect_code = 0;
+			loc_has_redirect = false;
 			loc_autoindex = false;
 			continue;
 		}
@@ -233,26 +239,31 @@ void ConfigParser::parsefile(const std::string& filepath) {
 			else if (key == "autoindex") {
 				loc_autoindex = (value == "on");
 			}
+			else if (key == "return") {
+				std::istringstream iss(value);
+				iss >> loc_redirect_code >> loc_redirect_path;
+				loc_has_redirect = true;
+			}
 		}
 		else if (inServer) {
 			if (key == "listen") {
-    			if (!value.empty() && value[value.size() - 1] == ';')
-        			value.erase(value.size() - 1, 1);
-    			size_t sep = value.find(':');
-    			if (sep != std::string::npos) {
-    			    std::string ip = value.substr(0, sep);
-        			int port = toInt(value.substr(sep + 1));
-       				if (port <= 0)
-            			throw ValidationException("Invalid port in listen directive: " + value);
-        			listen = std::make_pair(port, ip);
-    			}
+				if (!value.empty() && value[value.size() - 1] == ';')
+					value.erase(value.size() - 1, 1);
+				size_t sep = value.find(':');
+				if (sep != std::string::npos) {
+					std::string ip = value.substr(0, sep);
+					int port = toInt(value.substr(sep + 1));
+	   				if (port <= 0)
+						throw ValidationException("Invalid port in listen directive: " + value);
+					listen = std::make_pair(port, ip);
+				}
 				else {
-        			int port = toInt(value);
-        			if (port > 0)
-            			listen = std::make_pair(port, "0.0.0.0");
-        			else
-            			throw ValidationException("Invalid listen value: " + value);
-    			}
+					int port = toInt(value);
+					if (port > 0)
+						listen = std::make_pair(port, "0.0.0.0");
+					else
+						throw ValidationException("Invalid listen value: " + value);
+				}
 			}
 			else if (key == "server_name") {
 				std::istringstream iss(value);
