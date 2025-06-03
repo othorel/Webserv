@@ -120,6 +120,31 @@ void ConfigParser::validateCgiPass(const std::string& cgi_pass) {
 	if (access(cgi_pass.c_str(), X_OK) != 0)
 		throw ValidationException("CGI script not executable: " + cgi_pass);
 }
+
+size_t parseSizeWithUnit(const std::string& value) {
+	if (value.empty())
+		throw std::runtime_error("Client max body size value is empty");
+	char unit = value[value.size() - 1];
+	size_t mul = 1;
+	std::string numberPart = value;
+
+	if (!isdigit(unit)) {
+		numberPart = value.substr(0, value.size() - 1);
+		if (unit == 'k' || unit == 'K')
+			mul = 1024;
+		else if (unit == 'm' || unit == 'M')
+			mul = 1024 * 1024;
+		else
+			throw std::runtime_error("Invalid size unit for client max body size: " + value);
+	}
+	std::istringstream iss(numberPart);
+	size_t number;
+	iss >> number;
+	if (iss.fail())
+		throw std::runtime_error("Invalid number for clien max body size" + value);
+	return (number * mul);
+}
+
 //Parser
 void ConfigParser::parsefile(const std::string& filepath) {
 	std::ifstream file(filepath.c_str());
@@ -135,6 +160,7 @@ void ConfigParser::parsefile(const std::string& filepath) {
 	std::string root;
 	std::map<int, std::string> error_pages;
 	std::map<std::string, Location> locations;
+	size_t client_max_body_size;
 
 	std::string loc_path;
 	std::vector<std::string> loc_methods;
@@ -171,7 +197,7 @@ void ConfigParser::parsefile(const std::string& filepath) {
 				inLocation = false;
 			}
 			else if (inServer) {
-				ServerConfig server(listen, server_names, root, error_pages, locations);
+				ServerConfig server(listen, server_names, root, error_pages, locations, client_max_body_size);
 				validateListen(server.getListen().second, toString(server.getListen().first));
 				validateServerNames(server.getServerNames());
 				validateRoot(server.getRoot());
@@ -239,7 +265,7 @@ void ConfigParser::parsefile(const std::string& filepath) {
 			else if (key == "autoindex") {
 				loc_autoindex = (value == "on");
 			}
-			else if (key == "return") {
+			else if (key == "return" || key == "redirect") {
 				std::istringstream iss(value);
 				iss >> loc_redirect_code >> loc_redirect_path;
 				loc_has_redirect = true;
@@ -281,6 +307,8 @@ void ConfigParser::parsefile(const std::string& filepath) {
 				iss >> code >> path;
 				error_pages[code] = path;
 			}
+			else if (key == "client_max_body_size")
+				client_max_body_size = parseSizeWithUnit(value);
 		}
 	}
 }
