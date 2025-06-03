@@ -99,3 +99,7 @@ bool Location::isAutoIndex() const {
 bool Location::isValidMethod(const std::string& method) const {
 	return (std::find(_methods.begin(), _methods.end(), method) != _methods.end());
 }
+
+bool Location::hasCgi() const {
+	return (!_cgi_extension.empty());
+}

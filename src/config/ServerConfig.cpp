@@ -5,12 +5,14 @@ ServerConfig::ServerConfig(
     std::vector<std::string> server_names,
     std::string root,
     std::map<int, std::string> error_pages,
-    std::map<std::string, Location> locations
+    std::map<std::string, Location> locations,
+    size_t client_max_body_size
 ) : _listen(listen),
     _server_names(server_names),
     _root(root),
     _error_pages(error_pages),
-    _locations(locations)
+    _locations(locations),
+    _client_max_body_size(client_max_body_size)
 {}
 
 ServerConfig::~ServerConfig() {}
@@ -20,7 +22,8 @@ ServerConfig::ServerConfig(const ServerConfig& other) :
     _server_names(other._server_names),
     _root(other._root),
     _error_pages(other._error_pages),
-    _locations(other._locations)
+    _locations(other._locations),
+    _client_max_body_size(other._client_max_body_size)
 {}
 
 ServerConfig& ServerConfig::operator=(const ServerConfig& other) {
@@ -30,6 +33,7 @@ ServerConfig& ServerConfig::operator=(const ServerConfig& other) {
         _root = other._root;
         _error_pages = other._error_pages;
         _locations = other._locations;
+        _client_max_body_size = other._client_max_body_size;
     }
     return (*this);
 }
@@ -52,4 +56,8 @@ const std::map<int, std::string>& ServerConfig::getErrorPages() const {
 
 const std::map<std::string, Location>& ServerConfig::getLocations() const {
     return (_locations);
+}
+
+size_t ServerConfig::getClientMaxBodySize() const {
+    return (_client_max_body_size);
 }
