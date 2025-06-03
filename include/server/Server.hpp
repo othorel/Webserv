@@ -7,6 +7,7 @@
 # include <netinet/in.h>
 # include <string>
 # include <vector>
+# include <map>
 # include <algorithm>
 # include <exception>
 # include <arpa/inet.h>
@@ -33,9 +34,11 @@ class Server
 		
 	private:
 		// Attributes
-		PollManager									*_pollManager;
+		std::vector<std::pair<int, std::string> > 	_listenTab; // couples port-IP a surveiller
+		PollManager									*_pollManager; // classe contenant un vect de pollFd
+		std::map<int, Connexion>					_clients;
 		std::vector<int>							_fdSocketVect;
-		std::vector<std::pair<int, std::string> > 	_listenTab;
+		
 
 		// Initialization
 		void	Setup();
