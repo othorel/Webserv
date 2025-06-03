@@ -25,12 +25,7 @@ class Server
 		
 		Server & operator=(const Server & other);
 
-		void	Setup();
 		void	Run();
-		void	dealClient(int fd, int & i);
-		void	addNewConnexion(int fdClient);
-		void	dealExistingClient(int fdClient, int & i);
-		void	dealRequest(int fd);
 		
 	private:
 		// const ConfigParser &						_serv;
@@ -38,6 +33,11 @@ class Server
 		std::vector<struct pollfd>					_fdPollVect;
 		std::vector<std::pair<int, std::string>> 	_listenTab;
 
+		void	Setup();
+		void	dealClient(int fd, int & i);
+		void	addNewConnexion(int fdClient);
+		void	dealExistingClient(int fdClient, int & i);
+		void	dealRequest(int fd);
 		void	addPair(std::pair<int, std::string>);
 
 };

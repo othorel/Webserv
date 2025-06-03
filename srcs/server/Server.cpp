@@ -1,7 +1,7 @@
 
-#include "Server.hpp"
-#include "./include/config/ServerConfig.hpp"
-#include "./include/config/ConfigParser.hpp"
+#include "../../include/server/Server.hpp"
+#include "../../include/config/ServerConfig.hpp"
+#include "../../include/config/ConfigParser.hpp"
 
 Server::Server(){}
 	
