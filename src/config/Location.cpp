@@ -9,6 +9,9 @@ Location::Location(
 	std::string cgi_extension,
 	std::string root,
 	std::string index,
+	std::string redirectPath,
+	int redirectCode,
+	bool hasRedirect,
 	bool autoindex
 ) : _path(path),
 	_methods(methods),
@@ -16,6 +19,9 @@ Location::Location(
 	_cgi_extension(cgi_extension),
 	_root(root),
 	_index(index),
+	_redirectPath(redirectPath),
+	_redirectCode(redirectCode),
+	_hasRedirect(hasRedirect),
 	_autoindex(autoindex)
 {}
 
@@ -28,6 +34,9 @@ Location::Location(const Location& other) :
 	_cgi_extension(other._cgi_extension),
 	_root(other._root),
 	_index(other._index),
+	_redirectPath(other._redirectPath),
+	_redirectCode(other._redirectCode),
+	_hasRedirect(other._hasRedirect),
 	_autoindex(other._autoindex)
 {}
 
@@ -39,6 +48,9 @@ Location& Location::operator=(const Location& other) {
 		_cgi_extension = other._cgi_extension;
 		_root = other._root;
 		_index = other._index;
+		_redirectPath = other._redirectPath;
+		_redirectCode = other._redirectCode;
+		_hasRedirect = other._hasRedirect;
 		_autoindex = other._autoindex;
 	}
 	return (*this);
@@ -66,6 +78,18 @@ const std::string& Location::getRoot() const {
 
 const std::string& Location::getIndex() const {
 	return (_index);
+}
+
+const std::string& Location::getRedirectPath() const {
+	return (_redirectPath);
+}
+
+int Location::getRedirectCode() const {
+	return (_redirectCode);
+}
+
+bool Location::hasRedirect() const {
+	return (_hasRedirect);
 }
 
 bool Location::isAutoIndex() const {
