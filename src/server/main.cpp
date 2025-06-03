@@ -6,6 +6,8 @@
 
 // #include "../../include/config/ConfigParser.hpp"
 #include "../../include/server/Server.hpp"
+#include "../../include/server/PollManager.hpp"
+#include "../../include/server/Connexion.hpp"
 
 int	main(void)
 {

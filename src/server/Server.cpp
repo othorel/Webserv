@@ -9,7 +9,10 @@
 ///                               CANONIC +                                  ///
 ////////////////////////////////////////////////////////////////////////////////
 
-Server::Server(){}
+Server::Server()
+{
+	_pollManager = NULL;
+}
 
 // Server::Server(const ConfigParser & servconfig)
 // {
@@ -22,7 +25,7 @@ Server::Server(){}
 // 	Setup();
 // }
 
-Server::Server(const std::string str)
+Server::Server(const std::string str) : _pollManager(new PollManager())
 {
 	if (str == "debug")
 	{
@@ -37,7 +40,11 @@ Server::Server(const Server & toCopy)
 	*this = toCopy;
 }
 
-Server::~Server(){}
+Server::~Server()
+{
+	if (_pollManager)
+		delete _pollManager;
+}
 		
 Server & Server::operator=(const Server & other)
 {
@@ -60,14 +67,14 @@ void	Server::StartEventLoop()
 
 	while (1)
 	{
-		_pollManager.pollExec(-1);
+		_pollManager->pollExec(-1);
 		// if (poll(&_fdPollVect[0], _fdPollVect.size(), -1) == -1)
 		// 	throw std::runtime_error("Poll initialization failed");
 
-		for (int i = 0; i != static_cast<int>(_pollManager.getPollFdVector().size()); i++)
+		for (int i = 0; i != static_cast<int>(_pollManager->getPollFdVector().size()); i++)
 		{
-			if (_pollManager.getPollFdVector()[i].revents & POLLIN)
-				dealClient(_pollManager.getPollFdVector()[i].fd, i);
+			if (_pollManager->getPollFdVector()[i].revents & POLLIN)
+				dealClient(_pollManager->getPollFdVector()[i].fd, i);
 		}
 	}
 }
@@ -95,7 +102,7 @@ void	Server::acceptNewConnexion(int fd)
 	int clientFd = accept(fd, (struct sockaddr*)&clientAddr, &addrLen);
 	if (clientFd < 0)
 		return;
-	_pollManager.addSocket(clientFd, POLLIN);
+	_pollManager->addSocket(clientFd, POLLIN);
 }
 
 void	Server::handleEvent(int fdClient, int & i)
@@ -107,7 +114,7 @@ void	Server::handleEvent(int fdClient, int & i)
 	{
 		std::cout << "je close mon client" << std::endl;
 		close(fdClient);
-		_pollManager.removeSocket(i);
+		_pollManager->removeSocket(i);
 		i--;
 	}
 	else
@@ -156,7 +163,7 @@ void	Server::Setup()
 
 	std::vector<int>::iterator	itFd = _fdSocketVect.begin();
 	for (; itFd != _fdSocketVect.end(); itFd++)
-		_pollManager.addSocket(*itFd, POLLIN);
+		_pollManager->addSocket(*itFd, POLLIN);
 }
 
 void	Server::addPair(std::pair<int, std::string> listen)
