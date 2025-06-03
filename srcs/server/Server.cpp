@@ -4,22 +4,45 @@
 #include "../../include/config/ConfigParser.hpp"
 
 Server::Server(){}
-	
-Server::Server(const ConfigParser & servconfig)
+
+// Server::Server(const ConfigParser & servconfig)
+// {
+// 	std::vector<ServerConfig>::const_iterator	it = servconfig.getServerConfigVector().begin();
+// 	while (it != servconfig.getServerConfigVector().end())
+// 	{
+// 		addPair(it->getListen());
+// 		it++;
+// 	}
+// 	Setup();
+// }
+
+Server::Server(std::string str)
 {
-	std::vector<ServerConfig>::iterator	it = servconfig.getServerConfigVector().begin();
-	while (it != servconfig.getServerConfigVector().end())
+	if (str == "debug")
 	{
-		addPair(it->getListen());
-		it++;
+		addPair(std::make_pair(8080, "127.0.0.1"));
+		addPair(std::make_pair(8888, "127.0.0.1"));
+		Setup();
 	}
 }
 
-Server::Server(const Server & toCopy){}
+Server::Server(const Server & toCopy)
+{
+	*this = toCopy;
+}
 
 Server::~Server(){}
 		
-Server & Server::operator=(const Server & other){}
+Server & Server::operator=(const Server & other)
+{
+	if (this != &other)
+	{
+		this->_fdPollVect = other._fdPollVect;
+		this->_fdSocketVect = other._fdSocketVect;
+		this->_listenTab = other._listenTab;
+	}
+	return (*this);
+}
 
 void	Server::Run()
 {
@@ -28,20 +51,17 @@ void	Server::Run()
 		if (poll(&_fdPollVect[0], _fdPollVect.size(), -1) == -1)
 			throw std::runtime_error("Poll initialization failed");
 
-		std::vector<struct pollfd>::iterator	it = _fdPollVect.begin();
-		int	i = 0;
-		for (; it != _fdPollVect.end(); it++)
+		for (int i = 0; i != static_cast<int>(_fdPollVect.size()); i++)
 		{
-			if (it->revents & POLLIN)
-				dealClient(it->fd, i);
-			i++;
+			if (_fdPollVect[i].revents & POLLIN)
+				dealClient(_fdPollVect[i].fd, i);
 		}
 	}
 }
 
 void	Server::Setup()
 {
-	std::vector<std::pair<int, std::string>>::iterator	it = _listenTab.begin();
+	std::vector<std::pair<int, std::string> >::iterator	it = _listenTab.begin();
 	struct sockaddr_in serv_addr;
 
 	for (; it != _listenTab.end(); it++)
@@ -75,24 +95,31 @@ void	Server::Setup()
 
 void	Server::dealClient(int fd, int & i)
 {
+	std::cout << "je deal client" << std::endl;
 	if (std::find(_fdSocketVect.begin(), _fdSocketVect.end(), fd) != _fdSocketVect.end())
+	{
+		std::cout << "j add new connexion" << std::endl;
 		addNewConnexion(fd);
+	}
 	else
+	{
+		std::cout << "je deal existing client" << std::endl;
 		dealExistingClient(fd, i);
+	}
 }
 
-void	Server::addNewConnexion(int fdClient)
+void	Server::addNewConnexion(int fd)
 {
 	struct sockaddr_in clientAddr;
 
 	socklen_t addrLen = sizeof(clientAddr);
-	int clientFd = accept(fdClient, (struct sockaddr*)&clientAddr, &addrLen);
+	int clientFd = accept(fd, (struct sockaddr*)&clientAddr, &addrLen);
 	if (clientFd < 0)
 		return;
 
 	struct pollfd	clientPoll;
 
-	clientPoll.fd = fdClient;
+	clientPoll.fd = clientFd;
 	clientPoll.events = POLLIN;
 	clientPoll.revents = 0;
 	_fdPollVect.push_back(clientPoll);
@@ -105,6 +132,7 @@ void	Server::dealExistingClient(int fdClient, int & i)
 
 	if (bytes <= 0)
 	{
+		std::cout << "je close mon client" << std::endl;
 		close(fdClient);
 		_fdPollVect.erase(_fdPollVect.begin() + i);
 		i--;
@@ -117,7 +145,7 @@ void	Server::dealExistingClient(int fdClient, int & i)
 
 void	Server::addPair(std::pair<int, std::string> listen)
 {
- 	std::vector<std::pair<int, std::string>>::iterator	it = std::find(_listenTab.begin(), _listenTab.end(), listen);
+ 	std::vector<std::pair<int, std::string> >::iterator	it = std::find(_listenTab.begin(), _listenTab.end(), listen);
 
 	if (it == _listenTab.end())
 		_listenTab.push_back(listen);
@@ -126,4 +154,5 @@ void	Server::addPair(std::pair<int, std::string> listen)
 void	Server::dealRequest(int fd)
 {
 	(void)fd;
+	std::cout << "test" <<std::endl;
 }

@@ -29,6 +29,7 @@ class ConfigParser {
 	public:
 	
 		ConfigParser();
+		ConfigParser(const std::string& filepath);
 		~ConfigParser();
 		ConfigParser(const ConfigParser& other);
 		ConfigParser& operator=(const ConfigParser& other);

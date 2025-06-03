@@ -13,14 +13,14 @@
 # include <poll.h>
 # include <unistd.h>
 
-class ConfigParser;
+// class ConfigParser;
 class Server
 {
 	public:
 		Server();
-		Server(const ConfigParser & servconfig);
+		// Server(const ConfigParser & servconfig);
 		Server(const Server & toCopy);
-
+		
 		~Server();
 		
 		Server & operator=(const Server & other);
@@ -31,14 +31,14 @@ class Server
 		// const ConfigParser &						_serv;
 		std::vector<int>							_fdSocketVect;
 		std::vector<struct pollfd>					_fdPollVect;
-		std::vector<std::pair<int, std::string>> 	_listenTab;
+		std::vector<std::pair<int, std::string> > 	_listenTab;
 
 		void	Setup();
 		void	dealClient(int fd, int & i);
-		void	addNewConnexion(int fdClient);
+		void	addNewConnexion(int fd);
 		void	dealExistingClient(int fdClient, int & i);
 		void	dealRequest(int fd);
-		void	addPair(std::pair<int, std::string>);
+		void	addPair(std::pair<int, std::string> listen);
 
 };
 
