@@ -3,6 +3,7 @@
 
 # include <string>
 # include <vector>
+# include <algorithm>
 
 class Location {
 
@@ -18,6 +19,7 @@ class Location {
 	
 	public:
 	
+		Location();
 		Location(
 			std::string path,
 			std::vector<std::string> methods,
@@ -38,6 +40,7 @@ class Location {
 		const std::string& getRoot() const;
 		const std::string& getIndex() const;
 		bool isAutoIndex() const;
+		bool isValidMethod(const std::string& method) const;
 };
 
 #endif

@@ -9,6 +9,7 @@
 # include <exception>
 # include <unistd.h>
 # include <algorithm>
+# include <iostream>
 # include "ServerConfig.hpp"
 
 class ConfigParser {
@@ -24,11 +25,11 @@ class ConfigParser {
 		static void validateMethods(const std::vector<std::string>& methods);
 		static void validateAutoIndex(const std::string& value);
 		static void validateCgiPass(const std::string& cgi_pass);
-		static int toString(std::string value);
 
 	public:
 	
 		ConfigParser();
+		ConfigParser(const std::string & filepath);
 		~ConfigParser();
 		ConfigParser(const ConfigParser& other);
 		ConfigParser& operator=(const ConfigParser& other);

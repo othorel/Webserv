@@ -4,6 +4,10 @@
 
 ConfigParser::ConfigParser() {}
 
+ConfigParser::ConfigParser(const std::string & filepath) {
+	parsefile(filepath);
+}
+
 ConfigParser::~ConfigParser() {}
 
 ConfigParser::ConfigParser(const ConfigParser& other) : _serverConfigVector(other._serverConfigVector) {}
@@ -30,6 +34,12 @@ int toInt(std::string value) {
 	return (result);
 }
 
+std::string toString(int n) {
+	std::ostringstream oss;
+	oss << n;
+	return (oss.str());
+}
+
 std::string trim(const std::string& s) {
 	size_t start = s.find_first_not_of(" \t\r\n");
 	size_t end = s.find_last_not_of(" \t\r\n");
@@ -37,7 +47,6 @@ std::string trim(const std::string& s) {
 		return ("");
 	return (s.substr(start, end - start + 1));
 }
-
 //Validation
 void ConfigParser::validateListen(const std::string& ip, const std::string& port) {
 	size_t dot = 0;
@@ -80,7 +89,7 @@ void ConfigParser::validateErrorPage(const std::string& code, const std::string&
 	if (x < 100 || x > 599)
 		throw ValidationException("Invalid HTTP error code: " + code);
 	std::string fullPath = root;
-	if (!fullPath.empty() && fullPath.back() != '/' && !path.empty() && path[0] != '/')
+	if (!fullPath.empty() && fullPath[fullPath.size() - 1] != '/' && !path.empty() && path[0] != '/')
 		fullPath += '/';
 	fullPath += path;
 	if (access(fullPath.c_str(), F_OK) != 0)
@@ -111,22 +120,22 @@ void ConfigParser::validateCgiPass(const std::string& cgi_pass) {
 	if (access(cgi_pass.c_str(), X_OK) != 0)
 		throw ValidationException("CGI script not executable: " + cgi_pass);
 }
-
 //Parser
 void ConfigParser::parsefile(const std::string& filepath) {
-	std::ifstream file(filepath);
+	std::ifstream file(filepath.c_str());
 	if (!file)
 		throw std::runtime_error("Cannot open config file");
+
 	std::string line;
 	bool inServer = false;
 	bool inLocation = false;
-	//temp server
-	std::pair<int, std::string> listen = std::make_pair(0, "");
+
+	std::pair<int, std::string> listen;
 	std::vector<std::string> server_names;
 	std::string root;
 	std::map<int, std::string> error_pages;
 	std::map<std::string, Location> locations;
-	//temp location
+
 	std::string loc_path;
 	std::vector<std::string> loc_methods;
 	std::string loc_upload_path;
@@ -140,6 +149,8 @@ void ConfigParser::parsefile(const std::string& filepath) {
 		if (line.empty() || line[0] == '#')
 			continue;
 		if (line == "server {") {
+			if (inServer)
+				throw std::runtime_error("Nested server block is not allowed.");
 			inServer = true;
 			listen = std::make_pair(0, "");
 			server_names.clear();
@@ -150,31 +161,24 @@ void ConfigParser::parsefile(const std::string& filepath) {
 		}
 		if (line == "}") {
 			if (inLocation) {
-				Location loc(
-					loc_path,
-					loc_methods,
-					loc_upload_path,
-					loc_cgi_extension,
-					loc_root,
-					loc_index,
-					loc_autoindex
-				);
+				if (loc_root.empty())
+					loc_root = root;
+				Location loc(loc_path, loc_methods, loc_upload_path, loc_cgi_extension, loc_root, loc_index, loc_autoindex);
 				locations[loc_path] = loc;
 				inLocation = false;
 			}
 			else if (inServer) {
 				ServerConfig server(listen, server_names, root, error_pages, locations);
-				validateListen(server.getListen().second, std::to_string(server.getListen().first));
+				validateListen(server.getListen().second, toString(server.getListen().first));
 				validateServerNames(server.getServerNames());
 				validateRoot(server.getRoot());
-				for (size_t i = 0; i < server.getServerNames().size(); i++) {
-					(void)i;
-				}
-				for (std::map<int, std::string>::const_iterator it = server.getErrorPages().begin(); it != server.getErrorPages().end(); it++) {
-					validateErrorPage(std::to_string(it->first), it->second, server.getRoot());
-				}
-				for (std::map<std::string, Location>::const_iterator it = server.getLocations().begin(); it != server.getLocations().end(); it++) {
-					const Location& loc = it ->second;
+				std::map<int, std::string> eps = server.getErrorPages();
+				for (std::map<int, std::string>::const_iterator it = eps.begin(); it != eps.end(); ++it)
+					validateErrorPage(toString(it->first), it->second, server.getRoot());
+
+				std::map<std::string, Location> locs = server.getLocations();
+				for (std::map<std::string, Location>::const_iterator it = locs.begin(); it != locs.end(); ++it) {
+					const Location& loc = it->second;
 					validateMethods(loc.getMethods());
 					validateAutoIndex(loc.isAutoIndex() ? "on" : "off");
 					validateRoot(loc.getRoot());
@@ -182,63 +186,90 @@ void ConfigParser::parsefile(const std::string& filepath) {
 				_serverConfigVector.push_back(server);
 				inServer = false;
 			}
+			continue;
 		}
-		continue;
-	}
-	if (line.find("location") == 0 && line.find("{") != std::string::npos) {
-		inLocation = true;
+		if (line.find("location") == 0 && line.find("{") != std::string::npos) {
+			if (!inServer)
+				throw std::runtime_error("Location block outside of server block");
+			inLocation = true;
+			std::istringstream iss(line);
+			std::string keyword;
+			iss >> keyword >> loc_path;
+			loc_methods.clear();
+			loc_upload_path.clear();
+			loc_cgi_extension.clear();
+			loc_root.clear();
+			loc_index.clear();
+			loc_autoindex = false;
+			continue;
+		}
 		std::istringstream iss(line);
-		std::string token;
-		iss >> token;
-		iss >> loc_path;
-		loc_methods.clear();
-		loc_upload_path.clear();
-		loc_cgi_extension.clear();
-		loc_root.clear();
-		loc_index.clear();
-		loc_autoindex = false;
-		continue;
-	}
-	size_t pos = line.find(':');
-	if (pos == std::string::npos)
-		continue;
-	std::string key = trim(line.substr(0, pos));
-	std::string value = trim(line.substr(pos + 1));
-	if (inLocation) {
-		if (key == "methods") {
-			std::istringstream iss(value);
-			std::string method;
-			while (iss >> method)
-				loc_methods.push_back(method);
-		} else if (key == "upload_path") {
-			loc_upload_path = value;
-		} else if (key == "cgi_extension") {
-			loc_cgi_extension = value;
-		} else if (key == "root") {
-			loc_root = value;
-		} else if (key == "index") {
-			loc_index = value;
-		} else if (key == "autoindex") {
-			loc_autoindex = (value == "on");
+		std::string key;
+		iss >> key;
+		std::string value;
+		std::getline(iss, value);
+		value = trim(value);
+		if (!value.empty() && value[value.size() - 1] == ';')
+  			value.erase(value.size() - 1, 1);
+		if (inLocation) {
+			if (key == "methods") {
+				std::istringstream iss(value);
+				std::string method;
+				while (iss >> method)
+					loc_methods.push_back(method);
+			}
+			else if (key == "upload_path") {
+				loc_upload_path = value;
+			}
+			else if (key == "cgi_extension") {
+				loc_cgi_extension = value;
+			}
+			else if (key == "root") {
+				loc_root = value;
+			}
+			else if (key == "index") {
+				loc_index = value;
+			}
+			else if (key == "autoindex") {
+				loc_autoindex = (value == "on");
+			}
 		}
-	} else if (inServer) {
-		if (key == "listen") {
-			size_t sep = value.find(':');
-			if (sep != std::string::npos)
-				listen = std::make_pair(toInt(value.substr(sep + 1)), value.substr(0, sep));
-		} else if (key == "server_name") {
-			std::istringstream iss(value);
-			std::string name;
-			while (iss >> name)
-				server_names.push_back(name);
-		} else if (key == "root") {
-			root = value;
-		} else if (key == "error_page") {
-			std::istringstream iss(value);
-			int code;
-			std::string path;
-			iss >> code >> path;
-			error_pages[code] = path;
+		else if (inServer) {
+			if (key == "listen") {
+    			if (!value.empty() && value[value.size() - 1] == ';')
+        			value.erase(value.size() - 1, 1);
+    			size_t sep = value.find(':');
+    			if (sep != std::string::npos) {
+    			    std::string ip = value.substr(0, sep);
+        			int port = toInt(value.substr(sep + 1));
+       				if (port <= 0)
+            			throw ValidationException("Invalid port in listen directive: " + value);
+        			listen = std::make_pair(port, ip);
+    			}
+				else {
+        			int port = toInt(value);
+        			if (port > 0)
+            			listen = std::make_pair(port, "0.0.0.0");
+        			else
+            			throw ValidationException("Invalid listen value: " + value);
+    			}
+			}
+			else if (key == "server_name") {
+				std::istringstream iss(value);
+				std::string name;
+				while (iss >> name)
+					server_names.push_back(name);
+			}
+			else if (key == "root") {
+				root = value;
+			}
+			else if (key == "error_page") {
+				std::istringstream iss(value);
+				int code;
+				std::string path;
+				iss >> code >> path;
+				error_pages[code] = path;
+			}
 		}
 	}
 }
