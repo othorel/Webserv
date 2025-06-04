@@ -2,8 +2,11 @@
 #include <map>
 #include <sstream>
 #include "../../include/http/HttpResponse.hpp"
+#include "../../include/http/HttpUtils.hpp"
 
-std::string httpStatusMessage(int code);
+/* ************************************************************************** */
+/*                                   constructors                             */
+/* ************************************************************************** */
 
 HttpResponse::HttpResponse() :
 	_version("HTTP/1.1"),
@@ -29,6 +32,10 @@ HttpResponse::HttpResponse(const HttpResponse & other) :
 	_body(other._body)
 {}
 
+/* ************************************************************************** */
+/*                                     operators                              */
+/* ************************************************************************** */
+
 HttpResponse & HttpResponse::operator=(const HttpResponse & other)
 {
 	if (this != &other) {
@@ -40,8 +47,16 @@ HttpResponse & HttpResponse::operator=(const HttpResponse & other)
 	return (*this);
 }
 
+/* ************************************************************************** */
+/*                                    destructor                              */
+/* ************************************************************************** */
+
 HttpResponse::~HttpResponse()
 {}
+
+/* ************************************************************************** */
+/*                                      getters                               */
+/* ************************************************************************** */
 
 const std::string & HttpResponse::getVersion() const
 {
@@ -63,6 +78,10 @@ const std::string & HttpResponse::getBody() const
 	return (_body);
 }
 
+/* ************************************************************************** */
+/*                               to raw string                                */
+/* ************************************************************************** */
+
 std::string HttpResponse::toRawString() const
 {
 	std::ostringstream oss;
@@ -74,10 +93,12 @@ std::string HttpResponse::toRawString() const
 	return (oss.str());
 }
 
+/* ************************************************************************** */
+/*                                      tests                                 */
+/* ************************************************************************** */
 
-
-
-/*********** for testing: g++ HttpResponse.cpp httpStatusMessage.cpp **********/
+// Uncomment the main and include and compile with:
+// g++ HttpResponse.cpp httpUtils.cpp
 
 // #include <iostream>
 // int main()

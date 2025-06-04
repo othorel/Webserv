@@ -1,6 +1,6 @@
 #include <string>
-#include "../../include/handlers/GetHandler.hpp"
-#include "../../include/http/HttpResponse.hpp"
+#include "../../../include/http/handlers/GetHandler.hpp"
+#include "../../../include/http/HttpResponse.hpp"
 
 /* ************************************************************************** */
 /*                                   constructors                             */

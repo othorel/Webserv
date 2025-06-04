@@ -2,50 +2,18 @@
 #include <fstream>
 #include <dirent.h>
 #include <sys/stat.h>
-#include "../../include/handlers/AHandler.hpp"
+#include "../../../include/http/handlers/AHandler.hpp"
+
+/* ************************************************************************** */
+/*                                  destructor                                */
+/* ************************************************************************** */
 
 AHandler::~AHandler()
 {}
-std::string httpStatusMessage(int code);
 
-std::string AHandler::numberToString(size_t value)
-{
-	std::ostringstream oss;
-	oss << value;
-	return (oss.str());
-}
-
-std::string AHandler::numberToString(int value)
-{
-	std::ostringstream oss;
-	oss << value;
-	return (oss.str());
-}
-
-std::string AHandler::readFile(const std::string & path)
-{
-	std::ifstream file(path.c_str());
-	if (!file) {
-		throw std::runtime_error("Could not open file " + path); }
-	std::ostringstream content;
-	content << file.rdbuf();
-	file.close();
-	return (content.str());
-}
-
-bool AHandler::isDirectory(const std::string & path)
-{
-	struct stat s;
-	if (!stat(path.c_str(), &s))
-		return ((s.st_mode & S_IFMT) == S_IFDIR);
-	return (false);
-}
-
-bool AHandler::fileExists(const std::string & path)
-{
-	struct stat s;
-	return (stat(path.c_str(), &s) == 0 && S_ISREG(s.st_mode));
-}
+/* ************************************************************************** */
+/*                             protected methods                              */
+/* ************************************************************************** */
 
 std::string AHandler::createIndexPath(std::string path, const Location & location)
 {

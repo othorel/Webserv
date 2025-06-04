@@ -14,18 +14,11 @@ class RequestParser
 
 		HttpRequest	_httpRequest;
 		
-		RequestParser();
 		void parseRequest(const std::string & raw_request);
-		std::string	extractLineAndRemove(std::string & input);
-		std::string extractMethod(std::istringstream & iss);
-		std::string extractUri(std::istringstream & iss);
-		std::string extractVersion(std::istringstream & iss);
-		std::map<std::string, std::string> extractHeaders(std::string & buffer);
-		int calculateContentLength(const std::map<std::string, std::string> & headers);
-		std::string extractBody(std::string & buffer, int contentLength);
-
-	public :
-	
+		
+		public :
+		
+		RequestParser();
 		RequestParser(const std::string & raw_request);
 		RequestParser(const RequestParser & other);
 		RequestParser & operator=(const RequestParser & other);
@@ -33,25 +26,14 @@ class RequestParser
 
 		const HttpRequest & getHttpRequest() const;
 
-		class InvalidRequestException : std::exception
-		{
-			private :
-				int			_statusCode;
-				std::string	_msg;
-			public :
-				InvalidRequestException(int code) :
-					_statusCode(code),
-					_msg(httpStatusMessage(code))
-				{}
-				virtual const char * what() const throw()
-				{
-					return (_msg.c_str());
-				}
-				int	getStatusCode() const
-				{
-					return (_statusCode);
-				}
-		};
 };
+
+static std::string	extractLineAndRemove(std::string & input);
+static std::string extractMethod(std::istringstream & iss);
+static std::string extractUri(std::istringstream & iss);
+static std::string extractVersion(std::istringstream & iss);
+static std::map<std::string, std::string> extractHeaders(std::string & buffer);
+static int calculateContentLength(const std::map<std::string, std::string> & headers);
+static std::string extractBody(std::string & buffer, int contentLength);
 
 #endif
