@@ -36,22 +36,17 @@ class RequestParser
 		class InvalidRequestException : std::exception
 		{
 			private :
-
 				int			_statusCode;
 				std::string	_msg;
-
 			public :
-
 				InvalidRequestException(int code) :
 					_statusCode(code),
 					_msg(httpStatusMessage(code))
 				{}
-
 				virtual const char * what() const throw()
 				{
 					return (_msg.c_str());
 				}
-
 				int	getStatusCode() const
 				{
 					return (_statusCode);

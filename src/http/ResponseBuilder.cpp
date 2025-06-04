@@ -6,7 +6,7 @@
 #include "../../include/http/HttpRequest.hpp"
 #include "../../include/http/HttpResponse.hpp"
 #include "../../include/config/Location.hpp"
-# include "../../include/handlers/IHandler.hpp"
+# include "../../include/handlers/AHandler.hpp"
 # include "../../include/handlers/GetHandler.hpp"
 #include "../../include/handlers/PostHandler.hpp"
 #include "../../include/handlers/DeleteHandler.hpp"
@@ -170,7 +170,7 @@ const HttpResponse & ResponseBuilder::buildResponse(const HttpRequest& request, 
 			throw HttpErrorException(405); }
 		try {
 			handler = selectHandler(request, *locationPtr);
-			_httpResponse = handler->handle(request, *locationPtr);
+			_httpResponse = handler->handle(request, *locationPtr, server);
 			delete handler; }
 		catch (...) {
 			delete handler;
