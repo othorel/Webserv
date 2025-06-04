@@ -66,6 +66,7 @@ void printServerConfig(const ServerConfig& server, size_t index) {
         if (loc.hasRedirect())
             std::cout << "      Redirect    : " << loc.getRedirectCode() << " => " << loc.getRedirectPath() << std::endl;
     }
+    std::cout << std::endl;
 }
 
 int main(int argc, char** argv) {
@@ -90,7 +91,7 @@ int main(int argc, char** argv) {
         std::cout << "\nValidation réussie : la configuration est correcte." << std::endl;
     } 
     catch (const std::exception& e) {
-        std::cerr << "Erreur : " << e.what() << std::endl;
+        std::cerr << e.what() << std::endl;
         return 1;
     }
 

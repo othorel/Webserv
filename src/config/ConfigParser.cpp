@@ -137,19 +137,21 @@ size_t parseSizeWithUnit(const std::string& value) {
 		else
 			throw std::runtime_error("Invalid size unit for client max body size: " + value);
 	}
+	int number;
 	std::istringstream iss(numberPart);
-	size_t number;
 	iss >> number;
 	if (iss.fail())
 		throw std::runtime_error("Invalid number for clien max body size" + value);
-	return (number * mul);
+	if (number <= 0)
+		throw std::runtime_error("Client max body size must be greater than zero");
+	return (static_cast<size_t>(number) * mul);
 }
 
 //Parser
 void ConfigParser::parsefile(const std::string& filepath) {
 	std::ifstream file(filepath.c_str());
 	if (!file)
-		throw std::runtime_error("Cannot open config file");
+		throw ParseException("Cannot open config file");
 
 	std::string line;
 	bool inServer = false;
@@ -181,11 +183,24 @@ void ConfigParser::parsefile(const std::string& filepath) {
 
 	while (std::getline(file, line)) {
 		line = trim(line);
-		if (line.empty() || line[0] == '#')
+		size_t comment_pos = line.find('#');
+		if (comment_pos != std::string::npos)
+			line = line.substr(0, comment_pos);
+		line = trim(line);
+		if (line.empty())
 			continue;
+		if (line != "server {" && line != "}" && !(line.find("location") == 0 && line.find('{') != std::string::npos)) {
+			size_t semicolon_pos = line.find(';');
+			if (semicolon_pos == std::string::npos)
+				throw ParseException("Missing ';' at end of directive: " + line);
+			std::string after_semicolon = trim(line.substr(semicolon_pos + 1));
+			if (!after_semicolon.empty())
+				throw ParseException("Unexpected text after ';': " + after_semicolon + "'");
+			line = trim(line.substr(0, semicolon_pos));
+		}
 		if (line == "server {") {
 			if (inServer)
-				throw std::runtime_error("Nested server block is not allowed.");
+				throw ParseException("Nested server block is not allowed.");
 			inServer = true;
 			listen = std::make_pair(0, "");
 			server_names.clear();
@@ -208,7 +223,6 @@ void ConfigParser::parsefile(const std::string& filepath) {
 			}
 			else if (inServer) {
 				ServerConfig server(listen, server_names, root, error_pages, locations, client_max_body_size, session_name, session_timeout, session_enable);
-				validateListen(server.getListen().second, toString(server.getListen().first));
 				validateServerNames(server.getServerNames());
 				validateRoot(server.getRoot());
 				std::map<int, std::string> eps = server.getErrorPages();
@@ -219,7 +233,6 @@ void ConfigParser::parsefile(const std::string& filepath) {
 				for (std::map<std::string, Location>::const_iterator it = locs.begin(); it != locs.end(); ++it) {
 					const Location& loc = it->second;
 					validateMethods(loc.getMethods());
-					validateAutoIndex(loc.isAutoIndex() ? "on" : "off");
 					validateRoot(loc.getRoot());
 				}
 				_serverConfigVector.push_back(server);
@@ -229,7 +242,7 @@ void ConfigParser::parsefile(const std::string& filepath) {
 		}
 		if (line.find("location") == 0 && line.find("{") != std::string::npos) {
 			if (!inServer)
-				throw std::runtime_error("Location block outside of server block");
+				throw ParseException("Location block outside of server block");
 			inLocation = true;
 			std::istringstream iss(line);
 			std::string keyword;
@@ -277,11 +290,16 @@ void ConfigParser::parsefile(const std::string& filepath) {
 				loc_index = value;
 			}
 			else if (key == "autoindex") {
+				std::string loc_autoindex_str;
+				validateAutoIndex(value);
+				loc_autoindex_str = value;
 				loc_autoindex = (value == "on");
 			}
 			else if (key == "return" || key == "redirect") {
 				std::istringstream iss(value);
 				iss >> loc_redirect_code >> loc_redirect_path;
+				if (loc_redirect_code < 300 || loc_redirect_code > 399)
+					throw ValidationException("Invalid redirection code: " + toString(loc_redirect_code));
 				loc_has_redirect = true;
 			}
 			else if (key == "cookies_enabled")
@@ -289,23 +307,20 @@ void ConfigParser::parsefile(const std::string& filepath) {
 		}
 		else if (inServer) {
 			if (key == "listen") {
-				if (!value.empty() && value[value.size() - 1] == ';')
-					value.erase(value.size() - 1, 1);
-				size_t sep = value.find(':');
-				if (sep != std::string::npos) {
-					std::string ip = value.substr(0, sep);
-					int port = toInt(value.substr(sep + 1));
-	   				if (port <= 0)
-						throw ValidationException("Invalid port in listen directive: " + value);
-					listen = std::make_pair(port, ip);
-				}
+   				size_t sep = value.find(':');
+    			if (sep != std::string::npos) {
+        			std::string ip = value.substr(0, sep);
+					std::string port_str = value.substr(sep + 1);
+        			int port = toInt(port_str);
+        			validateListen(ip, port_str);
+        			listen = std::make_pair(port, ip);
+    			} 
 				else {
-					int port = toInt(value);
-					if (port > 0)
-						listen = std::make_pair(port, "0.0.0.0");
-					else
-						throw ValidationException("Invalid listen value: " + value);
-				}
+					std::string port_str = value;
+					int port = toInt(port_str);
+            		validateListen("0.0.0.0", port_str);
+					listen = std::make_pair(port, "0.0.0.0");
+    			}
 			}
 			else if (key == "server_name") {
 				std::istringstream iss(value);
