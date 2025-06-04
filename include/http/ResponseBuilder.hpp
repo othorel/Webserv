@@ -3,9 +3,11 @@
 
 # include <exception>
 # include <map>
+# include <string>
 # include "../../include/http/HttpRequest.hpp"
 # include "../../include/http/HttpResponse.hpp"
 # include "../../include/config/Location.hpp"
+# include "../../include/config/ServerConfig.hpp"
 
 class ResponseBuilder
 {
@@ -13,29 +15,19 @@ class ResponseBuilder
 
 		HttpResponse _httpResponse;
 
-		const Location & findMatchingRoute(
-				const std::map<std::string, Location> & routes,
-				const std::string & target) const;
 		void buildRedirect(int code, const std::string & path);
-		std::string intToString(const std::string & body);
-		bool isDirectory(const std::string & path);
-		bool fileExists(const std::string & path);
-		std::string generateAutoIndex(const std::string & dirPath, const std::string & uriPath);
-
+		void ResponseBuilder::buildError(int statusCode, const ServerConfig & server, const Location * location);
+		
 	public :
 
 		ResponseBuilder();
-		ResponseBuilder(const HttpRequest& request,
-						const std::map<std::string, Location> & routes);
+		ResponseBuilder(const HttpRequest& request, const ServerConfig & server);
 		ResponseBuilder(const ResponseBuilder & other);
 		ResponseBuilder & operator=(const ResponseBuilder & other);
 		~ResponseBuilder();
 
 		const HttpResponse & buildResponse(
-				const HttpRequest& request,
-				const std::map<std::string, Location> & routes);
-		const HttpResponse & buildError(int statusCode);
-		const HttpResponse & getResponse() const;
+			const HttpRequest& request, const ServerConfig & server);
 
 		class HttpErrorException : public std::exception
 		{

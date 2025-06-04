@@ -1,48 +1,58 @@
 #include <string>
 #include <sstream>
-#include <sys/stat.h>
-#include <dirent.h>
-
+#include <fstream>
+#include <stdexcept>
 #include "../../include/http/ResponseBuilder.hpp"
 #include "../../include/http/HttpRequest.hpp"
 #include "../../include/http/HttpResponse.hpp"
 #include "../../include/config/Location.hpp"
+# include "../../include/handlers/IHandler.hpp"
+# include "../../include/handlers/GetHandler.hpp"
+#include "../../include/handlers/PostHandler.hpp"
+#include "../../include/handlers/DeleteHandler.hpp"
+#include "../../include/handlers/CgiHandler.hpp"
+
+
+/* ************************************************************************** */
+/*                            non member functions                            */
+/* ************************************************************************** */
+
+/* ****************************** utils ************************************* */
 
 std::string httpStatusMessage(int code);
 
-ResponseBuilder::ResponseBuilder() :
-	_httpResponse()
-{}
-
-ResponseBuilder::ResponseBuilder(
-		const HttpRequest& request,
-		const std::map<std::string, Location> & routes)
+static std::string numberToString(size_t value)
 {
-	_httpResponse = buildResponse(request, routes);
+	std::ostringstream oss;
+	oss << value;
+	return (oss.str());
 }
 
-ResponseBuilder::ResponseBuilder(const ResponseBuilder & other) :
-	_httpResponse(other._httpResponse)
-{}
-
-ResponseBuilder & ResponseBuilder::operator=(const ResponseBuilder & other)
+static std::string numberToString(int value)
 {
-	if (&other != this) {
-		this->_httpResponse = other._httpResponse;
-	}
-	return (*this);
+	std::ostringstream oss;
+	oss << value;
+	return (oss.str());
 }
 
-ResponseBuilder::~ResponseBuilder()
-{}
+static std::string readFile(const std::string & path)
+{
+	std::ifstream file(path.c_str());
+	if (!file) {
+		throw std::runtime_error("Could not open file " + path); }
+	std::ostringstream content;
+	content << file.rdbuf();
+	file.close();
+	return (content.str());
+}
 
-const Location & ResponseBuilder::findMatchingRoute(
-		const std::map<std::string, Location> & routes,
-		const std::string & target) const
+static const Location & findMatchinglocation(
+		const std::map<std::string, Location> & locations,
+		const std::string & target)
 {
 	std::string bestMatch = "";
 	std::map<std::string, Location>::const_iterator it;
-	for (it = routes.begin(); it != routes.end(); ++it)
+	for (it = locations.begin(); it != locations.end(); ++it)
 	{
 		const std::string& path = it->first;
 		if (target.compare(0, path.size(), path) == 0)
@@ -52,8 +62,122 @@ const Location & ResponseBuilder::findMatchingRoute(
 		}
 	}
 	if (bestMatch.empty())
-		throw HttpErrorException(404);
-	return (routes.find(bestMatch)->second);
+		throw ResponseBuilder::HttpErrorException(404);
+	return (locations.find(bestMatch)->second);
+}
+
+static std::string selectErrorPage(int statusCode, const ServerConfig & server, const Location * location)
+{
+	if (location && location->hasErrorPage(statusCode)) {	// hasErrorCode à implementer
+		return (location->getErrorPage(statusCode)); }		// getErrorPage à implementer
+	if (server.hasErrorPage(statusCode)) {					// hasErrorCode à implementer
+		return (server.getErrorPage(statusCode)); }			// getErrorPage à implementer
+	return ("");
+}
+
+/* *************************** handler factory ****************************** */
+
+typedef IHandler * (*HandlerFactoryFn)();
+
+static IHandler * selectHandler(const HttpRequest& request, const Location & location)
+{
+	if (location.hasCgi())
+		return (new CgiHandler());
+
+	static std::map<std::string, HandlerFactoryFn> handlerFactories;
+	if (handlerFactories.empty()) {
+		handlerFactories["GET"] = &createGetHandler;
+		handlerFactories["POST"] = &createPostHandler;
+		handlerFactories["DELETE"] = &createDeleteHandler; }
+
+	if (handlerFactories.find(request.getMethod()) != handlerFactories.end())
+		return (handlerFactories[request.getMethod()]());
+	throw ResponseBuilder::HttpErrorException(405);
+}
+
+static IHandler * createGetHandler()
+{
+	return (new GetHandler());
+}
+
+static IHandler * createPostHandler()
+{
+	return (new PostHandler());
+}
+
+static IHandler * createDeleteHandler()
+{
+	return (new DeleteHandler());
+}
+
+static IHandler * createCgiHandler()
+{
+	return (new CgiHandler());
+}
+
+/* ************************************************************************** */
+/*                                  constructors                              */
+/* ************************************************************************** */
+
+ResponseBuilder::ResponseBuilder() :
+	_httpResponse()
+{}
+
+ResponseBuilder::ResponseBuilder(const HttpRequest& request, const ServerConfig & server)
+{
+	_httpResponse = buildResponse(request, server);
+}
+
+ResponseBuilder::ResponseBuilder(const ResponseBuilder & other) :
+	_httpResponse(other._httpResponse)
+{}
+
+/* ************************************************************************** */
+/*                                    operators                               */
+/* ************************************************************************** */
+
+ResponseBuilder & ResponseBuilder::operator=(const ResponseBuilder & other)
+{
+	if (&other != this) {
+		this->_httpResponse = other._httpResponse;
+	}
+	return (*this);
+}
+
+/* ************************************************************************** */
+/*                                   destructor                               */
+/* ************************************************************************** */
+
+ResponseBuilder::~ResponseBuilder()
+{}
+
+/* ************************************************************************** */
+/*                              response builder                              */
+/* ************************************************************************** */
+
+const HttpResponse & ResponseBuilder::buildResponse(const HttpRequest& request, const ServerConfig & server)
+{
+	IHandler * handler = NULL;
+	const Location * locationPtr = NULL;
+	const std::map<std::string, Location> & locations = server.getLocations();
+	try {
+		locationPtr = &findMatchinglocation(locations, request.getTarget());
+		if (locationPtr->hasRedirect()) {
+			buildRedirect(locationPtr->getRedirectCode(), locationPtr->getRedirectPath());
+			return (_httpResponse); }
+		std::string method = request.getMethod();
+		if (!locationPtr->isValidMethod(method)) {
+			throw HttpErrorException(405); }
+		try {
+			handler = selectHandler(request, *locationPtr);
+			_httpResponse = handler->handle(request, *locationPtr);
+			delete handler; }
+		catch (...) {
+			delete handler;
+			throw; }}
+	catch (const HttpErrorException & e) {
+		buildError(e.getStatusCode(), server, locationPtr); }
+	return (_httpResponse);
 }
 
 void ResponseBuilder::buildRedirect(int code, const std::string & path)
@@ -63,121 +187,22 @@ void ResponseBuilder::buildRedirect(int code, const std::string & path)
 	std::map<std::string, std::string> headers;
 	headers["Location"] = path;
 	headers["Content-Type"] = "text/html";
-	headers["Content-Length"] = intToString(body);
+	headers["Content-Length"] = numberToString(body.size());
 	_httpResponse = HttpResponse("HTTP/1.1", code, headers, body);
 }
 
-std::string HttpResponse::generateAutoIndex(const std::string & dirPath, const std::string & uriPath)
+void ResponseBuilder::buildError(int statusCode, const ServerConfig & server, const Location * location)
 {
-	DIR* dir = opendir(dirPath.c_str());
-	if (!dir)
-		throw HttpErrorException(500);
-
-	std::ostringstream html;
-	html << "<html><body><h1>Index of " << uriPath << "</h1><ul>";
-
-	struct dirent* entry;
-	while ((entry = readdir(dir)) != NULL)
-	{
-		std::string name = entry->d_name;
-		if (name == "." || name == "..")
-			continue;
-
-		html << "<li><a href=\"" << uriPath;
-		if (!uriPath.empty() && uriPath[uriPath.size() - 1] != '/')
-			html << "/";
-		html << name << "\">" << name << "</a></li>";
-	}
-	closedir(dir);
-	html << "</ul></body></html>";
-	return (html.str());
-}
-
-const HttpResponse & ResponseBuilder::buildResponse(
-		const HttpRequest& request,
-		const std::map<std::string, Location> & routes)
-{
+	std::string filePath = selectErrorPage(statusCode, server, location);
+	std::string body;
 	try {
-		// Find location corresponding to target
-		const Location route = findMatchingRoute(routes, request.getTarget());
-		// Check if method is authorised
-		std::string method = request.getMethod();
-		if (!route.isValidMethod(method))
-			throw HttpErrorException(405);
-		// Calculate Path
-		std::string path = route.getRoot() + request.getTarget().substr(route.getPath().length());
-		// Redirection ?
-		if (route.hasRedirect()) {
-			buildRedirect(route.getRedirectCode(), route.getRedirectPath());
-			return (_httpResponse);
-		}
-		// path is directory and autoindex
-		if (isDirectory(path)) {
-			std::string indexFile = path + "/index.html";
-			if (fileExists(indexFile))
-				path = indexFile;
-			else if (route.isAutoIndex()) {
-				std::string body = generateAutoIndex(path, request.getTarget());
-				std::map<std::string, std::string> headers;
-				headers["Content-Type"] = "text/html";
-				headers["Content-Length"] = intToString(body);
-				_httpResponse = HttpResponse("HTTP/1.1", 200, headers, body);
-				return (_httpResponse);
-			}
-			else
-				throw HttpErrorException(403);
-		}
-		// 5. Gérer le CGI (si activé dans la location)
-		// Si location.getCgiPath() est non vide et que le fichier est un CGI (ex: .py, .php) :
-		// fork()
-		// execve() du script
-		// Récupérer la sortie via pipe
-		// En faire le corps de la HttpResponse
-		if (route.hasCgi()) {
-			handleCgi();
-		}
-
-
-
-		// 6. Lire le fichier demandé
-		// Ouvrir le fichier en lecture binaire
-		// Lire son contenu
-		// Déduire le type MIME depuis l’extension (ex: .html, .jpg, etc.)
-		// Remplir :
-		// _statusCode = 200
-		// _headers["Content-Type"] = "text/html" (ou autre)
-		// _headers["Content-Length"] = taille du corps
-		// _body = contenu du fichier
-
-		// 7. Créer la réponse HTTP
-		// Construire l’objet :
-		// HttpResponse response("HTTP/1.1", 200, headers, body);
-		// Appeler response.toRawString() pour envoyer la réponse finale au client
-	}
-	catch (const HttpErrorException & e) {
-		buildError(e.getStatusCode());
-	}
-	_httpResponse = HttpResponse("HTTP/1.1", code, headers, body);
-	return (_httpResponse);
-}
-
-std::string HttpResponse::intToString(const std::string & body)
-{
-	std::ostringstream oss;
-	oss << body.size();
-	return (oss.str());
-}
-
-bool HttpResponse::isDirectory(const std::string & path)
-{
-	struct stat s;
-	if (!stat(path.c_str(), &s))
-		return ((s.st_mode & S_IFMT) == S_IFDIR);
-	return (false);
-}
-
-bool HttpResponse::fileExists(const std::string & path)
-{
-	struct stat s;
-	return (stat(path.c_str(), &s) == 0 && S_ISREG(s.st_mode));
+		body = readFile(filePath); }
+	catch (const std::exception &e) {
+		// std::cerr << "Error page not found: " << e.what() << std::endl;
+		body = "<html><body><h1>" + numberToString(statusCode) + " " +
+			httpStatusMessage(statusCode) + "</h1></body></html>"; }
+	std::map<std::string, std::string> headers;
+	headers["Content-Type"] = "text/html";
+	headers["Content-Length"] = numberToString(body.size());
+	_httpResponse = HttpResponse("HTTP/1.1", statusCode, headers, body);
 }
