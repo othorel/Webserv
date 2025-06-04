@@ -1,4 +1,40 @@
-#include <string>
+# include <string>
+# include <fstream>
+# include <sys/stat.h>
+# include <dirent.h>
+#include "../../include/http/HttpUtils.hpp"
+
+/* ************************************************************************** */
+/*                              static utils methods                          */
+/* ************************************************************************** */
+
+// Reads the file and returns a string with the data red
+std::string HttpUtils::readFile(const std::string & path)
+{
+	std::ifstream file(path.c_str());
+	if (!file) {
+		throw std::runtime_error("Could not open file " + path); }
+	std::ostringstream content;
+	content << file.rdbuf();
+	file.close();
+	return (content.str());
+}
+
+// return true if the file is a directory
+bool HttpUtils::isDirectory(const std::string & path)
+{
+	struct stat s;
+	if (!stat(path.c_str(), &s))
+		return ((s.st_mode & S_IFMT) == S_IFDIR);
+	return (false);
+}
+
+// Returns true if a file exists
+bool HttpUtils::fileExists(const std::string & path)
+{
+	struct stat s;
+	return (stat(path.c_str(), &s) == 0 && S_ISREG(s.st_mode));
+}
 
 // Function that returns an HTTP error message according to an HTTP error code
 std::string httpStatusMessage(int code)

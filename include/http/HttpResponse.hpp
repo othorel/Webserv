@@ -34,4 +34,6 @@ class HttpResponse
 
 };
 
+std::string httpStatusMessage(int code);
+
 #endif

@@ -3,6 +3,10 @@
 #include <map>
 #include "../../include/http/HttpRequest.hpp"
 
+/* ************************************************************************** */
+/*                                   constructors                             */
+/* ************************************************************************** */
+
 HttpRequest::HttpRequest() :
 	_method(),
 	_target(),
@@ -28,8 +32,6 @@ HttpRequest::HttpRequest(const std::string & method,
 		_contentLength = std::atoi(getHeaderValue("content-length").c_str());
 }
 
-HttpRequest::~HttpRequest() {}
- 
 HttpRequest::HttpRequest(const HttpRequest & other) :
 	_method(other._method),
 	_target(other._target),
@@ -38,6 +40,10 @@ HttpRequest::HttpRequest(const HttpRequest & other) :
 	_body(other._body),
 	_contentLength(other._contentLength)
 {}
+
+/* ************************************************************************** */
+/*                                    operators                               */
+/* ************************************************************************** */
 
 HttpRequest & HttpRequest::operator=(const HttpRequest & other)
 {
@@ -51,6 +57,16 @@ HttpRequest & HttpRequest::operator=(const HttpRequest & other)
 	}
 	return (*this);
 }
+
+/* ************************************************************************** */
+/*                                   destructor                               */
+/* ************************************************************************** */
+
+HttpRequest::~HttpRequest() {}
+
+/* ************************************************************************** */
+/*                                    getters                                 */
+/* ************************************************************************** */
 
 const std::string & HttpRequest::getMethod() const
 {
@@ -85,15 +101,19 @@ std::string HttpRequest::getHeaderValue(const std::string & key) const
 	return (cit->second);
 }
 
+size_t HttpRequest::getBodyLength() const
+{
+	return (_contentLength);
+}
+
+/* ************************************************************************** */
+/*                            other public methods                            */
+/* ************************************************************************** */
+
 bool HttpRequest::hasHeader(const std::string & key) const
 {
 	std::map<std::string, std::string>::const_iterator cit = _headers.find(key);
 	return (cit != _headers.end());
-}
-
-size_t HttpRequest::getBodyLength() const
-{
-	return (_contentLength);
 }
 
 void HttpRequest::debug() const
