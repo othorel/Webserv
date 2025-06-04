@@ -6,23 +6,25 @@ Location::Location(
 	std::string path,
 	std::vector<std::string> methods,
 	std::string upload_path,
-	std::string cgi_extension,
 	std::string root,
 	std::string index,
 	std::string redirectPath,
 	int redirectCode,
 	bool hasRedirect,
-	bool autoindex
+	bool autoindex,
+	std::vector<std::string> cgiExtensions,
+	bool cookiesEnabled
 ) : _path(path),
 	_methods(methods),
 	_upload_path(upload_path),
-	_cgi_extension(cgi_extension),
 	_root(root),
 	_index(index),
 	_redirectPath(redirectPath),
 	_redirectCode(redirectCode),
 	_hasRedirect(hasRedirect),
-	_autoindex(autoindex)
+	_autoindex(autoindex),
+	_cgiExtensions(cgiExtensions),
+	_cookiesEnabled(cookiesEnabled)
 {}
 
 Location::~Location() {}
@@ -31,13 +33,14 @@ Location::Location(const Location& other) :
 	_path(other._path),
 	_methods(other._methods),
 	_upload_path(other._upload_path),
-	_cgi_extension(other._cgi_extension),
 	_root(other._root),
 	_index(other._index),
 	_redirectPath(other._redirectPath),
 	_redirectCode(other._redirectCode),
 	_hasRedirect(other._hasRedirect),
-	_autoindex(other._autoindex)
+	_autoindex(other._autoindex),
+	_cgiExtensions(other._cgiExtensions),
+	_cookiesEnabled(other._cookiesEnabled)
 {}
 
 Location& Location::operator=(const Location& other) {
@@ -45,13 +48,14 @@ Location& Location::operator=(const Location& other) {
 		_path = other._path;
 		_methods = other._methods;
 		_upload_path = other._upload_path;
-		_cgi_extension = other._cgi_extension;
 		_root = other._root;
 		_index = other._index;
 		_redirectPath = other._redirectPath;
 		_redirectCode = other._redirectCode;
 		_hasRedirect = other._hasRedirect;
 		_autoindex = other._autoindex;
+		_cgiExtensions = other._cgiExtensions;
+		_cookiesEnabled = other._cookiesEnabled;
 	}
 	return (*this);
 }
@@ -66,10 +70,6 @@ const std::vector<std::string>& Location::getMethods() const {
 
 const std::string& Location::getUploadPath() const {
 	return (_upload_path);
-}
-
-const std::string& Location::getCgiExtension() const {
-	return (_cgi_extension);
 }
 
 const std::string& Location::getRoot() const {
@@ -101,5 +101,13 @@ bool Location::isValidMethod(const std::string& method) const {
 }
 
 bool Location::hasCgi() const {
-	return (!_cgi_extension.empty());
+	return (!_cgiExtensions.empty());
+}
+
+const std::vector<std::string>& Location::getCgiExtensions() const {
+	return (_cgiExtensions);
+}
+
+bool Location::isCookiesEnabled() const {
+	return (_cookiesEnabled);
 }
