@@ -16,7 +16,7 @@ class ResponseBuilder
 		HttpResponse _httpResponse;
 
 		void buildRedirect(int code, const std::string & path);
-		void ResponseBuilder::buildError(int statusCode, const ServerConfig & server, const Location * location);
+		void buildError(int statusCode, const ServerConfig & server, const Location * location);
 		
 	public :
 
@@ -29,5 +29,10 @@ class ResponseBuilder
 		const HttpResponse & buildResponse(const HttpRequest& request, const ServerConfig & server);
 
 };
+
+static const Location & findMatchinglocation(
+		const std::map<std::string, Location> & locations,
+		const std::string & target);
+static std::string selectErrorPage(int statusCode, const ServerConfig & server, const Location * location);
 
 #endif

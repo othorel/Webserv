@@ -8,7 +8,7 @@
 
 class GetHandler : public AHandler
 {
-	private :
+	public : // a passer en protected
 	
 		GetHandler();
 		GetHandler(const GetHandler & other);

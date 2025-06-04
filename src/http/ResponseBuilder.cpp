@@ -3,6 +3,7 @@
 #include <fstream>
 #include <stdexcept>
 # include "../../include/http/HttpErrorException.hpp"
+# include "../../include/http/HttpUtils.hpp"
 #include "../../include/http/ResponseBuilder.hpp"
 #include "../../include/http/HttpRequest.hpp"
 #include "../../include/http/HttpResponse.hpp"
@@ -12,6 +13,9 @@
 // #include "../../include/http/handlers/PostHandler.hpp"
 // #include "../../include/http/handlers/DeleteHandler.hpp"
 // #include "../../include/http/handlers/CgiHandler.hpp"
+
+static AHandler * selectHandler(const HttpRequest& request, const Location & location);
+static AHandler * createGetHandler();
 
 /* ************************************************************************** */
 /*                                  constructors                              */
@@ -85,7 +89,7 @@ void ResponseBuilder::buildRedirect(int code, const std::string & path)
 	std::map<std::string, std::string> headers;
 	headers["Location"] = path;
 	headers["Content-Type"] = "text/html";
-	headers["Content-Length"] = numberToString(body.size());
+	headers["Content-Length"] = HttpUtils::numberToString(body.size());
 	_httpResponse = HttpResponse("HTTP/1.1", code, headers, body);
 }
 
@@ -94,14 +98,14 @@ void ResponseBuilder::buildError(int statusCode, const ServerConfig & server, co
 	std::string filePath = selectErrorPage(statusCode, server, location);
 	std::string body;
 	try {
-		body = readFile(filePath); }
+		body = HttpUtils::readFile(filePath); }
 	catch (const std::exception &e) {
 		// std::cerr << "Error page not found: " << e.what() << std::endl;
-		body = "<html><body><h1>" + numberToString(statusCode) + " " +
+		body = "<html><body><h1>" + HttpUtils::numberToString(statusCode) + " " +
 			httpStatusMessage(statusCode) + "</h1></body></html>"; }
 	std::map<std::string, std::string> headers;
 	headers["Content-Type"] = "text/html";
-	headers["Content-Length"] = numberToString(body.size());
+	headers["Content-Length"] = HttpUtils::numberToString(body.size());
 	_httpResponse = HttpResponse("HTTP/1.1", statusCode, headers, body);
 }
 
@@ -110,33 +114,6 @@ void ResponseBuilder::buildError(int statusCode, const ServerConfig & server, co
 /* ************************************************************************** */
 
 /* ****************************** utils ************************************* */
-
-std::string httpStatusMessage(int code);
-
-static std::string numberToString(size_t value)
-{
-	std::ostringstream oss;
-	oss << value;
-	return (oss.str());
-}
-
-static std::string numberToString(int value)
-{
-	std::ostringstream oss;
-	oss << value;
-	return (oss.str());
-}
-
-static std::string readFile(const std::string & path)
-{
-	std::ifstream file(path.c_str());
-	if (!file) {
-		throw std::runtime_error("Could not open file " + path); }
-	std::ostringstream content;
-	content << file.rdbuf();
-	file.close();
-	return (content.str());
-}
 
 static const Location & findMatchinglocation(
 		const std::map<std::string, Location> & locations,
@@ -158,19 +135,27 @@ static const Location & findMatchinglocation(
 	return (locations.find(bestMatch)->second);
 }
 
+// static std::string selectErrorPage(int statusCode, const ServerConfig & server, const Location * location)
+// {
+// 	if (location && location->hasErrorPage(statusCode)) {	// hasErrorCode à implementer
+// 		return (location->getErrorPage(statusCode)); }		// getErrorPage à implementer
+// 	if (server.hasErrorPage(statusCode)) {					// hasErrorCode à implementer
+// 		return (server.getErrorPage(statusCode)); }			// getErrorPage à implementer
+// 	return ("");
+// }
+
+// version for testing only
 static std::string selectErrorPage(int statusCode, const ServerConfig & server, const Location * location)
 {
-	if (location && location->hasErrorPage(statusCode)) {	// hasErrorCode à implementer
-		return (location->getErrorPage(statusCode)); }		// getErrorPage à implementer
-	if (server.hasErrorPage(statusCode)) {					// hasErrorCode à implementer
-		return (server.getErrorPage(statusCode)); }			// getErrorPage à implementer
+	(void)statusCode;
+	(void)server;
+	(void)location;
 	return ("");
 }
 
 /* *************************** handler factory ****************************** */
 
 typedef AHandler * (*HandlerFactoryFn)();
-
 static AHandler * selectHandler(const HttpRequest& request, const Location & location)
 {
 	// if (location.hasCgi())

@@ -3,6 +3,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include "../../../include/http/handlers/AHandler.hpp"
+#include "../../../include/http/HttpErrorException.hpp"
 
 /* ************************************************************************** */
 /*                                  destructor                                */
