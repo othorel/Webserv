@@ -6,13 +6,19 @@ ServerConfig::ServerConfig(
     std::string root,
     std::map<int, std::string> error_pages,
     std::map<std::string, Location> locations,
-    size_t client_max_body_size
+    size_t client_max_body_size,
+    std::string sessionName,
+	int sessionTimeout,
+	bool sessionEnable
 ) : _listen(listen),
     _server_names(server_names),
     _root(root),
     _error_pages(error_pages),
     _locations(locations),
-    _client_max_body_size(client_max_body_size)
+    _client_max_body_size(client_max_body_size),
+    _sessionName(sessionName),
+    _sessionTimeout(sessionTimeout),
+    _sessionEnable(sessionEnable)
 {}
 
 ServerConfig::~ServerConfig() {}
@@ -23,7 +29,10 @@ ServerConfig::ServerConfig(const ServerConfig& other) :
     _root(other._root),
     _error_pages(other._error_pages),
     _locations(other._locations),
-    _client_max_body_size(other._client_max_body_size)
+    _client_max_body_size(other._client_max_body_size),
+    _sessionName(other._sessionName),
+    _sessionTimeout(other._sessionTimeout),
+    _sessionEnable(other._sessionEnable)
 {}
 
 ServerConfig& ServerConfig::operator=(const ServerConfig& other) {
@@ -34,6 +43,9 @@ ServerConfig& ServerConfig::operator=(const ServerConfig& other) {
         _error_pages = other._error_pages;
         _locations = other._locations;
         _client_max_body_size = other._client_max_body_size;
+        _sessionName = other._sessionName;
+        _sessionTimeout = other._sessionTimeout;
+        _sessionEnable = other._sessionEnable;
     }
     return (*this);
 }
@@ -60,4 +72,16 @@ const std::map<std::string, Location>& ServerConfig::getLocations() const {
 
 size_t ServerConfig::getClientMaxBodySize() const {
     return (_client_max_body_size);
+}
+
+const std::string& ServerConfig::getSessionName() const {
+    return (_sessionName);
+}
+
+int ServerConfig::getSessionTimeout() const {
+    return (_sessionTimeout);
+}
+
+bool ServerConfig::isSessionEnable() const {
+    return (_sessionEnable);
 }

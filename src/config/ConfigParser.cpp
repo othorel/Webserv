@@ -75,7 +75,7 @@ void ConfigParser::validateListen(const std::string& ip, const std::string& port
 
 void ConfigParser::validateServerNames(const std::vector<std::string>& names) {
 	if (names.empty())
-		throw ValidationException("Server name list is empty");
+		std::cout << "No server_name defined (this server will act as the default)." << std::endl;
 }
 
 void ConfigParser::validateRoot(const std::string& root) {
@@ -154,24 +154,30 @@ void ConfigParser::parsefile(const std::string& filepath) {
 	std::string line;
 	bool inServer = false;
 	bool inLocation = false;
-
+	//server
 	std::pair<int, std::string> listen;
 	std::vector<std::string> server_names;
 	std::string root;
 	std::map<int, std::string> error_pages;
 	std::map<std::string, Location> locations;
-	size_t client_max_body_size;
-
+	size_t client_max_body_size = 1024 * 1024;
+	//bonus server
+	std::string session_name;
+	int session_timeout = 0;
+	bool session_enable = false;
+	//location
 	std::string loc_path;
 	std::vector<std::string> loc_methods;
 	std::string loc_upload_path;
-	std::string loc_cgi_extension;
 	std::string loc_root;
 	std::string loc_index;
 	std::string loc_redirect_path;
 	int loc_redirect_code = 0;
 	bool loc_has_redirect = false;
 	bool loc_autoindex = false;
+	//bonus location
+	std::vector<std::string> loc_cgi_extension;
+	bool loc_cookies_enabled = false;
 
 	while (std::getline(file, line)) {
 		line = trim(line);
@@ -186,18 +192,22 @@ void ConfigParser::parsefile(const std::string& filepath) {
 			root.clear();
 			error_pages.clear();
 			locations.clear();
+			client_max_body_size = 1024 * 1024;
+			session_name.clear();
+			session_timeout = 0;
+			session_enable = false;
 			continue;
 		}
 		if (line == "}") {
 			if (inLocation) {
 				if (loc_root.empty())
 					loc_root = root;
-				Location loc(loc_path, loc_methods, loc_upload_path, loc_cgi_extension, loc_root, loc_index, loc_redirect_path, loc_redirect_code, loc_has_redirect, loc_autoindex);
+				Location loc(loc_path, loc_methods, loc_upload_path, loc_root, loc_index, loc_redirect_path, loc_redirect_code, loc_has_redirect, loc_autoindex, loc_cgi_extension, loc_cookies_enabled);
 				locations[loc_path] = loc;
 				inLocation = false;
 			}
 			else if (inServer) {
-				ServerConfig server(listen, server_names, root, error_pages, locations, client_max_body_size);
+				ServerConfig server(listen, server_names, root, error_pages, locations, client_max_body_size, session_name, session_timeout, session_enable);
 				validateListen(server.getListen().second, toString(server.getListen().first));
 				validateServerNames(server.getServerNames());
 				validateRoot(server.getRoot());
@@ -226,13 +236,14 @@ void ConfigParser::parsefile(const std::string& filepath) {
 			iss >> keyword >> loc_path;
 			loc_methods.clear();
 			loc_upload_path.clear();
-			loc_cgi_extension.clear();
 			loc_root.clear();
 			loc_index.clear();
 			loc_redirect_path.clear();
+			loc_cgi_extension.clear();
 			loc_redirect_code = 0;
 			loc_has_redirect = false;
 			loc_autoindex = false;
+			loc_cookies_enabled = false;
 			continue;
 		}
 		std::istringstream iss(line);
@@ -244,7 +255,7 @@ void ConfigParser::parsefile(const std::string& filepath) {
 		if (!value.empty() && value[value.size() - 1] == ';')
   			value.erase(value.size() - 1, 1);
 		if (inLocation) {
-			if (key == "methods") {
+			if (key == "methods" || key == "allowed_methods") {
 				std::istringstream iss(value);
 				std::string method;
 				while (iss >> method)
@@ -254,7 +265,10 @@ void ConfigParser::parsefile(const std::string& filepath) {
 				loc_upload_path = value;
 			}
 			else if (key == "cgi_extension") {
-				loc_cgi_extension = value;
+				std::istringstream iss(value);
+				std::string ext;
+				while (iss >> ext)
+					loc_cgi_extension.push_back(ext);
 			}
 			else if (key == "root") {
 				loc_root = value;
@@ -270,6 +284,8 @@ void ConfigParser::parsefile(const std::string& filepath) {
 				iss >> loc_redirect_code >> loc_redirect_path;
 				loc_has_redirect = true;
 			}
+			else if (key == "cookies_enabled")
+				loc_cookies_enabled = (value == "on");
 		}
 		else if (inServer) {
 			if (key == "listen") {
@@ -309,6 +325,18 @@ void ConfigParser::parsefile(const std::string& filepath) {
 			}
 			else if (key == "client_max_body_size")
 				client_max_body_size = parseSizeWithUnit(value);
+			else if (key == "session_name")
+				session_name = value;
+			else if (key == "session_timeout") {
+				session_timeout = toInt(value);
+				if (session_timeout <= 0)
+					throw ValidationException("Invalid session timeout value: " + value);
+			}
+			else if (key == "session_enable") {
+				if (value != "on" && value != "off")
+					throw ValidationException("Session enable must be 'on' or 'off'");
+				session_enable = (value == "on");
+			}
 		}
 	}
 }
