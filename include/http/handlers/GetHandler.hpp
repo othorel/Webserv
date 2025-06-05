@@ -6,6 +6,8 @@
 # include "../HttpResponse.hpp"
 # include "../../config/Location.hpp"
 
+# define DEBUG 1
+
 class GetHandler : public AHandler
 {
 	public : // a passer en protected

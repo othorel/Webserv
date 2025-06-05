@@ -57,8 +57,16 @@ ResponseBuilder::~ResponseBuilder()
 /*                              response builder                              */
 /* ************************************************************************** */
 
+// debug
+#include <iostream>
+
 const HttpResponse & ResponseBuilder::buildResponse(const HttpRequest& request, const ServerConfig & server)
 {
+	if (DEBUG)
+	{
+		std::cout << "In responseBuilder" << std::endl;
+	}
+
 	AHandler * handler = NULL;
 	const Location * locationPtr = NULL;
 	const std::map<std::string, Location> & locations = server.getLocations();
@@ -68,6 +76,10 @@ const HttpResponse & ResponseBuilder::buildResponse(const HttpRequest& request, 
 			buildRedirect(locationPtr->getRedirectCode(), locationPtr->getRedirectPath());
 			return (_httpResponse); }
 		std::string method = request.getMethod();
+
+		if (DEBUG)
+			std::cout << "In buildResponse request method is : " << request.getMethod() << std::endl;
+
 		if (!locationPtr->isValidMethod(method)) {
 			throw HttpErrorException(405); }
 		try {
@@ -75,10 +87,19 @@ const HttpResponse & ResponseBuilder::buildResponse(const HttpRequest& request, 
 			_httpResponse = handler->handle(request, *locationPtr, server);
 			delete handler; }
 		catch (...) {
+			if (DEBUG)
+				std::cout << "In responseBuilder : J ai attrape une exception" << std::endl;
 			delete handler;
 			throw; }}
 	catch (const HttpErrorException & e) {
 		buildError(e.getStatusCode(), server, locationPtr); }
+
+	if (DEBUG) {
+		std::cout << "At the end of response Builder" << std::endl;
+		std ::cout << _httpResponse.toRawString() << "\n"  << std::endl;
+
+	}
+
 	return (_httpResponse);
 }
 
@@ -95,6 +116,11 @@ void ResponseBuilder::buildRedirect(int code, const std::string & path)
 
 void ResponseBuilder::buildError(int statusCode, const ServerConfig & server, const Location * location)
 {
+	if (DEBUG)
+	{
+		std::cout << "In buildError" << std::endl;
+	}
+
 	std::string filePath = selectErrorPage(statusCode, server, location);
 	std::string body;
 	try {
@@ -110,6 +136,16 @@ void ResponseBuilder::buildError(int statusCode, const ServerConfig & server, co
 }
 
 /* ************************************************************************** */
+/*                                   getters                                  */
+/* ************************************************************************** */
+
+const HttpResponse & ResponseBuilder::getHttpResponse() const
+{
+	return (_httpResponse);
+}
+
+
+/* ************************************************************************** */
 /*                            non member functions                            */
 /* ************************************************************************** */
 
@@ -119,6 +155,9 @@ static const Location & findMatchinglocation(
 		const std::map<std::string, Location> & locations,
 		const std::string & target)
 {
+	if (DEBUG)
+		std::cout << "In findMatchingLocation" << std::endl;
+
 	std::string bestMatch = "";
 	std::map<std::string, Location>::const_iterator it;
 	for (it = locations.begin(); it != locations.end(); ++it)
@@ -132,6 +171,10 @@ static const Location & findMatchinglocation(
 	}
 	if (bestMatch.empty())
 		throw HttpErrorException(404);
+	
+	if (DEBUG)
+		std::cout << "In findMatchingLocation found location path : " << locations.find(bestMatch)->second.getPath() << std::endl;
+	
 	return (locations.find(bestMatch)->second);
 }
 
@@ -158,8 +201,13 @@ static std::string selectErrorPage(int statusCode, const ServerConfig & server, 
 typedef AHandler * (*HandlerFactoryFn)();
 static AHandler * selectHandler(const HttpRequest& request, const Location & location)
 {
+	if (DEBUG)
+		std::cout << "In selectHandler" << std::endl;
+
+
 	// if (location.hasCgi())
 	// 	return (new CgiHandler());
+
 
 	static std::map<std::string, HandlerFactoryFn> handlerFactories;
 	if (handlerFactories.empty()) {
