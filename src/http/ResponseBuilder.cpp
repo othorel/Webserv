@@ -8,6 +8,7 @@
 #include "../../include/http/HttpRequest.hpp"
 #include "../../include/http/HttpResponse.hpp"
 #include "../../include/config/Location.hpp"
+#include "../../include/config/ServerConfig.hpp"
 # include "../../include/http/handlers/AHandler.hpp"
 # include "../../include/http/handlers/GetHandler.hpp"
 // #include "../../include/http/handlers/PostHandler.hpp"
@@ -25,9 +26,9 @@ ResponseBuilder::ResponseBuilder() :
 	_httpResponse()
 {}
 
-ResponseBuilder::ResponseBuilder(const HttpRequest& request, const ServerConfig & server)
+ResponseBuilder::ResponseBuilder(const HttpRequest& request, std::vector<ServerConfig> serverVector)
 {
-	_httpResponse = buildResponse(request, server);
+	_httpResponse = buildResponse(request, serverVector);
 }
 
 ResponseBuilder::ResponseBuilder(const ResponseBuilder & other) :
@@ -60,7 +61,7 @@ ResponseBuilder::~ResponseBuilder()
 // debug
 #include <iostream>
 
-const HttpResponse & ResponseBuilder::buildResponse(const HttpRequest& request, const ServerConfig & server)
+const HttpResponse & ResponseBuilder::buildResponse(const HttpRequest& request, const std::vector<ServerConfig> serverVector)
 {
 	if (DEBUG)
 	{
@@ -69,6 +70,7 @@ const HttpResponse & ResponseBuilder::buildResponse(const HttpRequest& request, 
 
 	AHandler * handler = NULL;
 	const Location * locationPtr = NULL;
+	const ServerConfig server = selectServer(request, serverVector);
 	const std::map<std::string, Location> & locations = server.getLocations();
 	try {
 		locationPtr = &findMatchinglocation(locations, request.getTarget());
@@ -150,6 +152,11 @@ const HttpResponse & ResponseBuilder::getHttpResponse() const
 /* ************************************************************************** */
 
 /* ****************************** utils ************************************* */
+
+static const ServerConfig & selectServer(const HttpRequest& request, const std::vector<ServerConfig> serverVector)
+{
+	
+}
 
 static const Location & findMatchinglocation(
 		const std::map<std::string, Location> & locations,

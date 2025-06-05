@@ -80,7 +80,7 @@ HttpResponse GetHandler::handle(const HttpRequest & request, const Location & lo
 /* ************************************************************************** */
 
 // Uncomment main and includes and compile with:
-// // g++ src/http/HttpResponse.cpp src/http/HttpUtils.cpp src/http/ResponseBuilder.cpp src/http/handlers/AHandler.cpp src/http/handlers/GetHandler.cpp src/config/Location.cpp src/config/ServerConfig.cpp src/http/HttpRequest.cpp 
+// g++ src/http/HttpResponse.cpp src/http/HttpUtils.cpp src/http/ResponseBuilder.cpp src/http/handlers/AHandler.cpp src/http/handlers/GetHandler.cpp src/config/Location.cpp src/config/ServerConfig.cpp src/http/HttpRequest.cpp 
 // #include <iostream>
 // #include "../../../include/http/HttpRequest.hpp"
 // #include "../../../include/http/ResponseBuilder.hpp"

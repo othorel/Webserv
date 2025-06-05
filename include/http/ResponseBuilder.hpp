@@ -21,12 +21,12 @@ class ResponseBuilder
 	public :
 
 		ResponseBuilder();
-		ResponseBuilder(const HttpRequest& request, const ServerConfig & server);
+		ResponseBuilder(const HttpRequest& request, std::vector<ServerConfig> serverVector);
 		ResponseBuilder(const ResponseBuilder & other);
 		ResponseBuilder & operator=(const ResponseBuilder & other);
 		~ResponseBuilder();
 
-		const HttpResponse & buildResponse(const HttpRequest& request, const ServerConfig & server);
+		const HttpResponse & buildResponse(const HttpRequest& request, std::vector<ServerConfig> serverVector);
 		const HttpResponse & getHttpResponse() const;
 
 };
