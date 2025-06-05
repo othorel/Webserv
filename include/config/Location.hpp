@@ -4,6 +4,8 @@
 # include <string>
 # include <vector>
 # include <algorithm>
+# include <map>
+# include <stdexcept>
 
 class Location {
 
@@ -11,6 +13,7 @@ class Location {
 	
 		std::string _path;
 		std::vector<std::string> _methods;
+		std::map<int, std::string> _error_pages;
 		std::string _upload_path;
 		std::string _root;
 		std::string _index;
@@ -28,6 +31,7 @@ class Location {
 		Location(
 			std::string path,
 			std::vector<std::string> methods,
+			std::map<int, std::string> error_pages,
 			std::string upload_path,
 			std::string root,
 			std::string index,
@@ -54,6 +58,9 @@ class Location {
 		bool isAutoIndex() const;
 		bool isValidMethod(const std::string& method) const;
 		bool hasCgi() const;
+		const std::map<int, std::string>& getErrorPages() const;
+		bool hasErrorPage(int code) const;
+		const std::string& getErrorPage(int code) const;
 		//bonus
 		const std::vector<std::string>& getCgiExtensions() const;
 		bool isCookiesEnabled() const;

@@ -4,6 +4,7 @@
 # include <string>
 # include <map>
 # include <cstring>
+# include <stdexcept>
 # include "Location.hpp"
 
 class ServerConfig {
@@ -44,6 +45,8 @@ class ServerConfig {
 		const std::map<int, std::string>& getErrorPages() const;
 		const std::map<std::string, Location>& getLocations() const;
 		size_t getClientMaxBodySize() const;
+		bool hasErrorPage(int code) const;
+		const std::string& getErrorPage(int code) const;
 		//bonus
 		const std::string& getSessionName() const;
 		int getSessionTimeout() const;

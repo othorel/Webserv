@@ -170,6 +170,7 @@ void ConfigParser::parsefile(const std::string& filepath) {
 	//location
 	std::string loc_path;
 	std::vector<std::string> loc_methods;
+	std::map<int, std::string> loc_error_pages;
 	std::string loc_upload_path;
 	std::string loc_root;
 	std::string loc_index;
@@ -217,7 +218,7 @@ void ConfigParser::parsefile(const std::string& filepath) {
 			if (inLocation) {
 				if (loc_root.empty())
 					loc_root = root;
-				Location loc(loc_path, loc_methods, loc_upload_path, loc_root, loc_index, loc_redirect_path, loc_redirect_code, loc_has_redirect, loc_autoindex, loc_cgi_extension, loc_cookies_enabled);
+				Location loc(loc_path, loc_methods, loc_error_pages, loc_upload_path, loc_root, loc_index, loc_redirect_path, loc_redirect_code, loc_has_redirect, loc_autoindex, loc_cgi_extension, loc_cookies_enabled);
 				locations[loc_path] = loc;
 				inLocation = false;
 			}
@@ -253,6 +254,7 @@ void ConfigParser::parsefile(const std::string& filepath) {
 			loc_index.clear();
 			loc_redirect_path.clear();
 			loc_cgi_extension.clear();
+			loc_error_pages.clear();
 			loc_redirect_code = 0;
 			loc_has_redirect = false;
 			loc_autoindex = false;
@@ -304,6 +306,16 @@ void ConfigParser::parsefile(const std::string& filepath) {
 			}
 			else if (key == "cookies_enabled")
 				loc_cookies_enabled = (value == "on");
+			else if (key == "error_page") {
+				std::istringstream iss(value);
+				int code;
+				std::string path;
+				if (!(iss >> code))
+					throw ParseException("Missing error code in error_page directive");
+				if (!(iss >> path))
+					throw ParseException("Missing path in error_page directive for code: " + toString(code));
+				error_pages[code] = path;
+			}
 		}
 		else if (inServer) {
 			if (key == "listen") {
@@ -335,7 +347,10 @@ void ConfigParser::parsefile(const std::string& filepath) {
 				std::istringstream iss(value);
 				int code;
 				std::string path;
-				iss >> code >> path;
+				if (!(iss >> code))
+					throw ParseException("Missing error code in error_page directive");
+				if (!(iss >> path))
+					throw ParseException("Missing path in error_page directive for code: " + toString(code));
 				error_pages[code] = path;
 			}
 			else if (key == "client_max_body_size")
