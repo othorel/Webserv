@@ -5,6 +5,7 @@ Location::Location() {}
 Location::Location(
 	std::string path,
 	std::vector<std::string> methods,
+	std::map<int, std::string> error_pages,
 	std::string upload_path,
 	std::string root,
 	std::string index,
@@ -16,6 +17,7 @@ Location::Location(
 	bool cookiesEnabled
 ) : _path(path),
 	_methods(methods),
+	_error_pages(error_pages),
 	_upload_path(upload_path),
 	_root(root),
 	_index(index),
@@ -32,6 +34,7 @@ Location::~Location() {}
 Location::Location(const Location& other) : 
 	_path(other._path),
 	_methods(other._methods),
+	_error_pages(other._error_pages),
 	_upload_path(other._upload_path),
 	_root(other._root),
 	_index(other._index),
@@ -47,6 +50,7 @@ Location& Location::operator=(const Location& other) {
 	if (this != &other) {
 		_path = other._path;
 		_methods = other._methods;
+		_error_pages = other._error_pages;
 		_upload_path = other._upload_path;
 		_root = other._root;
 		_index = other._index;
@@ -110,4 +114,19 @@ const std::vector<std::string>& Location::getCgiExtensions() const {
 
 bool Location::isCookiesEnabled() const {
 	return (_cookiesEnabled);
+}
+
+const std::map<int, std::string>& Location::getErrorPages() const {
+    return (_error_pages);
+}
+
+bool Location::hasErrorPage(int code) const {
+	return (_error_pages.find(code) != _error_pages.end());
+}
+
+const std::string& Location::getErrorPage(int code) const {
+	std::map<int, std::string>::const_iterator it = _error_pages.find(code);
+	if (it == _error_pages.end())
+		throw std::out_of_range("No error page defined for this code");
+	return (it->second);
 }
