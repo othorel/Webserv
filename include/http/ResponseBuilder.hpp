@@ -27,6 +27,7 @@ class ResponseBuilder
 		~ResponseBuilder();
 
 		const HttpResponse & buildResponse(const HttpRequest& request, const ServerConfig & server);
+		const HttpResponse & getHttpResponse() const;
 
 };
 

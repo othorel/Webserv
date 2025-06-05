@@ -34,10 +34,25 @@ GetHandler::~GetHandler()
 /*                                      handler                               */
 /* ************************************************************************** */
 
+//debug
+# include <iostream>
+
+
 HttpResponse GetHandler::handle(const HttpRequest & request, const Location & location , const ServerConfig & server)
 {
 	std::string path = selectRoot(server, location) + request.getTarget();
+
+	if (DEBUG)
+	{
+		std::cout << "In handle" << std::endl;
+		std::cout << "SelectRoot : " << selectRoot(server, location) << std::endl;
+		std::cout << "requestTarget : " << request.getTarget() << std::endl;
+		std::cout << "Path : " << path << std::endl << std::endl;
+	}
+
 	if (!HttpUtils::fileExists(path)) {
+		if (DEBUG)
+			std::cout << "In handle : file does not exist" << std::endl;
 		throw HttpErrorException(404); }
 	if (HttpUtils::isDirectory(path)) {
 		std::string indexFile = createIndexPath(path, location);
@@ -65,9 +80,10 @@ HttpResponse GetHandler::handle(const HttpRequest & request, const Location & lo
 /* ************************************************************************** */
 
 // Uncomment main and includes and compile with:
-// g++ HttpResponse.cpp HttpUtils.cpp ResponseBuilder.cpp handlers/AHandler.cpp handlers/GetHandler.cpp ../config/Location.cpp ../config/ServerConfig.cpp HttpRequest.cpp 
+// g++ src/http/HttpResponse.cpp src/http/HttpUtils.cpp src/http/ResponseBuilder.cpp src/http/handlers/AHandler.cpp src/http/handlers/GetHandler.cpp src/config/Location.cpp src/config/ServerConfig.cpp src/http/HttpRequest.cpp 
 #include <iostream>
 #include "../../../include/http/HttpRequest.hpp"
+#include "../../../include/http/ResponseBuilder.hpp"
 #include "../../../include/config/Location.hpp"
 #include "../../../include/config/ServerConfig.hpp"
 
@@ -76,12 +92,14 @@ int main()
 	try {
 		// Simule une requête GET sur "/"
 		HttpRequest request(
-			"GET",
-			"/", // Target
+			"ZEUB",
+			"/index.html", // Target
 			"HTTP/1.1",
 			std::map<std::string, std::string>(),
 			""
 		);
+
+		std::cout << "In main : after HttpRequest." << std::endl;
 
 		// Crée un Location avec autoindex actif, root vers ./www
 		Location location(
@@ -97,6 +115,8 @@ int main()
 			std::vector<std::string>(),     // cgiExtensions
 			false                           // cookiesEnabled
 		);
+
+		std::cout << "In main : after Location." << std::endl;
 
 		// Crée la map de locations
 		std::map<std::string, Location> locations;
@@ -115,17 +135,15 @@ int main()
 			false                                        // sessionEnable
 		);
 
-		// Appelle le handler
-		GetHandler handler;
-		HttpResponse response = handler.handle(request, location, serverConfig);
+		std::cout << "In main : after ServerConfig." << std::endl;
 
-		// Affiche la réponse HTTP
-		std::cout << "Status: " << response.getStatusCode() << std::endl;
-		std::cout << "Headers:\n";
-		for (std::map<std::string, std::string>::const_iterator it = response.getHeaders().begin();
-			 it != response.getHeaders().end(); ++it)
-			std::cout << it->first << ": " << it->second << std::endl;
-		std::cout << "\nBody:\n" << response.getBody() << std::endl;
+		// Appelle Response Builder
+		ResponseBuilder response(request, serverConfig);
+
+		std::cout << "In main : after responseBuilder\n" << std::endl;
+
+		std::cout << response.getHttpResponse().toRawString() << std::endl;
+
 	}
 	catch (const HttpErrorException &e) {
 		std::cerr << "Error: " << e.getStatusCode() << " " << e.what() << std::endl;
