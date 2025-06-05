@@ -4,6 +4,8 @@
 // #include "../include/config/ConfigParser.hpp"
 // #include "../include/config/ServerConfig.hpp"
 // #include "../include/config/Location.hpp"
+// #include "../include/http/HttpRequest.hpp"
+// #include "../include/http/ResponseBuilder.hpp"
 
 // // Fonction d'affichage d'une configuration serveur
 // void printServerConfig(const ServerConfig& server, size_t index) {
@@ -94,6 +96,14 @@
 //         std::cerr << e.what() << std::endl;
 //         return 1;
 //     }
-
+//     HttpRequest request(
+// 			"ZEUB",
+// 			"/index.html", // Target
+// 			"HTTP/1.1",
+// 			std::map<std::string, std::string>(),
+// 			""
+// 		);
+//     ResponseBuilder response(request, parser);
+//     std::cout << response.getHttpResponse().toRawString() << std::endl;
 //     return 0;
 // }

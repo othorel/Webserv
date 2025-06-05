@@ -8,18 +8,21 @@ SRC     := $(SRCDIR)/config/ConfigParser.cpp    \
 		   $(SRCDIR)/config/ServerConfig.cpp    \
 		   $(SRCDIR)/http/HttpRequest.cpp       \
 		   $(SRCDIR)/http/HttpReponse.cpp       \
-		   $(SRCDIR)/http/HttpStatusMessage.cpp \
+		   $(SRCDIR)/http/HttpUtils.cpp         \
 		   $(SRCDIR)/http/RequestParser.cpp     \
-		   $(SRCDIR)/http/RequestParser.cpp     \
-		   $(SRCDIR)/server/Server.cpp          \
-		   $(SRCDIR)/server/PollManager.cpp     \
-		   $(SRCDIR)/server/Connexion.cpp       \
+		   $(SRCDIR)/http/ResponseBuilder.cpp   \
+		   $(SRCDIR)/http/handlers/AHandler.cpp   \
+		   $(SRCDIR)/http/handlers/GetHandler.cpp   \
+		   $(SRCDIR)/http/handlers/GetHandler.cpp   \
+		#    $(SRCDIR)/server/Server.cpp          \
+		#    $(SRCDIR)/server/PollManager.cpp     \
+		#    $(SRCDIR)/server/Connexion.cpp       \
 		   
 		
 OBJ     := $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRC))
 
 CXX     := c++
-CXXFLAGS := -Wall -Wextra -Werror -std=c++98 -I$(INCDIR)
+CXXFLAGS := -Wall -Wextra -Werror -I$(INCDIR)
 
 GREEN   := \033[1;32m
 CYAN    := \033[1;36m
