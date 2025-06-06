@@ -14,7 +14,7 @@ Server::Server()
 	_pollManager = NULL;
 }
 
-Server::Server(const ConfigParser & servconfig)
+Server::Server(const ConfigParser & servconfig) : _pollManager(new PollManager())
 {
 	std::vector<ServerConfig>::const_iterator	it = servconfig.getServerConfigVector().begin();
 	while (it != servconfig.getServerConfigVector().end())
@@ -63,7 +63,6 @@ Server & Server::operator=(const Server & other)
 
 void	Server::StartEventLoop()
 {
-
 	while (1)
 	{
 		_pollManager->pollExec(-1);
@@ -159,6 +158,7 @@ void	Server::Setup()
 	std::vector<int>::iterator	itFd = _fdSocketVect.begin();
 	for (; itFd != _fdSocketVect.end(); itFd++)
 		_pollManager->addSocket(*itFd, POLLIN);
+	
 }
 
 void	Server::addPair(std::pair<int, std::string> listen)
@@ -166,5 +166,7 @@ void	Server::addPair(std::pair<int, std::string> listen)
  	std::vector<std::pair<int, std::string> >::iterator	it = std::find(_listenTab.begin(), _listenTab.end(), listen);
 
 	if (it == _listenTab.end())
+	{
 		_listenTab.push_back(listen);
+	}
 }
