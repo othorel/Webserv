@@ -35,5 +35,6 @@ static const Location & findMatchinglocation(
 		const std::map<std::string, Location> & locations,
 		const std::string & target);
 static std::string selectErrorPage(int statusCode, const ServerConfig & server, const Location * location);
+static const ServerConfig & selectServer(const HttpRequest& request, const std::vector<ServerConfig> & serverVector);
 
 #endif

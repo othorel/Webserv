@@ -153,20 +153,21 @@ const HttpResponse & ResponseBuilder::getHttpResponse() const
 
 /* ****************************** utils ************************************* */
 
-static const ServerConfig & selectServer(const HttpRequest& request, const std::vector<ServerConfig> serverVector)
+static const ServerConfig & selectServer(const HttpRequest& request, const std::vector<ServerConfig> & serverVector)
 {
-	std::map<std::string, std::string> headers = request.getHeaders();
-	std::map<std::string, std::string>::const_iterator headersCit = headers.find("host"); 
-	if (headersCit != headers.end()) {
-		std::vector<ServerConfig>::const_iterator serverCit = serverVector.begin();
-		for (; serverCit != serverVector.end(); serverCit++) {
-			if (serverCit->hasServerName(headersCit->second)) {
-				return (*serverCit);
-			}
-		}
-
-	}
-
+	(void)request;
+	(void)serverVector;
+	// std::map<std::string, std::string> headers = request.getHeaders();
+	// std::map<std::string, std::string>::const_iterator headersCit = headers.find("host"); 
+	// if (headersCit != headers.end()) {
+	// 	std::vector<ServerConfig>::const_iterator serverCit = serverVector.begin();
+	// 	for (; serverCit != serverVector.end(); serverCit++) {
+	// 		if (serverCit->hasServerName(headersCit->second)) {
+	// 			return (*serverCit); }}}
+	// if (serverVector.empty()) {
+	// 	throw std::runtime_error("No server available to select");
+	// }
+	return (serverVector[0]);
 }
 
 static const Location & findMatchinglocation(
