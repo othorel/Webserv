@@ -81,94 +81,94 @@ HttpResponse GetHandler::handle(const HttpRequest & request, const Location & lo
 
 // Uncomment main and includes and compile with:
 // g++ src/http/HttpResponse.cpp src/http/HttpUtils.cpp src/http/ResponseBuilder.cpp src/http/handlers/AHandler.cpp src/http/handlers/GetHandler.cpp src/config/Location.cpp src/config/ServerConfig.cpp src/http/HttpRequest.cpp 
-#include <iostream>
-#include <map>
-#include "../../../include/http/HttpRequest.hpp"
-#include "../../../include/http/ResponseBuilder.hpp"
-#include "../../../include/config/Location.hpp"
-#include "../../../include/config/ServerConfig.hpp"
+// #include <iostream>
+// #include <map>
+// #include "../../../include/http/HttpRequest.hpp"
+// #include "../../../include/http/ResponseBuilder.hpp"
+// #include "../../../include/config/Location.hpp"
+// #include "../../../include/config/ServerConfig.hpp"
 
-int main()
-{
-	try {
-		// Simule une requête GET sur "/"
-		HttpRequest request(
-			"GET",
-			"/index.html", // Target
-			"HTTP/1.1",
-			std::map<std::string, std::string>(),
-			""
-		);
+// int main()
+// {
+// 	try {
+// 		// Simule une requête GET sur "/"
+// 		HttpRequest request(
+// 			"GET",
+// 			"/index.html", // Target
+// 			"HTTP/1.1",
+// 			std::map<std::string, std::string>(),
+// 			""
+// 		);
 
-		std::cout << "In main : after HttpRequest." << std::endl;
+// 		std::cout << "In main : after HttpRequest." << std::endl;
 		
-		std::map<int, std::string> error_pages;
+// 		std::map<int, std::string> error_pages;
 
 
-		// Crée un Location avec autoindex actif, root vers ./www
-		Location location(
-			"/Users/christophedonnat/STUDENT/Webserv",                            // path
-			std::vector<std::string>(1, "GET"), // allowed methods
-			error_pages,
-			"",                             // upload_path
-			"www",                          // root (assure-toi que www/index.html existe)
-			"",                             // index (vide pour ce test)
-			"",                             // redirectPath
-			0,                              // redirectCode
-			false,                          // hasRedirect
-			true,                           // autoindex
-			std::vector<std::string>(),     // cgiExtensions
-			false                           // cookiesEnabled
-		);
+// 		// Crée un Location avec autoindex actif, root vers ./www
+// 		Location location(
+// 			"/Users/christophedonnat/STUDENT/Webserv",                            // path
+// 			std::vector<std::string>(1, "GET"), // allowed methods
+// 			error_pages,
+// 			"",                             // upload_path
+// 			"www",                          // root (assure-toi que www/index.html existe)
+// 			"",                             // index (vide pour ce test)
+// 			"",                             // redirectPath
+// 			0,                              // redirectCode
+// 			false,                          // hasRedirect
+// 			true,                           // autoindex
+// 			std::vector<std::string>(),     // cgiExtensions
+// 			false                           // cookiesEnabled
+// 		);
 
-			// std::string path,
-			// std::vector<std::string> methods,
-			// std::map<int, std::string> error_pages,
-			// std::string upload_path,
-			// std::string root,
-			// std::string index,
-			// std::string redirectPath,
-			// int redirectCode,
-			// bool hasRedirect,
-			// bool autoindex,
-			// std::vector<std::string> cgiExtensions,
-			// bool cookiesEnabled
+// 			// std::string path,
+// 			// std::vector<std::string> methods,
+// 			// std::map<int, std::string> error_pages,
+// 			// std::string upload_path,
+// 			// std::string root,
+// 			// std::string index,
+// 			// std::string redirectPath,
+// 			// int redirectCode,
+// 			// bool hasRedirect,
+// 			// bool autoindex,
+// 			// std::vector<std::string> cgiExtensions,
+// 			// bool cookiesEnabled
 
-		std::cout << "In main : after Location." << std::endl;
+// 		std::cout << "In main : after Location." << std::endl;
 
-		// Crée la map de locations
-		std::map<std::string, Location> locations;
-		locations["/"] = location;
+// 		// Crée la map de locations
+// 		std::map<std::string, Location> locations;
+// 		locations["/"] = location;
 
-		// Crée le ServerConfig
-		ServerConfig serverConfig(
-			std::make_pair(8080, "127.0.0.1"),           // listen
-			std::vector<std::string>(1, "localhost"),    // server_names
-			"www",                                       // root
-			std::map<int, std::string>(),                // error_pages
-			locations,                                   // locations
-			1024,                                        // client_max_body_size
-			"SESSIONID",                                 // sessionName
-			3600,                                        // sessionTimeout
-			false                                        // sessionEnable
-		);
+// 		// Crée le ServerConfig
+// 		ServerConfig serverConfig(
+// 			std::make_pair(8080, "127.0.0.1"),           // listen
+// 			std::vector<std::string>(1, "localhost"),    // server_names
+// 			"www",                                       // root
+// 			std::map<int, std::string>(),                // error_pages
+// 			locations,                                   // locations
+// 			1024,                                        // client_max_body_size
+// 			"SESSIONID",                                 // sessionName
+// 			3600,                                        // sessionTimeout
+// 			false                                        // sessionEnable
+// 		);
 
-		// Cree le vector de serverConfig
-		std::vector<ServerConfig> serverConfigVector;
-		serverConfigVector.push_back(serverConfig);
+// 		// Cree le vector de serverConfig
+// 		std::vector<ServerConfig> serverConfigVector;
+// 		serverConfigVector.push_back(serverConfig);
 
-		std::cout << "In main : after ServerConfig." << std::endl;
+// 		std::cout << "In main : after ServerConfig." << std::endl;
 
-		// Appelle Response Builder
-		ResponseBuilder response(request, serverConfigVector);
+// 		// Appelle Response Builder
+// 		ResponseBuilder response(request, serverConfigVector);
 
-		std::cout << "In main : after responseBuilder\n" << std::endl;
+// 		std::cout << "In main : after responseBuilder\n" << std::endl;
 
-		std::cout << response.getHttpResponse().toRawString() << std::endl;
+// 		std::cout << response.getHttpResponse().toRawString() << std::endl;
 
-	}
-	catch (const HttpErrorException &e) {
-		std::cerr << "Error: " << e.getStatusCode() << " " << e.what() << std::endl;
-	}
-}
+// 	}
+// 	catch (const HttpErrorException &e) {
+// 		std::cerr << "Error: " << e.getStatusCode() << " " << e.what() << std::endl;
+// 	}
+// }
 
