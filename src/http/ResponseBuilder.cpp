@@ -155,7 +155,18 @@ const HttpResponse & ResponseBuilder::getHttpResponse() const
 
 static const ServerConfig & selectServer(const HttpRequest& request, const std::vector<ServerConfig> serverVector)
 {
-	
+	std::map<std::string, std::string> headers = request.getHeaders();
+	std::map<std::string, std::string>::const_iterator headersCit = headers.find("host"); 
+	if (headersCit != headers.end()) {
+		std::vector<ServerConfig>::const_iterator serverCit = serverVector.begin();
+		for (; serverCit != serverVector.end(); serverCit++) {
+			if (serverCit->hasServerName(headersCit->second)) {
+				return (*serverCit);
+			}
+		}
+
+	}
+
 }
 
 static const Location & findMatchinglocation(
