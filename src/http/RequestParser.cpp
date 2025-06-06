@@ -177,7 +177,7 @@ static std::string extractBody(std::string & buffer, int contentLength)
 		body = "";
 	}
 	else {
-		if (buffer.length() < contentLength)
+		if (buffer.length() < static_cast<size_t>(contentLength))
 			throw HttpErrorException(400);
 		body = buffer.substr(0, contentLength);
 		buffer.erase(0, contentLength);
@@ -219,51 +219,51 @@ static std::string extractLineAndRemove(std::string & input)
 // Uncomment main then compile with:
 // g++ HttpRequest.cpp RequestParser.cpp httpUtils.cpp
 
-int main()
-{
-	std::string testCases[] = {
-		"GET /index.html HTTP/1.1\r\n"
-		"Host: localhost\r\n"
-		"Connection: keep-alive\r\n"
-		"\r\n",
+// int main()
+// {
+// 	std::string testCases[] = {
+// 		"GET /index.html HTTP/1.1\r\n"
+// 		"Host: localhost\r\n"
+// 		"Connection: keep-alive\r\n"
+// 		"\r\n",
 
-		"POST /submit HTTP/1.1\r\n"
-		"Host: localhost\r\n"
-		"Content-Length: 11\r\n"
-		"Content-Type: text/plain\r\n"
-		"\r\n"
-		"Hello World",
+// 		"POST /submit HTTP/1.1\r\n"
+// 		"Host: localhost\r\n"
+// 		"Content-Length: 11\r\n"
+// 		"Content-Type: text/plain\r\n"
+// 		"\r\n"
+// 		"Hello World",
 
-		"GET / HTTP/1.1\r\n"
-		"Content-Length: 0\r\n"
-		"\r\n",
+// 		"GET / HTTP/1.1\r\n"
+// 		"Content-Length: 0\r\n"
+// 		"\r\n",
 
-		"POST / HTTP/1.1\r\n"
-		"Host: localhost\r\n"
-		"Content-Length: abc\r\n"
-		"\r\n"
-		"hello",
+// 		"POST / HTTP/1.1\r\n"
+// 		"Host: localhost\r\n"
+// 		"Content-Length: abc\r\n"
+// 		"\r\n"
+// 		"hello",
 
-		"POST / HTTP/1.1\r\n"
-		"Host: localhost\r\n"
-		"Content-Length: 20\r\n"
-		"\r\n"
-		"short"
-	};
+// 		"POST / HTTP/1.1\r\n"
+// 		"Host: localhost\r\n"
+// 		"Content-Length: 20\r\n"
+// 		"\r\n"
+// 		"short"
+// 	};
 
-	for (size_t i = 0; i < sizeof(testCases) / sizeof(testCases[0]); ++i) {
-		std::cout << "\n==============================" << std::endl;
-		std::cout << "Test Case #" << i + 1 << std::endl;
-		std::cout << "==============================\n" << std::endl;
+// 	for (size_t i = 0; i < sizeof(testCases) / sizeof(testCases[0]); ++i) {
+// 		std::cout << "\n==============================" << std::endl;
+// 		std::cout << "Test Case #" << i + 1 << std::endl;
+// 		std::cout << "==============================\n" << std::endl;
 
-		try {
-			RequestParser parser(testCases[i]);
-			parser.getHttpRequest().debug();
-		}
-		catch (const HttpErrorException & e) {
-			std::cerr << "InvalidRequestException (" << e.getStatusCode() << ") : "
-					  << e.what() << std::endl;
-		}
-	}
-	return 0;
-}
+// 		try {
+// 			RequestParser parser(testCases[i]);
+// 			parser.getHttpRequest().debug();
+// 		}
+// 		catch (const HttpErrorException & e) {
+// 			std::cerr << "InvalidRequestException (" << e.getStatusCode() << ") : "
+// 					  << e.what() << std::endl;
+// 		}
+// 	}
+// 	return 0;
+// }

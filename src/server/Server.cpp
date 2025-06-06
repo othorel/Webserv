@@ -3,7 +3,7 @@
 #include "../../include/server/PollManager.hpp"
 #include "../../include/server/Connexion.hpp"
 #include "../../include/config/ServerConfig.hpp"
-// #include "../../include/config/ConfigParser.hpp"
+#include "../../include/config/ConfigParser.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 ///                               CANONIC +                                  ///
@@ -14,16 +14,16 @@ Server::Server()
 	_pollManager = NULL;
 }
 
-// Server::Server(const ConfigParser & servconfig)
-// {
-// 	std::vector<ServerConfig>::const_iterator	it = servconfig.getServerConfigVector().begin();
-// 	while (it != servconfig.getServerConfigVector().end())
-// 	{
-// 		addPair(it->getListen());
-// 		it++;
-// 	}
-// 	Setup();
-// }
+Server::Server(const ConfigParser & servconfig)
+{
+	std::vector<ServerConfig>::const_iterator	it = servconfig.getServerConfigVector().begin();
+	while (it != servconfig.getServerConfigVector().end())
+	{
+		addPair(it->getListen());
+		it++;
+	}
+	Setup();
+}
 
 Server::Server(const std::string str) : _pollManager(new PollManager())
 {
@@ -50,7 +50,6 @@ Server & Server::operator=(const Server & other)
 {
 	if (this != &other)
 	{
-		// this->_fdPollVect = other._fdPollVect;
 		this->_pollManager = other._pollManager;
 		this->_fdSocketVect = other._fdSocketVect;
 		this->_listenTab = other._listenTab;
