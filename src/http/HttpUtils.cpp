@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <map>
+#include <unistd.h>
 #include "../../include/http/HttpUtils.hpp"
 
 /* ************************************************************************** */
@@ -22,6 +23,20 @@ std::string HttpUtils::readFile(const std::string & path)
 	content << file.rdbuf();
 	file.close();
 	return (content.str());
+}
+
+// Write data in a file
+void HttpUtils::writeFile(const std::string & filename, const std::string & data, size_t length)
+{
+	if (length > data.size()) {
+		throw std::runtime_error("Invalid data size. Could not write in file " + filename); }
+	std::ofstream file(filename.c_str(), std::ios::binary);
+	if (!file) {
+		throw std::runtime_error("Could not write in file " + filename); }
+	file.write(data.c_str(), length);
+	if (!file) {
+		throw std::runtime_error("An error occured while writing to the file " + filename); }
+	file.close();
 }
 
 // return true if the file is a directory
@@ -176,4 +191,30 @@ std::string HttpUtils::getMimeType(const std::string & path)
 	if (extensionMap.find(extension) != extensionMap.end()) {
 		return (extensionMap[extension]); }
 	return ("application/octet-stream");
+}
+
+std::string HttpUtils::getExtensionFromMimeType(const std::string & mimeType)
+{
+	static std::map<std::string, std::string> mimeTypeMap;
+
+	if (mimeTypeMap.empty()) {
+		mimeTypeMap["text/html"] = "html";
+		mimeTypeMap["text/css"] = "css";
+		mimeTypeMap["text/plain"] = "txt";
+		mimeTypeMap["application/javascript"] = "js";
+		mimeTypeMap["image/jpeg"] = "jpg";
+		mimeTypeMap["image/png"] = "png";
+		mimeTypeMap["image/gif"] = "gif";
+		mimeTypeMap["image/x-icon"] = "ico";
+		mimeTypeMap["application/x-json"] = "json";
+		mimeTypeMap["application/pdf"] = "pdf"; }
+
+	if (mimeTypeMap.find(mimeType) != mimeTypeMap.end()) {
+		return mimeTypeMap[mimeType]; }
+	return "";
+}
+
+bool HttpUtils::hasWritePermission(const std::string & path)
+{
+	return (access(path.c_str(), W_OK) == 0);
 }

@@ -1,0 +1,2 @@
+A vérifier dans le parsing :
+que dans le parsing du fichier de config, si une location a une méthode POST elle doit obligatoirement avoir un upload_path valide

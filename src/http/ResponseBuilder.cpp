@@ -11,7 +11,7 @@
 #include "../../include/config/ServerConfig.hpp"
 # include "../../include/http/handlers/AHandler.hpp"
 # include "../../include/http/handlers/GetHandler.hpp"
-// #include "../../include/http/handlers/PostHandler.hpp"
+#include "../../include/http/handlers/PostHandler.hpp"
 // #include "../../include/http/handlers/DeleteHandler.hpp"
 // #include "../../include/http/handlers/CgiHandler.hpp"
 
@@ -254,7 +254,7 @@ static AHandler * selectHandler(const HttpRequest& request, const Location & loc
 	static std::map<std::string, HandlerFactoryFn> handlerFactories;
 	if (handlerFactories.empty()) {
 		handlerFactories["GET"] = &createGetHandler;
-		// handlerFactories["POST"] = &createPostHandler;
+		handlerFactories["POST"] = &createPostHandler;
 		// handlerFactories["DELETE"] = &createDeleteHandler;
 		}
 
@@ -268,10 +268,10 @@ static AHandler * createGetHandler()
 	return (new GetHandler());
 }
 
-// static AHandler * createPostHandler()
-// {
-// 	return (new PostHandler());
-// }
+static AHandler * createPostHandler()
+{
+	return (new PostHandler());
+}
 
 // static AHandler * createDeleteHandler()
 // {

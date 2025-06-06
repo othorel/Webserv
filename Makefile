@@ -12,7 +12,8 @@ SRC     := $(SRCDIR)/config/ConfigParser.cpp     \
 		   $(SRCDIR)/http/RequestParser.cpp      \
 		   $(SRCDIR)/http/ResponseBuilder.cpp    \
 		   $(SRCDIR)/http/handlers/AHandler.cpp  \
-		   $(SRCDIR)/http/handlers/GetHandler.cpp\
+		   $(SRCDIR)/http/handlers/GetHandler.cpp \
+		   $(SRCDIR)/http/handlers/PostHandler.cpp \
 		   $(SRCDIR)/server/Server.cpp           \
 		   $(SRCDIR)/server/PollManager.cpp      \
 		   $(SRCDIR)/server/Connexion.cpp        \

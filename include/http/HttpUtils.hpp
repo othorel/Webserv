@@ -16,6 +16,7 @@ class HttpUtils
 	public:
 
 		static std::string readFile(const std::string & path);
+		static void writeFile(const std::string & filename, const std::string & body, size_t length);
 		static bool isDirectory(const std::string & path);
 		static bool fileExists(const std::string & path);
 		static std::string generateAutoIndex(const std::string & dirPath, const std::string & uriPath);
@@ -23,6 +24,8 @@ class HttpUtils
 		static int stringToInt(std::string string);
 		static std::string getCurrentDate();
 		static std::string getMimeType(const std::string & path);
+		static std::string getExtensionFromMimeType(const std::string & mimeType);
+		static bool hasWritePermission(const std::string & path);
 
 		template<typename T>
 		static std::string numberToString(T value)

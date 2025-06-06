@@ -1,19 +1,19 @@
-#ifndef GETHANDLER_HPP
-# define GETHANDLER_HPP
+#ifndef POSTHANDLER_HPP
+# define POSTHANDLER_HPP
 
 # include "AHandler.hpp"
 # include "../HttpRequest.hpp"
 # include "../HttpResponse.hpp"
 # include "../../config/Location.hpp"
 
-class GetHandler : public AHandler
+class PostHandler : public AHandler
 {
 	public :
 	
-		GetHandler();
-		GetHandler(const GetHandler & other);
-		GetHandler & operator=(const GetHandler & other);
-		~GetHandler();
+		PostHandler();
+		PostHandler(const PostHandler & other);
+		PostHandler & operator=(const PostHandler & other);
+		~PostHandler();
 
 	public :
 	

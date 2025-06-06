@@ -6,6 +6,7 @@
 # include <string>
 # include "../../include/http/HttpRequest.hpp"
 # include "../../include/http/HttpResponse.hpp"
+# include "../../include/http/handlers/AHandler.hpp"
 # include "../../include/config/Location.hpp"
 # include "../../include/config/ServerConfig.hpp"
 
@@ -16,7 +17,6 @@ class ResponseBuilder
 		HttpResponse _httpResponse;
 
 		void buildRedirect(int statusCode, const ServerConfig & server, const Location * location);
-		// void buildRedirect(int statusCode, const std::string & path, const ServerConfig & server);
 		void buildError(int statusCode, const ServerConfig & server, const Location * location);
 		void addMandatoryHeaders(const ServerConfig & server, size_t bodySize);
 		
@@ -39,5 +39,7 @@ static const Location & findMatchinglocation(
 static std::string selectErrorPage(int statusCode, const ServerConfig & server, const Location * location);
 static const ServerConfig & selectServer(const HttpRequest& request, const std::vector<ServerConfig> & serverVector);
 static std::string createAllowedMethodsList(const Location & location);
+static AHandler * createGetHandler();
+static AHandler * createPostHandler();
 
 #endif
