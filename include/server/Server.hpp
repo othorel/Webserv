@@ -14,7 +14,7 @@
 # include <poll.h>
 # include <unistd.h>
 
-// class ConfigParser;
+class ConfigParser;
 class Connexion;
 class PollManager;
 
@@ -22,7 +22,7 @@ class Server
 {
 	public:
 		Server();
-		// Server(const ConfigParser & servconfig);
+		Server(const ConfigParser & servconfig);
 		Server(const Server & toCopy);
 		Server(const std::string str);
 
