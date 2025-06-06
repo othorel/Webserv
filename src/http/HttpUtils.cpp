@@ -1,8 +1,10 @@
-# include <string>
-# include <fstream>
-# include <sstream>
-# include <sys/stat.h>
-# include <dirent.h>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <ctime>
+#include <iomanip>
+#include <sys/stat.h>
+#include <dirent.h>
 #include "../../include/http/HttpUtils.hpp"
 
 /* ************************************************************************** */
@@ -126,3 +128,25 @@ int HttpUtils::stringToInt(std::string string)
 	ss >> result;
 	return (result);
 }
+
+std::string HttpUtils::getCurrentDate()
+{
+	std::time_t now = std::time(NULL);
+	std::tm *gmt = std::gmtime(&now);
+
+	static const char* days[]  = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+	static const char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+	                               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+	std::ostringstream oss;
+	oss << days[gmt->tm_wday] << ", ";
+	oss << std::setw(2) << std::setfill('0') << gmt->tm_mday << " ";
+	oss << months[gmt->tm_mon] << " ";
+	oss << (gmt->tm_year + 1900) << " ";
+	oss << std::setw(2) << std::setfill('0') << gmt->tm_hour << ":";
+	oss << std::setw(2) << std::setfill('0') << gmt->tm_min << ":";
+	oss << std::setw(2) << std::setfill('0') << gmt->tm_sec << " GMT";
+
+	return (oss.str());
+}
+

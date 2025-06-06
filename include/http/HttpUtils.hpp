@@ -21,6 +21,7 @@ class HttpUtils
 		static std::string generateAutoIndex(const std::string & dirPath, const std::string & uriPath);
 		static std::string httpStatusMessage(int code);
 		static int stringToInt(std::string string);
+		static std::string getCurrentDate();
 
 		template<typename T>
 		static std::string numberToString(T value)
