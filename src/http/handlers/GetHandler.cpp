@@ -139,7 +139,22 @@ HttpResponse GetHandler::handle(const HttpRequest & request, const Location & lo
 // 		// Crée la map de locations
 // 		std::map<std::string, Location> locations;
 // 		locations["/"] = location;
+// 		// Crée la map de locations
+// 		std::map<std::string, Location> locations;
+// 		locations["/"] = location;
 
+// 		// Crée le ServerConfig
+// 		ServerConfig serverConfig(
+// 			std::make_pair(8080, "127.0.0.1"),           // listen
+// 			std::vector<std::string>(1, "localhost"),    // server_names
+// 			"www",                                       // root
+// 			std::map<int, std::string>(),                // error_pages
+// 			locations,                                   // locations
+// 			1024,                                        // client_max_body_size
+// 			"SESSIONID",                                 // sessionName
+// 			3600,                                        // sessionTimeout
+// 			false                                        // sessionEnable
+// 		);
 // 		// Crée le ServerConfig
 // 		ServerConfig serverConfig(
 // 			std::make_pair(8080, "127.0.0.1"),           // listen
@@ -163,9 +178,16 @@ HttpResponse GetHandler::handle(const HttpRequest & request, const Location & lo
 // 		ResponseBuilder response(request, serverConfigVector);
 
 // 		std::cout << "In main : after responseBuilder\n" << std::endl;
+// 		std::cout << "In main : after responseBuilder\n" << std::endl;
 
 // 		std::cout << response.getHttpResponse().toRawString() << std::endl;
+// 		std::cout << response.getHttpResponse().toRawString() << std::endl;
 
+// 	}
+// 	catch (const HttpErrorException &e) {
+// 		std::cerr << "Error: " << e.getStatusCode() << " " << e.what() << std::endl;
+// 	}
+// }
 // 	}
 // 	catch (const HttpErrorException &e) {
 // 		std::cerr << "Error: " << e.getStatusCode() << " " << e.what() << std::endl;
