@@ -96,3 +96,8 @@ const std::string& ServerConfig::getErrorPage(int code) const {
 		throw std::out_of_range("No error page defined for this code");
 	return (it->second);
 }
+
+bool ServerConfig::hasServerName(const std::string & nameToFind) const
+{
+	return std::find(_server_names.begin(), _server_names.end(), nameToFind) != _server_names.end();
+}

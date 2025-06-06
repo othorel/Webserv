@@ -37,25 +37,10 @@ GetHandler::~GetHandler()
 /*                                      handler                               */
 /* ************************************************************************** */
 
-//debug
-# include <iostream>
-
-
 HttpResponse GetHandler::handle(const HttpRequest & request, const Location & location , const ServerConfig & server)
 {
 	std::string path = selectRoot(server, location) + request.getTarget();
-
-	if (DEBUG)
-	{
-		std::cout << "In handle" << std::endl;
-		std::cout << "SelectRoot : " << selectRoot(server, location) << std::endl;
-		std::cout << "requestTarget : " << request.getTarget() << std::endl;
-		std::cout << "Path : " << path << std::endl << std::endl;
-	}
-
 	if (!HttpUtils::fileExists(path)) {
-		if (DEBUG)
-			std::cout << "In handle : file does not exist" << std::endl;
 		throw HttpErrorException(404); }
 	if (HttpUtils::isDirectory(path)) {
 		std::string indexFile = createIndexPath(path, location);
@@ -65,16 +50,13 @@ HttpResponse GetHandler::handle(const HttpRequest & request, const Location & lo
 			std::string body = generateAutoIndex(path, request.getTarget());
 			std::map<std::string, std::string> headers;
 			headers["Content-Type"] = "text/html";
-			headers["Content-Length"] = HttpUtils::numberToString(body.size());
-			headers["Date"] = HttpUtils::getCurrentDate();
 			HttpResponse httpResponse("HTTP/1.1", 200, headers, body);
 			return (httpResponse); }
 		else
 			throw HttpErrorException(403); }
 	std::string body = HttpUtils::readFile(path);
 	std::map<std::string, std::string> headers;
-	headers["Content-Type"] = "text/html";
-	headers["Content-Length"] = HttpUtils::numberToString(body.size());
+	headers["Content-Type"] = HttpUtils::getMimeType(path);
 	HttpResponse httpResponse("HTTP/1.1", 200, headers, body);
 	return (httpResponse);
 }

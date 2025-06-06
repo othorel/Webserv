@@ -58,16 +58,8 @@ ResponseBuilder::~ResponseBuilder()
 /*                              response builder                              */
 /* ************************************************************************** */
 
-// debug
-#include <iostream>
-
 const HttpResponse & ResponseBuilder::buildResponse(const HttpRequest& request, const std::vector<ServerConfig> serverVector)
 {
-	if (DEBUG)
-	{
-		std::cout << "In responseBuilder" << std::endl;
-	}
-
 	AHandler * handler = NULL;
 	const Location * locationPtr = NULL;
 	const ServerConfig server = selectServer(request, serverVector);
@@ -75,13 +67,9 @@ const HttpResponse & ResponseBuilder::buildResponse(const HttpRequest& request, 
 	try {
 		locationPtr = &findMatchinglocation(locations, request.getTarget());
 		if (locationPtr->hasRedirect()) {
-			buildRedirect(locationPtr->getRedirectCode(), locationPtr->getRedirectPath());
+			buildRedirect(locationPtr->getRedirectCode(), server, locationPtr);
 			return (_httpResponse); }
 		std::string method = request.getMethod();
-
-		if (DEBUG)
-			std::cout << "In buildResponse request method is : " << request.getMethod() << std::endl;
-
 		if (!locationPtr->isValidMethod(method)) {
 			throw HttpErrorException(405); }
 		try {
@@ -89,54 +77,66 @@ const HttpResponse & ResponseBuilder::buildResponse(const HttpRequest& request, 
 			_httpResponse = handler->handle(request, *locationPtr, server);
 			delete handler; }
 		catch (...) {
-			if (DEBUG)
-				std::cout << "In responseBuilder : J ai attrape une exception" << std::endl;
 			delete handler;
 			throw; }}
 	catch (const HttpErrorException & e) {
 		buildError(e.getStatusCode(), server, locationPtr); }
-
-	if (DEBUG) {
-		std::cout << "At the end of response Builder" << std::endl;
-		std ::cout << _httpResponse.toRawString() << "\n"  << std::endl;
-
-	}
-
+	addMandatoryHeaders(server, _httpResponse.getBody().size());
 	return (_httpResponse);
 }
 
-void ResponseBuilder::buildRedirect(int code, const std::string & path)
+void ResponseBuilder::buildRedirect(int statusCode, const ServerConfig & server, const Location * location)
 {
-	std::string body = "<html><body><h1>" + HttpUtils::httpStatusMessage(code) + "</h1>"
+	std::string path = (*location).getRedirectPath();
+	std::string filePath = selectErrorPage(statusCode, server, location);
+	std::string body;
+	std::string mimeType;
+	try {
+		body = HttpUtils::readFile(filePath);
+		mimeType = HttpUtils::getMimeType(filePath); }
+	catch (const std::exception &e) {
+		body = "<html><body><h1>" + HttpUtils::httpStatusMessage(statusCode) + "</h1>"
         "<p>Redirecting to <a href=\"" + path + "\">" + path + "</a></p></body></html>";
+		mimeType = "text/html"; }
 	std::map<std::string, std::string> headers;
+	headers["Content-Type"] = mimeType;
 	headers["Location"] = path;
-	headers["Content-Type"] = "text/html";
-	headers["Content-Length"] = HttpUtils::numberToString(body.size());
-	headers["Date"] = HttpUtils::getCurrentDate();
-	_httpResponse = HttpResponse("HTTP/1.1", code, headers, body);
+	_httpResponse = HttpResponse("HTTP/1.1", statusCode, headers, body);
+	addMandatoryHeaders(server, _httpResponse.getBody().size());
 }
+
+// ancienne fonction  supprimer si la nouvelle fonctionne correctement
+// void ResponseBuilder::buildRedirect(int statusCode, const std::string & path, const ServerConfig & server)
+// {
+// 	std::string body = "<html><body><h1>" + HttpUtils::httpStatusMessage(statusCode) + "</h1>"
+//         "<p>Redirecting to <a href=\"" + path + "\">" + path + "</a></p></body></html>";
+// 	std::map<std::string, std::string> headers;
+// 	headers["Location"] = path;
+// 	headers["Content-Type"] = "text/html";
+// 	addMandatoryHeaders(server, _httpResponse.getBody().size());
+// 	_httpResponse = HttpResponse("HTTP/1.1", statusCode, headers, body);
+// }
 
 void ResponseBuilder::buildError(int statusCode, const ServerConfig & server, const Location * location)
 {
-	if (DEBUG)
-	{
-		std::cout << "In buildError" << std::endl;
-	}
-
 	std::string filePath = selectErrorPage(statusCode, server, location);
 	std::string body;
+	std::string mimeType;
 	try {
-		body = HttpUtils::readFile(filePath); }
+		body = HttpUtils::readFile(filePath);
+		mimeType = HttpUtils::getMimeType(filePath); }
 	catch (const std::exception &e) {
-		// std::cerr << "Error page not found: " << e.what() << std::endl;
 		body = "<html><body><h1>" + HttpUtils::numberToString(statusCode) + " " +
-			HttpUtils::httpStatusMessage(statusCode) + "</h1></body></html>"; }
+			HttpUtils::httpStatusMessage(statusCode) + "</h1></body></html>";
+		mimeType = "text/html"; }
 	std::map<std::string, std::string> headers;
-	headers["Content-Type"] = "text/html";
-	headers["Content-Length"] = HttpUtils::numberToString(body.size());
-	headers["Date"] = HttpUtils::getCurrentDate();
+	headers["Content-Type"] = mimeType;
+
+	if (statusCode == 405) {
+		headers["Allow"] = createAllowedMethodsList(*location); }
+
 	_httpResponse = HttpResponse("HTTP/1.1", statusCode, headers, body);
+	addMandatoryHeaders(server, _httpResponse.getBody().size());
 }
 
 /* ************************************************************************** */
@@ -148,6 +148,23 @@ const HttpResponse & ResponseBuilder::getHttpResponse() const
 	return (_httpResponse);
 }
 
+/* ************************************************************************** */
+/*                                   setters                                  */
+/* ************************************************************************** */
+
+void ResponseBuilder::addMandatoryHeaders(const ServerConfig & server, size_t bodySize)
+{
+	_httpResponse.addHeader("Content-Length", HttpUtils::numberToString(bodySize));
+	_httpResponse.addHeader("Date", HttpUtils::getCurrentDate());
+	std::ostringstream oss;
+	std::vector<std::string>::const_iterator cit = server.getServerNames().begin();
+	if (cit != server.getServerNames().end()) {
+	oss << *cit;
+	++cit;
+	for (; cit != server.getServerNames().end(); ++cit) {
+		oss << " " << *cit; }}
+	_httpResponse.addHeader("Server", oss.str());
+}
 
 /* ************************************************************************** */
 /*                            non member functions                            */
@@ -157,18 +174,16 @@ const HttpResponse & ResponseBuilder::getHttpResponse() const
 
 static const ServerConfig & selectServer(const HttpRequest& request, const std::vector<ServerConfig> & serverVector)
 {
-	(void)request;
-	(void)serverVector;
-	// std::map<std::string, std::string> headers = request.getHeaders();
-	// std::map<std::string, std::string>::const_iterator headersCit = headers.find("host"); 
-	// if (headersCit != headers.end()) {
-	// 	std::vector<ServerConfig>::const_iterator serverCit = serverVector.begin();
-	// 	for (; serverCit != serverVector.end(); serverCit++) {
-	// 		if (serverCit->hasServerName(headersCit->second)) {
-	// 			return (*serverCit); }}}
-	// if (serverVector.empty()) {
-	// 	throw std::runtime_error("No server available to select");
-	// }
+	std::map<std::string, std::string> headers = request.getHeaders();
+	std::map<std::string, std::string>::const_iterator headersCit = headers.find("host"); 
+	if (headersCit != headers.end()) {
+		std::vector<ServerConfig>::const_iterator serverCit = serverVector.begin();
+		for (; serverCit != serverVector.end(); serverCit++) {
+			if (serverCit->hasServerName(headersCit->second)) {
+				return (*serverCit); }}}
+	if (serverVector.empty()) {
+		throw std::runtime_error("No server available to select");
+	}
 	return (serverVector[0]);
 }
 
@@ -176,9 +191,6 @@ static const Location & findMatchinglocation(
 		const std::map<std::string, Location> & locations,
 		const std::string & target)
 {
-	if (DEBUG)
-		std::cout << "In findMatchingLocation" << std::endl;
-
 	std::string bestMatch = "";
 	std::map<std::string, Location>::const_iterator it;
 	for (it = locations.begin(); it != locations.end(); ++it)
@@ -193,28 +205,39 @@ static const Location & findMatchinglocation(
 	if (bestMatch.empty())
 		throw HttpErrorException(404);
 	
-	if (DEBUG)
-		std::cout << "In findMatchingLocation found location path : " << locations.find(bestMatch)->second.getPath() << std::endl;
-	
 	return (locations.find(bestMatch)->second);
 }
 
+static std::string selectErrorPage(int statusCode, const ServerConfig & server, const Location * location)
+{
+	if (location && location->hasErrorPage(statusCode)) {
+		return (location->getErrorPage(statusCode)); }
+	if (server.hasErrorPage(statusCode)) {	
+		return (server.getErrorPage(statusCode)); }
+	return ("");
+}
+
+// version for testing only
 // static std::string selectErrorPage(int statusCode, const ServerConfig & server, const Location * location)
 // {
-// 	if (location && location->hasErrorPage(statusCode)) {	// hasErrorCode à implementer
-// 		return (location->getErrorPage(statusCode)); }		// getErrorPage à implementer
-// 	if (server.hasErrorPage(statusCode)) {					// hasErrorCode à implementer
-// 		return (server.getErrorPage(statusCode)); }			// getErrorPage à implementer
+// 	(void)statusCode;
+// 	(void)server;
+// 	(void)location;
 // 	return ("");
 // }
 
-// version for testing only
-static std::string selectErrorPage(int statusCode, const ServerConfig & server, const Location * location)
+static std::string createAllowedMethodsList(const Location & location)
 {
-	(void)statusCode;
-	(void)server;
-	(void)location;
-	return ("");
+	std::ostringstream oss;
+	const std::vector<std::string> & methodsVector = location.getMethods();
+	std::vector<std::string>::const_iterator cit = methodsVector.begin();
+	if (cit != methodsVector.end()) {
+		oss << *cit;
+		cit++; }
+	for (; cit != methodsVector.end(); cit++) {
+		oss << " ";
+		oss << *cit; }
+	return (oss.str());
 }
 
 /* *************************** handler factory ****************************** */
@@ -222,8 +245,6 @@ static std::string selectErrorPage(int statusCode, const ServerConfig & server, 
 typedef AHandler * (*HandlerFactoryFn)();
 static AHandler * selectHandler(const HttpRequest& request, const Location & location)
 {
-	if (DEBUG)
-		std::cout << "In selectHandler" << std::endl;
 
 	(void)location;
 	// if (location.hasCgi())

@@ -22,6 +22,7 @@ class HttpUtils
 		static std::string httpStatusMessage(int code);
 		static int stringToInt(std::string string);
 		static std::string getCurrentDate();
+		static std::string getMimeType(const std::string & path);
 
 		template<typename T>
 		static std::string numberToString(T value)

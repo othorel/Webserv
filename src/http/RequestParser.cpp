@@ -63,7 +63,6 @@ void RequestParser::parseRequest(const std::string & raw_request)
 		throw HttpErrorException(400);
 
 	std::string buffer = raw_request;
-
 	std::string requestLine = extractLineAndRemove(buffer);
 
 	if (requestLine.empty())
@@ -88,7 +87,6 @@ void RequestParser::parseRequest(const std::string & raw_request)
 		throw HttpErrorException(400);
 	unsigned int contentLength = calculateContentLength(headers);
 	std::string body = extractBody(buffer, contentLength);
-
 	_httpRequest = HttpRequest(method, uri, version, headers, body);
 }
 

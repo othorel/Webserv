@@ -15,8 +15,10 @@ class ResponseBuilder
 
 		HttpResponse _httpResponse;
 
-		void buildRedirect(int code, const std::string & path);
+		void buildRedirect(int statusCode, const ServerConfig & server, const Location * location);
+		// void buildRedirect(int statusCode, const std::string & path, const ServerConfig & server);
 		void buildError(int statusCode, const ServerConfig & server, const Location * location);
+		void addMandatoryHeaders(const ServerConfig & server, size_t bodySize);
 		
 	public :
 
@@ -36,5 +38,6 @@ static const Location & findMatchinglocation(
 		const std::string & target);
 static std::string selectErrorPage(int statusCode, const ServerConfig & server, const Location * location);
 static const ServerConfig & selectServer(const HttpRequest& request, const std::vector<ServerConfig> & serverVector);
+static std::string createAllowedMethodsList(const Location & location);
 
 #endif

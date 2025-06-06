@@ -30,10 +30,9 @@ class HttpResponse
 		int getStatusCode() const;
 		const std::map<std::string, std::string> & getHeaders() const;
 		const std::string & getBody() const;
+		void addHeader(const std::string & key, const std::string & value);
 		std::string toRawString() const;
 
 };
-
-std::string httpStatusMessage(int code);
 
 #endif

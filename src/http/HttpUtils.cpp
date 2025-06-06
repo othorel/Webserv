@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <map>
 #include "../../include/http/HttpUtils.hpp"
 
 /* ************************************************************************** */
@@ -150,3 +151,29 @@ std::string HttpUtils::getCurrentDate()
 	return (oss.str());
 }
 
+std::string HttpUtils::getMimeType(const std::string & path)
+{
+	size_t dot = path.rfind('.');
+	if (dot == std::string::npos) {
+		return ("application/octet-stream"); }
+	std::string extension = path.substr(dot +1);
+
+	static std::map<std::string, std::string> extensionMap;
+	if (extensionMap.empty()) {
+		extensionMap["html"] = "text/html";
+		extensionMap["htm"] = "text/html";
+		extensionMap["css"] = "text/css";
+		extensionMap["txt"] = "text/plain";
+		extensionMap["js"] = "application/javascript";
+		extensionMap["jpg"] = "image/jpeg";
+		extensionMap["jpeg"] = "image/jpeg";
+		extensionMap["png"] = "image/png";
+		extensionMap["gif"] = "image/gif";
+		extensionMap["ico"] = "image/x-icon";
+		extensionMap["json"] = "application/x-json";
+		extensionMap["pdf"] = "application/pdf"; }
+	
+	if (extensionMap.find(extension) != extensionMap.end()) {
+		return (extensionMap[extension]); }
+	return ("application/octet-stream");
+}
