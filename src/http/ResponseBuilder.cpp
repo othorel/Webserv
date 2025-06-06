@@ -113,6 +113,7 @@ void ResponseBuilder::buildRedirect(int code, const std::string & path)
 	headers["Location"] = path;
 	headers["Content-Type"] = "text/html";
 	headers["Content-Length"] = HttpUtils::numberToString(body.size());
+	headers["Date"] = HttpUtils::getCurrentDate();
 	_httpResponse = HttpResponse("HTTP/1.1", code, headers, body);
 }
 
@@ -134,6 +135,7 @@ void ResponseBuilder::buildError(int statusCode, const ServerConfig & server, co
 	std::map<std::string, std::string> headers;
 	headers["Content-Type"] = "text/html";
 	headers["Content-Length"] = HttpUtils::numberToString(body.size());
+	headers["Date"] = HttpUtils::getCurrentDate();
 	_httpResponse = HttpResponse("HTTP/1.1", statusCode, headers, body);
 }
 

@@ -66,6 +66,7 @@ HttpResponse GetHandler::handle(const HttpRequest & request, const Location & lo
 			std::map<std::string, std::string> headers;
 			headers["Content-Type"] = "text/html";
 			headers["Content-Length"] = HttpUtils::numberToString(body.size());
+			headers["Date"] = HttpUtils::getCurrentDate();
 			HttpResponse httpResponse("HTTP/1.1", 200, headers, body);
 			return (httpResponse); }
 		else
