@@ -10,6 +10,7 @@
 #include "../include/server/Server.hpp"
 #include "../include/server/PollManager.hpp"
 #include "../include/server/Connexion.hpp"
+#include "../include/http/HttpErrorException.hpp"
 
 void printServerConfig(const ServerConfig& server, size_t index) {
     std::cout << "Serveur " << (index + 1) << " :" << std::endl;
@@ -114,6 +115,11 @@ int	main(int argc, char **argv)
 //     ResponseBuilder response(request, parser);
 //     std::cout << response.getHttpResponse().toRawString() << std::endl;
 //     return 0;
+	}
+	catch (const HttpErrorException& e)
+	{
+		std::cerr << e.what() << " " << e.getStatusCode() << std::endl;
+		return (1);
 	}
 	catch (const std::exception& e)
 	{

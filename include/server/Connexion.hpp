@@ -28,11 +28,13 @@ class Connexion
 		int			getFd() const;
 		std::string	getIP() const;
 		int			getPort() const;
-		bool		isComplete() const;
+		std::string	getBufferIn() const;
+		std::string	getBufferOut() const;
 
 		// Runtime
 		ssize_t		readDataFromSocket();
 		ssize_t		writeDataToSocket(const std::string & response);
+		bool		isComplete();
 
 	private:
 		bool		_isComplete;

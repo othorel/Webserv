@@ -65,6 +65,7 @@ void RequestParser::parseRequest(const std::string & raw_request)
 	std::string buffer = raw_request;
 
 	std::string requestLine = extractLineAndRemove(buffer);
+
 	if (requestLine.empty())
 		throw HttpErrorException(400);
 	if (buffer.empty())
@@ -74,11 +75,14 @@ void RequestParser::parseRequest(const std::string & raw_request)
 	std::string method = extractMethod(iss);
 	std::string uri = extractUri(iss);
 	std::string version = extractVersion(iss);
+	
 	if (version != "HTTP/1.1")
 		throw HttpErrorException(400);
 	std::string shouldBeEmpty;
 	if ((iss >> shouldBeEmpty))
+	{
 		throw HttpErrorException(400);
+	}
 	std::map<std::string, std::string> headers = extractHeaders(buffer);
 	if (!headers.count("host") || headers.find("host")->second.empty())
 		throw HttpErrorException(400);

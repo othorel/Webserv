@@ -39,23 +39,24 @@ Connexion & Connexion::operator=(const Connexion & other)
 
 ssize_t	Connexion::readDataFromSocket()
 {
-	char		buf[1024];
-	ssize_t		bytes = recv(_fd, buf, sizeof(buf), 0);
+	char buf[1024];
+	ssize_t bytes = recv(_fd, buf, sizeof(buf), 0);
 
-	if (bytes <= 0)
-	{
-		_isComplete = true;
-		std::cout << "la lecture est terminee" << std::endl;
-		//close(_fd);
-	}
-	else
+	if (bytes > 0)
 		_bufferIn.append(buf, bytes);
+
 	return (bytes);
 }
 
 ssize_t	Connexion::writeDataToSocket(const std::string & response)
 {
 	return send(_fd, response.c_str(), response.size(), 0);
+}
+
+bool	Connexion::isComplete()
+{
+	_isComplete = (_bufferIn.find("\r\n\r\n") != std::string::npos);
+	return (_isComplete);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -79,8 +80,13 @@ int	Connexion::getPort() const
 	return (ntohs(_addr.sin_port));
 }
 
-bool	Connexion::isComplete() const
+std::string	Connexion::getBufferIn() const
 {
-	return (_isComplete);
+	return (_bufferIn);
+}
+
+std::string	Connexion::getBufferOut() const
+{
+	return (_bufferOut);
 }
 		

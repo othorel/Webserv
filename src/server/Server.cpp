@@ -4,6 +4,8 @@
 #include "../../include/server/Connexion.hpp"
 #include "../../include/config/ServerConfig.hpp"
 #include "../../include/config/ConfigParser.hpp"
+#include "../../include/http/RequestParser.hpp"
+#include "../../include/http/ResponseBuilder.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 ///                               CANONIC +                                  ///
@@ -104,16 +106,30 @@ void	Server::acceptNewConnexion(int fd)
 
 void	Server::handleEvent(int fdClient, int & i)
 {
-	if (_clients[fdClient].readDataFromSocket() <= 0 || _clients[fdClient].isComplete() == true)
+	ssize_t	bytes = _clients[fdClient].readDataFromSocket();
+	if (bytes <= 0)
 	{
 		_pollManager->removeSocket(i);
 		_clients.erase(fdClient);
 		i--;
+		return ;
 	}
-	else
+	if (_clients[fdClient].isComplete() == true)
 	{
-		std::string	msg = "HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\npong";
+		std::string rawrequest = _clients[fdClient].getBufferIn();
+		std::cout << "Raw Request:" << std::endl;
+		std::cout << rawrequest << std::endl;
+
+		RequestParser requestparser(rawrequest);
+		requestparser.getHttpRequest().debug();
+
+		// ResponseBuilder	responsebuilder(requestparser.getHttpRequest(), );
+		// faire un taleau de servs base sur celui de servconfig mois ceux inactifs
+		std::string msg = "HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\npong";
 		_clients[fdClient].writeDataToSocket(msg);
+		_pollManager->removeSocket(i);
+		_clients.erase(fdClient);
+		i--;
 	}
 }
 
@@ -144,6 +160,9 @@ void	Server::Setup()
 		int	fdSocket = socket(AF_INET, SOCK_STREAM, 0);
 		if (fdSocket == -1)
 			throw std::runtime_error("Socket creation failed");
+		int opt = 1;
+		if (setsockopt(fdSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
+			throw std::runtime_error("setsockopt failed");
 		_fdSocketVect.push_back(fdSocket);
 		serv_addr.sin_family = AF_INET;
 		serv_addr.sin_port = htons(it->first);
