@@ -12,7 +12,9 @@ GetHandler::GetHandler()
 {}
 
 GetHandler::GetHandler(const GetHandler & other)
-{}
+{
+	(void)other;
+}
 
 /* ************************************************************************** */
 /*                                    operators                               */
@@ -20,6 +22,7 @@ GetHandler::GetHandler(const GetHandler & other)
 
 GetHandler & GetHandler::operator=(const GetHandler & other)
 {
+	(void)other;
 	return (*this);
 }
 

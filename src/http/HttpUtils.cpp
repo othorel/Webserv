@@ -1,5 +1,6 @@
 # include <string>
 # include <fstream>
+# include <sstream>
 # include <sys/stat.h>
 # include <dirent.h>
 #include "../../include/http/HttpUtils.hpp"
@@ -37,7 +38,7 @@ bool HttpUtils::fileExists(const std::string & path)
 }
 
 // Function that returns an HTTP error message according to an HTTP error code
-std::string httpStatusMessage(int code)
+std::string HttpUtils::httpStatusMessage(int code)
 {
 	switch (code)
 	{
@@ -115,4 +116,13 @@ std::string httpStatusMessage(int code)
 
 		default: return "Unknown Status";
 	}
+}
+
+int HttpUtils::stringToInt(std::string string)
+{
+	int result = 0;
+	std::stringstream ss;
+	ss << string;
+	ss >> result;
+	return (result);
 }

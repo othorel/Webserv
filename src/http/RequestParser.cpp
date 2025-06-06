@@ -200,7 +200,7 @@ static std::string extractLineAndRemove(std::string & input)
 
 	if (pos != std::string::npos) {
 		line = input.substr(0, pos);
-		if (!line.empty() && line.back() == '\r')
+		if (!line.empty() && line[line.size() - 1] == '\r')
 			line.resize(line.size() - 1);
 		input.erase(0, pos + 1);
 	}

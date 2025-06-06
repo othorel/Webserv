@@ -107,7 +107,7 @@ const HttpResponse & ResponseBuilder::buildResponse(const HttpRequest& request, 
 
 void ResponseBuilder::buildRedirect(int code, const std::string & path)
 {
-	std::string body = "<html><body><h1>" + httpStatusMessage(code) + "</h1>"
+	std::string body = "<html><body><h1>" + HttpUtils::httpStatusMessage(code) + "</h1>"
         "<p>Redirecting to <a href=\"" + path + "\">" + path + "</a></p></body></html>";
 	std::map<std::string, std::string> headers;
 	headers["Location"] = path;
@@ -130,7 +130,7 @@ void ResponseBuilder::buildError(int statusCode, const ServerConfig & server, co
 	catch (const std::exception &e) {
 		// std::cerr << "Error page not found: " << e.what() << std::endl;
 		body = "<html><body><h1>" + HttpUtils::numberToString(statusCode) + " " +
-			httpStatusMessage(statusCode) + "</h1></body></html>"; }
+			HttpUtils::httpStatusMessage(statusCode) + "</h1></body></html>"; }
 	std::map<std::string, std::string> headers;
 	headers["Content-Type"] = "text/html";
 	headers["Content-Length"] = HttpUtils::numberToString(body.size());
@@ -223,7 +223,7 @@ static AHandler * selectHandler(const HttpRequest& request, const Location & loc
 	if (DEBUG)
 		std::cout << "In selectHandler" << std::endl;
 
-
+	(void)location;
 	// if (location.hasCgi())
 	// 	return (new CgiHandler());
 

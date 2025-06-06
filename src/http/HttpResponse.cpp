@@ -85,7 +85,7 @@ const std::string & HttpResponse::getBody() const
 std::string HttpResponse::toRawString() const
 {
 	std::ostringstream oss;
-	oss << _version << " " << _statusCode << " " << httpStatusMessage(_statusCode) << "\r\n";
+	oss << _version << " " << _statusCode << " " << HttpUtils::httpStatusMessage(_statusCode) << "\r\n";
 	std::map<std::string, std::string>::const_iterator cit = _headers.begin();
 	for (; cit != _headers.end(); cit++)
 		oss << cit->first << ": " << cit->second << "\r\n";

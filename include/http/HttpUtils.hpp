@@ -20,6 +20,7 @@ class HttpUtils
 		static bool fileExists(const std::string & path);
 		static std::string generateAutoIndex(const std::string & dirPath, const std::string & uriPath);
 		static std::string httpStatusMessage(int code);
+		static int stringToInt(std::string string);
 
 		template<typename T>
 		static std::string numberToString(T value)

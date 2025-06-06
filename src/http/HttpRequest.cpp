@@ -2,6 +2,7 @@
 #include <string>
 #include <map>
 #include "../../include/http/HttpRequest.hpp"
+#include "../../include/http/HttpUtils.hpp"
 
 /* ************************************************************************** */
 /*                                   constructors                             */
@@ -29,7 +30,7 @@ HttpRequest::HttpRequest(const std::string & method,
 	_contentLength(0)
 {
 	if (hasHeader("content-length"))
-		_contentLength = std::atoi(getHeaderValue("content-length").c_str());
+		_contentLength = HttpUtils::stringToInt(getHeaderValue("content-length").c_str());
 }
 
 HttpRequest::HttpRequest(const HttpRequest & other) :

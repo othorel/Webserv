@@ -18,8 +18,8 @@ AHandler::~AHandler()
 
 std::string AHandler::createIndexPath(std::string path, const Location & location)
 {
-	if (!path.empty() && path.back() == '/') {
-		path.pop_back(); }
+	if (!path.empty() && path[path.size() - 1] == '/') {
+		path.erase(path.size() - 1); }
 	std::string indexFile = location.getIndex();
 	if (indexFile.empty()) {
 		indexFile = "/index.html"; }
