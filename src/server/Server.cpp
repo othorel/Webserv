@@ -180,7 +180,7 @@ void	Server::handleEvent(int fdClient, size_t & i)
 		}
 		else
 		{
-			_clientsMap[fdClient].getRequestParser()->getHttpRequest().AppendBody(rawrequest);
+			_clientsMap[fdClient].getRequestParser()->AppendRequestBody(rawrequest);
 		}
 	}
 	//sinon on ne fait rien de plus que d'appeler readDatafromSocket pour concatener les donnees lues tant que la requete n'est pas terminee

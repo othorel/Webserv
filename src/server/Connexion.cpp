@@ -1,5 +1,6 @@
 
 #include "../../include/server/Connexion.hpp"
+#include "../../include/http/RequestParser.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 ///                               CANONIC +                                  ///
@@ -14,7 +15,8 @@ Connexion::Connexion(int fd, sockaddr_in addr) : _fd(fd), _addr(addr), _requestP
 
 Connexion::~Connexion()
 {
-	delete _requestParser;
+	if (_requestParser)
+		delete _requestParser;
 }
 
 Connexion::Connexion(const Connexion & toCopy)
