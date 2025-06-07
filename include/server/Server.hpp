@@ -15,6 +15,7 @@
 # include <unistd.h>
 
 class ConfigParser;
+class ServerConfig;
 class Connexion;
 class PollManager;
 
@@ -22,7 +23,7 @@ class Server
 {
 	public:
 		Server();
-		Server(const ConfigParser & servconfig);
+		Server(const ConfigParser & Parser, const std::vector<ServerConfig> servConfigVect);
 		Server(const Server & toCopy);
 		Server(const std::string str);
 
@@ -35,8 +36,11 @@ class Server
 		std::vector<std::pair<int, std::string> >	getListenVect() const;
 		std::vector<std::pair<int, std::string> >	getActiveListenVec() const;
 		PollManager									*getPollManager() const;
-		std::map<int, Connexion>					getClientsMap();
-		std::vector<int>							getFdSocketVect();
+		std::map<int, Connexion>					getClientsMap() const;
+		std::vector<int>							getFdSocketVect() const;
+		std::vector<ServerConfig> 					getServerConfig() const;
+
+		void										setServerConfig(std::vector<ServerConfig> & servConfigVect);
 		
 	private:
 		// Attributes
@@ -48,7 +52,7 @@ class Server
 		std::map<int, Connexion>					_clientsMap;
 
 		std::vector<std::pair<int, std::string> >	_activeListenVect; // sous-partie de listen tab contenant uniquement les couples ports IP concernes par des evenements
-				
+		std::vector<ServerConfig>					_serverConfigVect;		
 
 		// Initialization
 		void	Setup();

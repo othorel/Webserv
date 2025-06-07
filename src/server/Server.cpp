@@ -15,16 +15,16 @@ Server::Server()
 {
 	_pollManager = NULL;
 }
-
-Server::Server(const ConfigParser & servconfig) : _pollManager(new PollManager())
+Server::Server(const ConfigParser & Parser, const std::vector<ServerConfig> servConfigVect) : _pollManager(new PollManager()), _serverConfigVect(servConfigVect)
 {
-	std::vector<ServerConfig>::const_iterator	it = servconfig.getServerConfigVector().begin();
-	while (it != servconfig.getServerConfigVector().end())
+	std::vector<ServerConfig>::const_iterator	it = Parser.getServerConfigVector().begin();
+	while (it != Parser.getServerConfigVector().end())
 	{
 		addPair(it->getListen());
 		it++;
 	}
 	Setup();
+
 }
 
 Server::Server(const std::string str) : _pollManager(new PollManager())
@@ -78,16 +78,29 @@ PollManager									*Server::getPollManager() const
 	return (this->_pollManager);
 }
 
-std::map<int, Connexion>					Server::getClientsMap()
+std::map<int, Connexion>					Server::getClientsMap() const
 {
 	return (this->_clientsMap);
 }
 
-std::vector<int>							Server::getFdSocketVect()
+std::vector<int>							Server::getFdSocketVect() const
 {
 	return (this->_fdSocketVect);
 }
 
+std::vector<ServerConfig> 					Server::getServerConfig() const
+{
+	return (this->_serverConfigVect);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+///                                 SETTERS                                  ///
+////////////////////////////////////////////////////////////////////////////////
+
+void	Server::setServerConfig(std::vector<ServerConfig> & servConfigVect)
+{
+	this->_serverConfigVect = servConfigVect;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 ///                                RUNTIME                                   ///
@@ -154,9 +167,8 @@ void	Server::handleEvent(int fdClient, size_t & i)
 		RequestParser requestparser(rawrequest);
 		requestparser.getHttpRequest().debug();
 
-		// ResponseBuilder	responsebuilder(requestparser.getHttpRequest(), );
-		std::string msg = "HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\npong";
-		_clientsMap[fdClient].writeDataToSocket(msg);
+		ResponseBuilder	responsebuilder(requestparser.getHttpRequest(), this->_serverConfigVect);
+		_clientsMap[fdClient].writeDataToSocket(responsebuilder.getHttpResponse().toRawString());
 		_pollManager->removeSocket(i);
 		_clientsMap.erase(fdClient);
 		i--;

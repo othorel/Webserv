@@ -99,7 +99,7 @@ int	main(int argc, char **argv)
 
 		std::cout << "\nValidation réussie : la configuration est correcte." << std::endl;
 
-		Server server(parser);
+		Server server(parser, servers);
 
 		std::cout << "\nCréation des sockets" << std::endl;
 
