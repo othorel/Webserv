@@ -41,5 +41,6 @@ static const ServerConfig & selectServer(const HttpRequest& request, const std::
 static std::string createAllowedMethodsList(const Location & location);
 static AHandler * createGetHandler();
 static AHandler * createPostHandler();
+static AHandler * createDeleteHandler();
 
 #endif

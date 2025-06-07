@@ -7,6 +7,7 @@
 #include <dirent.h>
 #include <map>
 #include <unistd.h>
+#include <sys/time.h>
 #include "../../include/http/HttpUtils.hpp"
 
 /* ************************************************************************** */
@@ -46,6 +47,14 @@ bool HttpUtils::isDirectory(const std::string & path)
 	if (!stat(path.c_str(), &s))
 		return ((s.st_mode & S_IFMT) == S_IFDIR);
 	return (false);
+}
+
+bool HttpUtils::isRegularFile(const std::string & path)
+{
+	struct stat s;
+	if (stat(path.c_str(), &s) != 0)
+		return false;
+	return S_ISREG(s.st_mode);
 }
 
 // Returns true if a file exists
@@ -217,4 +226,22 @@ std::string HttpUtils::getExtensionFromMimeType(const std::string & mimeType)
 bool HttpUtils::hasWritePermission(const std::string & path)
 {
 	return (access(path.c_str(), W_OK) == 0);
+}
+
+std::string HttpUtils::getUnixTimestampString()
+{
+	std::time_t now = std::time(NULL);
+	std::ostringstream oss;
+	oss << now;
+	return oss.str();
+}
+
+std::string HttpUtils::generateUniqueTimestamp()
+{
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+
+	std::ostringstream oss;
+	oss << tv.tv_sec << "_" << tv.tv_usec;
+	return oss.str();
 }

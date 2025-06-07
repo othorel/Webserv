@@ -6,8 +6,6 @@
 # include <exception>
 # include "HttpRequest.hpp"
 
-std::string httpStatusMessage(int code);
-
 class RequestParser
 {
 	private :

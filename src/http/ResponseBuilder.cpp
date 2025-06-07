@@ -12,7 +12,7 @@
 # include "../../include/http/handlers/AHandler.hpp"
 # include "../../include/http/handlers/GetHandler.hpp"
 #include "../../include/http/handlers/PostHandler.hpp"
-// #include "../../include/http/handlers/DeleteHandler.hpp"
+#include "../../include/http/handlers/DeleteHandler.hpp"
 // #include "../../include/http/handlers/CgiHandler.hpp"
 
 static AHandler * selectHandler(const HttpRequest& request, const Location & location);
@@ -156,13 +156,14 @@ void ResponseBuilder::addMandatoryHeaders(const ServerConfig & server, size_t bo
 {
 	_httpResponse.addHeader("Content-Length", HttpUtils::numberToString(bodySize));
 	_httpResponse.addHeader("Date", HttpUtils::getCurrentDate());
+	_httpResponse.addHeader("Connection", "close");
 	std::ostringstream oss;
 	std::vector<std::string>::const_iterator cit = server.getServerNames().begin();
 	if (cit != server.getServerNames().end()) {
-	oss << *cit;
-	++cit;
-	for (; cit != server.getServerNames().end(); ++cit) {
-		oss << " " << *cit; }}
+		oss << *cit;
+		++cit;
+		for (; cit != server.getServerNames().end(); ++cit) {
+			oss << " " << *cit; }}
 	_httpResponse.addHeader("Server", oss.str());
 }
 
@@ -255,7 +256,7 @@ static AHandler * selectHandler(const HttpRequest& request, const Location & loc
 	if (handlerFactories.empty()) {
 		handlerFactories["GET"] = &createGetHandler;
 		handlerFactories["POST"] = &createPostHandler;
-		// handlerFactories["DELETE"] = &createDeleteHandler;
+		handlerFactories["DELETE"] = &createDeleteHandler;
 		}
 
 	if (handlerFactories.find(request.getMethod()) != handlerFactories.end())
@@ -273,10 +274,10 @@ static AHandler * createPostHandler()
 	return (new PostHandler());
 }
 
-// static AHandler * createDeleteHandler()
-// {
-// 	return (new DeleteHandler());
-// }
+static AHandler * createDeleteHandler()
+{
+	return (new DeleteHandler());
+}
 
 // static AHandler * createCgiHandler()
 // {

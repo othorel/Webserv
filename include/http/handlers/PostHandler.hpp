@@ -17,8 +17,16 @@ class PostHandler : public AHandler
 
 	public :
 	
-		HttpResponse handle(const HttpRequest & request, const Location & location, const ServerConfig & server);
+		HttpResponse handle(const HttpRequest & request,
+			const Location & location, const ServerConfig & server);
 
 };
+
+static void checkPostValidity(
+	const HttpRequest & request, const Location & location ,
+	const ServerConfig & server, const std::string & path);
+static std::string createPostFileName(
+	const HttpRequest & request, const ServerConfig & server, const std::string & path);
+static std::string sanitizeFilenamePart(const std::string & input);
 
 #endif

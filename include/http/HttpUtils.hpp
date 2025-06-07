@@ -18,6 +18,7 @@ class HttpUtils
 		static std::string readFile(const std::string & path);
 		static void writeFile(const std::string & filename, const std::string & body, size_t length);
 		static bool isDirectory(const std::string & path);
+		static bool isRegularFile(const std::string & path);
 		static bool fileExists(const std::string & path);
 		static std::string generateAutoIndex(const std::string & dirPath, const std::string & uriPath);
 		static std::string httpStatusMessage(int code);
@@ -26,6 +27,8 @@ class HttpUtils
 		static std::string getMimeType(const std::string & path);
 		static std::string getExtensionFromMimeType(const std::string & mimeType);
 		static bool hasWritePermission(const std::string & path);
+		static std::string getUnixTimestampString();
+		static std::string generateUniqueTimestamp();
 
 		template<typename T>
 		static std::string numberToString(T value)
