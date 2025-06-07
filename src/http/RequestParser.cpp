@@ -90,6 +90,12 @@ void RequestParser::parseRequest(const std::string & raw_request)
 	_httpRequest = HttpRequest(method, uri, version, headers, body);
 }
 
+size_t RequestParser::AppendRequestBody(const std::string & buffer)
+{
+	_httpRequest.AppendBody(buffer);
+	return (_httpRequest.getMissingBodyLength());
+}
+
 /* ************************************************************************** */
 /*                            non member functions                            */
 /* ************************************************************************** */

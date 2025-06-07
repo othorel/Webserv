@@ -23,6 +23,7 @@ class RequestParser
 		~RequestParser();
 
 		const HttpRequest & getHttpRequest() const;
+		size_t AppendRequestBody(const std::string & buffer);
 
 };
 
