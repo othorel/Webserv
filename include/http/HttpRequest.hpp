@@ -13,7 +13,7 @@ class HttpRequest
 		std::string							_version;
 		std::map<std::string, std::string>	_headers;
 		std::string							_body;
-		unsigned int						_contentLength;
+		size_t								_contentLength;
 		
 	public :
 
@@ -34,7 +34,11 @@ class HttpRequest
 		const std::map<std::string, std::string>  & getHeaders() const;
 		std::string getHeaderValue(const std::string & key) const;
 		bool		hasHeader(const std::string & key) const;
-		size_t		getBodyLength() const;
+		size_t		getContentLength() const;
+		size_t		getCurrentBodyLength() const;
+		size_t		getMissingBodyLength() const;
+		bool		BodyIsComplete() const;
+		size_t		AppendBody(const std::string & buffer);
 		void		debug() const;
 
 };

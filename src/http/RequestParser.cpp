@@ -150,9 +150,9 @@ static std::map<std::string, std::string> extractHeaders(std::string & buffer)
 	return (headers);
 }
 
-static int calculateContentLength(const std::map<std::string, std::string> & headers)
+static size_t calculateContentLength(const std::map<std::string, std::string> & headers)
 {
-	int contentLength = 0;
+	size_t contentLength = 0;
 	std::map<std::string, std::string>::const_iterator cit = headers.find("content-length");
 	if (cit != headers.end()) {
 		std::string contentLengthValue = cit->second;
@@ -173,17 +173,13 @@ static std::string extractBody(std::string & buffer, int contentLength)
 {
 	std::string body;
 
-	if (buffer.empty()) {
-		if (contentLength != 0)
-			throw HttpErrorException(400);
-		body = "";
-	}
-	else {
-		if (buffer.length() < static_cast<size_t>(contentLength))
-			throw HttpErrorException(400);
-		body = buffer.substr(0, contentLength);
-		buffer.erase(0, contentLength);
-	}
+	if (buffer.empty() || contentLength == 0) {
+		return (body); }
+
+	size_t dataSize = buffer.length() < static_cast<size_t>(contentLength) ? buffer.length() : static_cast<size_t>(contentLength);
+	body = buffer.substr(0, dataSize);
+	buffer.erase(0, dataSize);
+
 	return (body);
 }
 

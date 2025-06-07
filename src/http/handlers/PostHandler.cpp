@@ -49,7 +49,7 @@ HttpResponse PostHandler::handle(
 	std::string filename = createPostFileName(request, server, path);
 
 	try {
-		HttpUtils::writeFile(filename, request.getBody(), request.getBodyLength()); }
+		HttpUtils::writeFile(filename, request.getBody(), request.getContentLength()); }
 	catch (std::exception & e) {
 		throw HttpErrorException(500); }
 
@@ -80,7 +80,7 @@ static void checkPostValidity(
 {
 	if (location.getUploadPath().empty()) {
 		throw HttpErrorException(403); }
-	if (request.getBodyLength() > static_cast<unsigned int>(server.getClientMaxBodySize())) {
+	if (request.getContentLength() > (server.getClientMaxBodySize())) {
 		throw HttpErrorException(413); }
 	if (!HttpUtils::fileExists(path)) {
 		throw HttpErrorException(404); }

@@ -102,9 +102,34 @@ std::string HttpRequest::getHeaderValue(const std::string & key) const
 	return (cit->second);
 }
 
-size_t HttpRequest::getBodyLength() const
+size_t HttpRequest::getContentLength() const
 {
 	return (_contentLength);
+}
+
+size_t HttpRequest::getCurrentBodyLength() const
+{
+	return (_body.size());
+}
+
+size_t HttpRequest::getMissingBodyLength() const
+{
+	return (_body.size() >= _contentLength ? 0 : _contentLength - _body.size());
+}
+
+bool HttpRequest::BodyIsComplete() const
+{
+	return (_body.size() >= _contentLength);
+}
+
+/* ************************************************************************** */
+/*                                    setters                                 */
+/* ************************************************************************** */
+
+size_t HttpRequest::AppendBody(const std::string & buffer)
+{
+	_body += buffer;
+	return (getMissingBodyLength());
 }
 
 /* ************************************************************************** */
