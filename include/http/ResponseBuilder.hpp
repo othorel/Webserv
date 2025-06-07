@@ -17,19 +17,19 @@ class ResponseBuilder
 		HttpResponse _httpResponse;
 
 		void buildRedirect(int statusCode, const ServerConfig & server, const Location * location);
-		void buildError(int statusCode, const ServerConfig & server, const Location * location);
 		void addMandatoryHeaders(const ServerConfig & server, size_t bodySize);
 		
 	public :
-
+		
 		ResponseBuilder();
 		ResponseBuilder(const HttpRequest& request, std::vector<ServerConfig> serverVector);
 		ResponseBuilder(const ResponseBuilder & other);
 		ResponseBuilder & operator=(const ResponseBuilder & other);
 		~ResponseBuilder();
-
+		
 		const HttpResponse & buildResponse(const HttpRequest& request, std::vector<ServerConfig> serverVector);
 		const HttpResponse & getHttpResponse() const;
+		void buildError(int statusCode, const ServerConfig & server, const Location * location);
 
 };
 

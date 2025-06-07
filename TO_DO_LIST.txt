@@ -1,6 +1,10 @@
 A vérifier dans le parsing :
 que dans le parsing du fichier de config, si une location a une méthode POST elle doit obligatoirement avoir un upload_path valide
 
+Dans la boucle du serveur qui reçoit les requetes :
+créer le ParseRequest dans un try / catch et attraper l'exception pour faire appel au HttpRequest::buildError
+en lui transmettant le code d'erreur de l'exception (mais il sera peut etre nécessaire de modifier ou surcharger builError)
+
 Classe pour envoyer le body par paquets à créer :
 class ResponseSender {
 public:
