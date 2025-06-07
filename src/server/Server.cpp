@@ -137,15 +137,15 @@ void	Server::acceptNewConnexion(int fd)
 
 void	Server::handleEvent(int fdClient, size_t & i)
 {
-	ssize_t	bytes = _clientsMap[fdClient].readDataFromSocket();
-	if (bytes <= 0)
+	ssize_t	bytes = _clientsMap[fdClient].readDataFromSocket(); // quoi qu'il arrive on lit le socket
+	if (bytes <= 0) //detecte la fermeture de la connexion
 	{
 		_pollManager->removeSocket(i);
 		_clientsMap.erase(fdClient);
 		i--;
 		return ;
 	}
-	if (_clientsMap[fdClient].isComplete() == true)
+	if (_clientsMap[fdClient].isComplete() == true) //si la lecture est terminee
 	{
 		std::string rawrequest = _clientsMap[fdClient].getBufferIn();
 		std::cout << "Raw Request:" << std::endl;
@@ -155,13 +155,13 @@ void	Server::handleEvent(int fdClient, size_t & i)
 		requestparser.getHttpRequest().debug();
 
 		// ResponseBuilder	responsebuilder(requestparser.getHttpRequest(), );
-		// faire un taleau de servs base sur celui de servconfig mois ceux inactifs
 		std::string msg = "HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\npong";
 		_clientsMap[fdClient].writeDataToSocket(msg);
 		_pollManager->removeSocket(i);
 		_clientsMap.erase(fdClient);
 		i--;
 	}
+	//sinon on ne fait rien de plus que d'appeler readDatafromSocket pour concatener les donnees lues tant que la requete n'est pas terminee
 }
 
 void	Server::dealRequest(int fd)
