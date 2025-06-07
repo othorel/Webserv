@@ -43,7 +43,10 @@ ssize_t	Connexion::readDataFromSocket()
 	ssize_t bytes = recv(_fd, buf, sizeof(buf), 0);
 
 	if (bytes > 0)
+	{
+		std::cout << "Parsing request" << std::endl;
 		_bufferIn.append(buf, bytes);
+	}
 
 	return (bytes);
 }

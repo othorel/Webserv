@@ -54,10 +54,40 @@ Server & Server::operator=(const Server & other)
 	{
 		this->_pollManager = other._pollManager;
 		this->_fdSocketVect = other._fdSocketVect;
-		this->_listenTab = other._listenTab;
+		this->_listenVect = other._listenVect;
 	}
 	return (*this);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+///                                 GETTERS                                  ///
+////////////////////////////////////////////////////////////////////////////////
+
+std::vector<std::pair<int, std::string> >	Server::getListenVect() const
+{
+	return (this->_listenVect);
+}
+
+std::vector<std::pair<int, std::string> >	Server::getActiveListenVec() const
+{
+	return (this->_activeListenVect);
+}
+
+PollManager									*Server::getPollManager() const
+{
+	return (this->_pollManager);
+}
+
+std::map<int, Connexion>					Server::getClientsMap()
+{
+	return (this->_clientsMap);
+}
+
+std::vector<int>							Server::getFdSocketVect()
+{
+	return (this->_fdSocketVect);
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 ///                                RUNTIME                                   ///
@@ -68,7 +98,12 @@ void	Server::StartEventLoop()
 	while (1)
 	{
 		_pollManager->pollExec(-1);
-		for (int i = 0; i != static_cast<int>(_pollManager->getPollFdVector().size()); i++)
+		fillActiveListenVect();
+		for (size_t i = 0; i < _activeListenVect.size(); i++)
+		{
+			std::cout << "Something happens on: " << _activeListenVect[i].second << ":" << _activeListenVect[i].first << std::endl;
+		}
+		for (size_t i = 0; i != _pollManager->getPollFdVector().size(); i++)
 		{
 			if (_pollManager->getPollFdVector()[i].revents & POLLIN)
 				dealClient(_pollManager->getPollFdVector()[i].fd, i);
@@ -76,17 +111,13 @@ void	Server::StartEventLoop()
 	}
 }
 
-void	Server::dealClient(int fd, int & i)
+void	Server::dealClient(int fd, size_t & i)
 {
-	std::cout << "je deal client" << std::endl;
 	if (std::find(_fdSocketVect.begin(), _fdSocketVect.end(), fd) != _fdSocketVect.end())
-	{
-		std::cout << "j add new connexion" << std::endl;
 		acceptNewConnexion(fd);
-	}
 	else
 	{
-		std::cout << "je deal existing client" << std::endl;
+		std::cout << "New event to handle" << std::endl;
 		handleEvent(fd, i);
 	}
 }
@@ -100,23 +131,23 @@ void	Server::acceptNewConnexion(int fd)
 	if (clientFd < 0)
 		return;
 	_pollManager->addSocket(clientFd, POLLIN);
-	_clients.insert(std::make_pair(clientFd, Connexion(clientFd, clientAddr)));
+	_clientsMap.insert(std::make_pair(clientFd, Connexion(clientFd, clientAddr)));
 	std::cout << "New connexion authorized" << std::endl;
 }
 
-void	Server::handleEvent(int fdClient, int & i)
+void	Server::handleEvent(int fdClient, size_t & i)
 {
-	ssize_t	bytes = _clients[fdClient].readDataFromSocket();
+	ssize_t	bytes = _clientsMap[fdClient].readDataFromSocket();
 	if (bytes <= 0)
 	{
 		_pollManager->removeSocket(i);
-		_clients.erase(fdClient);
+		_clientsMap.erase(fdClient);
 		i--;
 		return ;
 	}
-	if (_clients[fdClient].isComplete() == true)
+	if (_clientsMap[fdClient].isComplete() == true)
 	{
-		std::string rawrequest = _clients[fdClient].getBufferIn();
+		std::string rawrequest = _clientsMap[fdClient].getBufferIn();
 		std::cout << "Raw Request:" << std::endl;
 		std::cout << rawrequest << std::endl;
 
@@ -126,9 +157,9 @@ void	Server::handleEvent(int fdClient, int & i)
 		// ResponseBuilder	responsebuilder(requestparser.getHttpRequest(), );
 		// faire un taleau de servs base sur celui de servconfig mois ceux inactifs
 		std::string msg = "HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\npong";
-		_clients[fdClient].writeDataToSocket(msg);
+		_clientsMap[fdClient].writeDataToSocket(msg);
 		_pollManager->removeSocket(i);
-		_clients.erase(fdClient);
+		_clientsMap.erase(fdClient);
 		i--;
 	}
 }
@@ -146,16 +177,39 @@ void	Server::dealRequest(int fd)
 	std::cout << "I just sent a response" << std::endl;
 }
 
+void	Server::fillActiveListenVect()
+{
+	const std::vector<struct pollfd>& pollFds = _pollManager->getPollFdVector();
+
+	for (size_t i = 0; i < pollFds.size(); ++i)
+	{
+		int fd = pollFds[i].fd;
+		if ((pollFds[i].revents & POLLIN) &&
+			(std::find(_fdSocketVect.begin(), _fdSocketVect.end(), fd) != _fdSocketVect.end())) // Si l'événement est actif (POLLIN) et que c'est un socket d'écoute
+		{
+			
+			for (size_t j = 0; j < _fdSocketVect.size(); ++j)// On recupere lec couple IP Port associé à ce fd
+			{
+				if (_fdSocketVect[j] == fd)
+				{
+					_activeListenVect.push_back(_listenVect[j]);
+					break;
+				}
+			}
+		}
+	}
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 ///                           INITIALIZATION                                 ///
 ////////////////////////////////////////////////////////////////////////////////
 
 void	Server::Setup()
 {
-	std::vector<std::pair<int, std::string> >::iterator	it = _listenTab.begin();
+	std::vector<std::pair<int, std::string> >::iterator	it = _listenVect.begin();
 	struct sockaddr_in serv_addr;
 
-	for (; it != _listenTab.end(); it++)
+	for (; it != _listenVect.end(); it++)
 	{
 		int	fdSocket = socket(AF_INET, SOCK_STREAM, 0);
 		if (fdSocket == -1)
@@ -182,10 +236,10 @@ void	Server::Setup()
 
 void	Server::addPair(std::pair<int, std::string> listen)
 {
- 	std::vector<std::pair<int, std::string> >::iterator	it = std::find(_listenTab.begin(), _listenTab.end(), listen);
+ 	std::vector<std::pair<int, std::string> >::iterator	it = std::find(_listenVect.begin(), _listenVect.end(), listen);
 
-	if (it == _listenTab.end())
+	if (it == _listenVect.end())
 	{
-		_listenTab.push_back(listen);
+		_listenVect.push_back(listen);
 	}
 }
