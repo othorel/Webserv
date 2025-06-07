@@ -15,6 +15,7 @@
 # include <poll.h>
 # include <unistd.h>
 
+class RequestParser;
 class Connexion
 {
 	public:
@@ -25,23 +26,28 @@ class Connexion
 		Connexion & operator=(const Connexion & other);
 
 		// Getters
-		int			getFd() const;
-		std::string	getIP() const;
-		int			getPort() const;
-		std::string	getBufferIn() const;
-		std::string	getBufferOut() const;
+		int				getFd() const;
+		std::string		getIP() const;
+		int				getPort() const;
+		std::string		getBufferIn() const;
+		std::string		getBufferOut() const;
+		RequestParser	*getRequestParser() const;
+
+		// Setters
+		void			setRequestParser(RequestParser	*requestParser);
 
 		// Runtime
-		ssize_t		readDataFromSocket();
-		ssize_t		writeDataToSocket(const std::string & response);
-		bool		isComplete();
+		ssize_t			readDataFromSocket();
+		ssize_t			writeDataToSocket(const std::string & response);
+		bool			isComplete();
 
 	private:
-		bool		_isComplete;
-		int			_fd;
-		sockaddr_in	_addr;
-		std::string	_bufferIn;
-		std::string	_bufferOut;
+		bool			_isComplete;
+		int				_fd;
+		sockaddr_in		_addr;
+		std::string		_bufferIn;
+		std::string		_bufferOut;
+		RequestParser	*_requestParser;
 
 };
 

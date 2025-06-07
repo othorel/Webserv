@@ -7,12 +7,15 @@
 
 Connexion::Connexion(){}
 
-Connexion::Connexion(int fd, sockaddr_in addr) : _fd(fd), _addr(addr)
+Connexion::Connexion(int fd, sockaddr_in addr) : _fd(fd), _addr(addr), _requestParser(NULL)
 {
 	_isComplete = false;
 }
 
-Connexion::~Connexion(){}
+Connexion::~Connexion()
+{
+	delete _requestParser;
+}
 
 Connexion::Connexion(const Connexion & toCopy)
 {
@@ -91,5 +94,19 @@ std::string	Connexion::getBufferIn() const
 std::string	Connexion::getBufferOut() const
 {
 	return (_bufferOut);
+}
+
+RequestParser	*Connexion::getRequestParser() const
+{
+	return (_requestParser);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+///                                 SETTERS                                  ///
+////////////////////////////////////////////////////////////////////////////////
+
+void	Connexion::setRequestParser(RequestParser	*requestParser)
+{
+	_requestParser = requestParser;
 }
 		
