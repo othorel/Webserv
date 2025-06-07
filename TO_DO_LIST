@@ -1,2 +1,14 @@
 A vérifier dans le parsing :
 que dans le parsing du fichier de config, si une location a une méthode POST elle doit obligatoirement avoir un upload_path valide
+
+Classe pour envoyer le body par paquets à créer :
+class ResponseSender {
+public:
+    ResponseSender(const HttpResponse& resp);
+    bool sendNextChunk(int client_fd); // Appelable dans une boucle
+private:
+    int file_fd;
+    size_t offset;
+    // etc.
+};
+

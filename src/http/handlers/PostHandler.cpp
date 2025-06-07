@@ -37,31 +37,16 @@ PostHandler::~PostHandler()
 /*                                      handler                               */
 /* ************************************************************************** */
 
-HttpResponse PostHandler::handle(const HttpRequest & request, const Location & location , const ServerConfig & server)
+HttpResponse PostHandler::handle(
+	const HttpRequest & request, const Location & location , const ServerConfig & server)
 {
-	if (location.getUploadPath().empty()) {
-		throw HttpErrorException(403); }
-
 	std::string path = selectRoot(server, location) + location.getUploadPath();
 	if (!path.empty() && path[path.size() - 1] == '/') {
 		path.erase(path.size() - 1); }
 
-	if (!HttpUtils::fileExists(path)) {
-		throw HttpErrorException(404); }
-	if (!HttpUtils::isDirectory(path)) {
-		throw HttpErrorException(403); }
-	if (!HttpUtils::hasWritePermission(path)) {
-		throw HttpErrorException(403); }
-	
-	static unsigned int count = 0;
-	std::string extension;
-	if (!request.hasHeader("content-type")) {
-		extension = ""; }
-	else {
-		extension = HttpUtils::getExtensionFromMimeType(request.getHeaderValue("content-type")); }
-	std::string filename = path + "/upload_" + HttpUtils::numberToString(count);
-	if (!extension.empty()) {
-		filename += "." + extension; }
+	checkPostValidity(request, location, server, path);
+
+	std::string filename = createPostFileName(request, server, path);
 
 	try {
 		HttpUtils::writeFile(filename, request.getBody(), request.getBodyLength()); }
@@ -70,24 +55,73 @@ HttpResponse PostHandler::handle(const HttpRequest & request, const Location & l
 
 	std::map<std::string, std::string> headers;
 	std::string relativePath = location.getUploadPath();
-	if (!relativePath.empty() && relativePath[relativePath.size() - 1] != '/')
-		relativePath += "/";
-	relativePath += "upload_" + HttpUtils::numberToString(count);
-	if (!extension.empty())
-		relativePath += "." + extension;
+	if (!relativePath.empty() && relativePath[relativePath.size() - 1] != '/') {
+		relativePath += "/"; }
+	relativePath += filename.substr(filename.find_last_of("/") + 1);
 	headers["Location"] = relativePath;
 	headers["Content-Type"] = "text/html";
-	std::string body = "<html><body><h1>201 Created</h1><p>The ressource has been successfully created.</p></body></html>";
+	std::string body =
+		"<html><body><h1>201 Created</h1>\n"
+		"<p>The resource has been successfully created.</p>\n"
+		"<a href=\"" + relativePath  + "\">See file</a>\n"
+		"</body></html>";
 	HttpResponse httpResponse("HTTP/1.1", 201, headers, body);
-
-	if (count < std::numeric_limits<unsigned int>::max()) {
-		count++; }
-	else {
-		count = 0; }
 
 	return (httpResponse);
 }
 
+/* ************************************************************************** */
+/*                            non member functions                            */
+/* ************************************************************************** */
+
+static void checkPostValidity(
+	const HttpRequest & request, const Location & location ,
+	const ServerConfig & server, const std::string & path)
+{
+	if (location.getUploadPath().empty()) {
+		throw HttpErrorException(403); }
+	if (request.getBodyLength() > static_cast<unsigned int>(server.getClientMaxBodySize())) {
+		throw HttpErrorException(413); }
+	if (!HttpUtils::fileExists(path)) {
+		throw HttpErrorException(404); }
+	if (!HttpUtils::isDirectory(path)) {
+		throw HttpErrorException(403); }
+	if (!HttpUtils::hasWritePermission(path)) {
+		throw HttpErrorException(403); }
+}
+
+static std::string createPostFileName(
+	const HttpRequest & request, const ServerConfig & server, const std::string & path)
+{
+	std::string extension;
+	if (request.hasHeader("content-type")) {
+		extension = HttpUtils::getExtensionFromMimeType(request.getHeaderValue("content-type")); }
+
+	std::string userAgent;
+	if (request.hasHeader("user-agent")) {
+		userAgent = "ua_" + sanitizeFilenamePart(request.getHeaderValue("user-agent")) + "_"; }
+	else {
+		userAgent = "ua_unknown_"; }
+
+	std::string filename = path + "/upload_" + userAgent + HttpUtils::generateUniqueTimestamp();
+	if (!extension.empty()) {
+		filename += "." + extension; }
+	return (filename);
+}
+
+static std::string sanitizeFilenamePart(const std::string & input)
+{
+	std::string result;
+	for (size_t i = 0; i < input.length(); ++i) {
+		char c = input[i];
+		if (std::isalnum(c) || c == '-' || c == '_') {
+			result += c; }
+		else {
+			result += '_'; }
+		if (result.size() > 39) {
+			break ; }}
+	return (result);
+}
 
 // Que fait une requête POST ?
 
