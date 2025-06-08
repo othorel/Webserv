@@ -11,15 +11,30 @@
 /* ************************************************************************** */
 
 RequestParser::RequestParser() :
-	_httpRequest(new HttpRequest)
+	_httpRequest()
 {}
 
-// Constructor that parses a raw HTTP request string
-// and dynamically allocates a new HttpRequest object.
-// Throws HttpErrorException if the request is invalid.
+// Method that creates an HttpRequest object by parsing the whole request
+// throwing invalidRequestException in case of error
 RequestParser::RequestParser(const std::string & raw_request)
 {
 	parseRequest(raw_request);
+}
+
+RequestParser::RequestParser(const RequestParser & other) :
+	_httpRequest(other._httpRequest)
+{}
+
+/* ************************************************************************** */
+/*                                 operators                                  */
+/* ************************************************************************** */
+
+RequestParser & RequestParser::operator=(const RequestParser & other)
+{
+	if (this != &other) {
+		_httpRequest = other._httpRequest;
+	}
+	return (*this);
 }
 
 /* ************************************************************************** */
@@ -27,9 +42,7 @@ RequestParser::RequestParser(const std::string & raw_request)
 /* ************************************************************************** */
 
 RequestParser::~RequestParser()
-{
-	delete _httpRequest;
-}
+{}
 
 /* ************************************************************************** */
 /*                                   getters                                  */
@@ -37,9 +50,7 @@ RequestParser::~RequestParser()
 
 const HttpRequest & RequestParser::getHttpRequest() const
 {
-	if (!_httpRequest) {
-		throw std::runtime_error("HttpRequest has been released or not initialized."); }
-	return (*_httpRequest);
+	return (_httpRequest);
 }
 
 /* ************************************************************************** */
@@ -48,9 +59,6 @@ const HttpRequest & RequestParser::getHttpRequest() const
 
 void RequestParser::parseRequest(const std::string & raw_request)
 {
-	if (_httpRequest)
-		delete _httpRequest;
-
 	if (raw_request.empty())
 		throw HttpErrorException(400);
 
@@ -69,36 +77,27 @@ void RequestParser::parseRequest(const std::string & raw_request)
 	
 	if (version != "HTTP/1.1")
 		throw HttpErrorException(400);
-
 	std::string shouldBeEmpty;
-	if ((iss >> shouldBeEmpty)) {
-		throw HttpErrorException(400); }
-
+	if ((iss >> shouldBeEmpty))
+	{
+		throw HttpErrorException(400);
+	}
 	std::map<std::string, std::string> headers = extractHeaders(buffer);
 	if (!headers.count("host") || headers.find("host")->second.empty())
 		throw HttpErrorException(400);
-
 	unsigned int contentLength = calculateContentLength(headers);
 	std::string body = extractBody(buffer, contentLength);
-
-	try {
-		_httpRequest = new HttpRequest(method, uri, version, headers, body); }
-	catch (const std::bad_alloc&) {
-		throw HttpErrorException(500); }
+	_httpRequest = HttpRequest(method, uri, version, headers, body);
 }
 
 /* ************************************************************************** */
-/*                             ownership transfer                             */
+/*                                    setters                                 */
 /* ************************************************************************** */
 
-// Transfers ownership of the internal HttpRequest pointer to the caller.
-// After this call, the RequestParser no longer manages or deletes the object.
-// Returns a pointer to the HttpRequest, or NULL if it was already released.
-HttpRequest * RequestParser::release()
+size_t RequestParser::AppendRequestBody(const std::string & buffer)
 {
-	HttpRequest * temp = _httpRequest;
-	_httpRequest = NULL;
-	return (temp);
+	_httpRequest.AppendBody(buffer);
+	return (_httpRequest.getMissingBodyLength());
 }
 
 /* ************************************************************************** */
@@ -220,3 +219,59 @@ static std::string extractLineAndRemove(std::string & input)
 
 	return (line);
 }
+
+/* ************************************************************************** */
+/*                                  tests                                     */
+/* ************************************************************************** */
+
+// Uncomment main then compile with:
+// g++ HttpRequest.cpp RequestParser.cpp httpUtils.cpp
+
+// int main()
+// {
+// 	std::string testCases[] = {
+// 		"GET /index.html HTTP/1.1\r\n"
+// 		"Host: localhost\r\n"
+// 		"Connection: keep-alive\r\n"
+// 		"\r\n",
+
+// 		"POST /submit HTTP/1.1\r\n"
+// 		"Host: localhost\r\n"
+// 		"Content-Length: 11\r\n"
+// 		"Content-Type: text/plain\r\n"
+// 		"\r\n"
+// 		"Hello World",
+
+// 		"GET / HTTP/1.1\r\n"
+// 		"Content-Length: 0\r\n"
+// 		"\r\n",
+
+// 		"POST / HTTP/1.1\r\n"
+// 		"Host: localhost\r\n"
+// 		"Content-Length: abc\r\n"
+// 		"\r\n"
+// 		"hello",
+
+// 		"POST / HTTP/1.1\r\n"
+// 		"Host: localhost\r\n"
+// 		"Content-Length: 20\r\n"
+// 		"\r\n"
+// 		"short"
+// 	};
+
+// 	for (size_t i = 0; i < sizeof(testCases) / sizeof(testCases[0]); ++i) {
+// 		std::cout << "\n==============================" << std::endl;
+// 		std::cout << "Test Case #" << i + 1 << std::endl;
+// 		std::cout << "==============================\n" << std::endl;
+
+// 		try {
+// 			RequestParser parser(testCases[i]);
+// 			parser.getHttpRequest().debug();
+// 		}
+// 		catch (const HttpErrorException & e) {
+// 			std::cerr << "InvalidRequestException (" << e.getStatusCode() << ") : "
+// 					  << e.what() << std::endl;
+// 		}
+// 	}
+// 	return 0;
+// }

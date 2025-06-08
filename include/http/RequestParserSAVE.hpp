@@ -10,20 +10,20 @@ class RequestParser
 {
 	private :
 
-		HttpRequest	* _httpRequest;
+		HttpRequest	_httpRequest;
 		
 		void parseRequest(const std::string & raw_request);
-		RequestParser(const RequestParser & other);
-		RequestParser & operator=(const RequestParser & other);
 		
-	public :
+		public :
 		
 		RequestParser();
 		RequestParser(const std::string & raw_request);
+		RequestParser(const RequestParser & other);
+		RequestParser & operator=(const RequestParser & other);
 		~RequestParser();
 
 		const HttpRequest & getHttpRequest() const;
-		HttpRequest *release();
+		size_t AppendRequestBody(const std::string & buffer);
 
 };
 

@@ -5,6 +5,14 @@ Dans la boucle du serveur qui reçoit les requetes :
 créer le ParseRequest dans un try / catch et attraper l'exception pour faire appel au HttpRequest::buildError
 en lui transmettant le code d'erreur de l'exception (mais il sera peut etre nécessaire de modifier ou surcharger builError)
 
+Transformer la classe RequestParser pour allouer dynamiquement son HttpRequest :
+Avoir une méthode pour transférer la propriété:
+HttpRequest *release() {
+	HttpRequest *temp = _httpRequest;
+	_httpRequest = NULL; // empêche le destructeur de delete
+	return temp;         // transfert de propriété
+}
+
 Classe pour envoyer le body par paquets à créer :
 class ResponseSender {
 public:
