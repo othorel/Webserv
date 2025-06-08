@@ -11,13 +11,14 @@
 /* ************************************************************************** */
 
 RequestParser::RequestParser() :
-	_httpRequest(new HttpRequest)
+	_httpRequest(NULL)
 {}
 
 // Constructor that parses a raw HTTP request string
 // and dynamically allocates a new HttpRequest object.
 // Throws HttpErrorException if the request is invalid.
-RequestParser::RequestParser(const std::string & raw_request)
+RequestParser::RequestParser(const std::string & raw_request) :
+	_httpRequest(NULL)
 {
 	parseRequest(raw_request);
 }
