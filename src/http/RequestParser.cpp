@@ -177,7 +177,6 @@ static size_t calculateContentLength(const std::map<std::string, std::string> & 
 		std::istringstream iss(contentLengthValue);
 		iss >> contentLength;
 	}
-
 	return (contentLength);
 }
 
@@ -218,6 +217,5 @@ static std::string extractLineAndRemove(std::string & input)
 		line = input;
 		input.clear();
 	}
-
 	return (line);
 }
