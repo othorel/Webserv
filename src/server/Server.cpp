@@ -164,11 +164,14 @@ void	Server::handleEvent(int fdClient, size_t & i)
 		std::cout << "Raw Request:" << std::endl;
 		std::cout << rawrequest << std::endl;
 
+		bool	isBody = true;
+
 		if (_clientsMap[fdClient].getHttpRequest() == NULL)
 		{
 			RequestParser	parser(rawrequest);
 			_clientsMap[fdClient].setRequestParser(parser.release());
-			_clientsMap[fdClient].getHttpRequest()->debug(); //debug
+			_clientsMap[fdClient].getHttpRequest()->debug();
+			isBody = false;
 		}
 		int	bytesStillToRead = _clientsMap[fdClient].getHttpRequest()->getMissingBodyLength();
 		if (bytesStillToRead == 0)
@@ -179,7 +182,7 @@ void	Server::handleEvent(int fdClient, size_t & i)
 			_clientsMap.erase(fdClient);
 			i--;
 		}
-		else
+		else if (isBody == true)
 		{
 			_clientsMap[fdClient].getHttpRequest()->AppendBody(rawrequest);
 		}

@@ -7,9 +7,9 @@
 ///                               CANONIC +                                  ///
 ////////////////////////////////////////////////////////////////////////////////
 
-Connexion::Connexion(){}
+Connexion::Connexion() : _request(NULL), _body(NULL) {}
 
-Connexion::Connexion(int fd, sockaddr_in addr) : _fd(fd), _addr(addr), _request(NULL)
+Connexion::Connexion(int fd, sockaddr_in addr) : _fd(fd), _addr(addr), _request(NULL), _body(NULL)
 {
 	_isComplete = false;
 }
@@ -18,6 +18,8 @@ Connexion::~Connexion()
 {
 	if (_request)
 		delete _request;
+	if (_body)
+		delete _body;
 }
 
 Connexion::Connexion(const Connexion & toCopy)
@@ -35,6 +37,7 @@ Connexion & Connexion::operator=(const Connexion & other)
 		this->_fd = other._fd;
 		this->_isComplete = other._isComplete;
 		this->_request = other._request;
+		this->_body = other._body;
 	}
 	return (*this);
 }
@@ -115,4 +118,9 @@ void	Connexion::setRequestParser(HttpRequest	*request)
 		delete _request;
  	_request = request;
 }
+
+// void	Connexion::setBody()
+// {
+// 	while (_bufferIn.c_str()[i])
+// }
 		
