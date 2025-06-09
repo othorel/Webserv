@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include "../../../include/http/handlers/AHandler.hpp"
 #include "../../../include/http/HttpErrorException.hpp"
+#include <iostream>
 
 /* ************************************************************************** */
 /*                                  destructor                                */
@@ -23,7 +24,7 @@ std::string AHandler::createIndexPath(std::string path, const Location & locatio
 	std::string indexFile = location.getIndex();
 	if (indexFile.empty()) {
 		indexFile = "/index.html"; }
-	return (path + indexFile);
+	return (path + '/' + indexFile);
 }
 
 std::string AHandler::generateAutoIndex(const std::string & dirPath, const std::string & uriPath)
