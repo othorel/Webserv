@@ -164,15 +164,16 @@ void	Server::handleEvent(int fdClient, size_t & i)
 		std::cout << "Raw Request:" << std::endl;
 		std::cout << rawrequest << std::endl;
 
-		if (_clientsMap[fdClient].getRequestParser() == NULL)
+		if (_clientsMap[fdClient].getHttpRequest() == NULL)
 		{
-			_clientsMap[fdClient].setRequestParser(new RequestParser(rawrequest));
-			_clientsMap[fdClient].getRequestParser()->getHttpRequest().debug(); //debug
+			RequestParser	parser(rawrequest);
+			_clientsMap[fdClient].setRequestParser(parser.release());
+			_clientsMap[fdClient].getHttpRequest()->debug(); //debug
 		}
-		int	bytesStillToRead = _clientsMap[fdClient].getRequestParser()->getHttpRequest().getMissingBodyLength();
+		int	bytesStillToRead = _clientsMap[fdClient].getHttpRequest()->getMissingBodyLength();
 		if (bytesStillToRead == 0)
 		{
-			ResponseBuilder	responsebuilder(_clientsMap[fdClient].getRequestParser()->getHttpRequest(), this->_serverConfigVect);
+			ResponseBuilder	responsebuilder(*_clientsMap[fdClient].getHttpRequest(), this->_serverConfigVect);
 			_clientsMap[fdClient].writeDataToSocket(responsebuilder.getHttpResponse().toRawString());
 			_pollManager->removeSocket(i);
 			_clientsMap.erase(fdClient);
@@ -180,7 +181,7 @@ void	Server::handleEvent(int fdClient, size_t & i)
 		}
 		else
 		{
-			_clientsMap[fdClient].getRequestParser()->AppendRequestBody(rawrequest);
+			_clientsMap[fdClient].getHttpRequest()->AppendBody(rawrequest);
 		}
 	}
 	//sinon on ne fait rien de plus que d'appeler readDatafromSocket pour concatener les donnees lues tant que la requete n'est pas terminee
