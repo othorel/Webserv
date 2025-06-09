@@ -61,7 +61,9 @@ bool HttpUtils::isRegularFile(const std::string & path)
 bool HttpUtils::fileExists(const std::string & path)
 {
 	struct stat s;
-	return (stat(path.c_str(), &s) == 0 && S_ISREG(s.st_mode));
+	if (stat(path.c_str(), &s) != 0)
+		return false;
+	return (S_ISREG(s.st_mode) || S_ISDIR(s.st_mode));
 }
 
 // Function that returns an HTTP error message according to an HTTP error code
