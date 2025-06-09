@@ -36,6 +36,7 @@ class Connexion
 
 		// Setters
 		void			setRequestParser(HttpRequest	*request);
+		// void			setBody();
 
 		// Runtime
 		ssize_t			readDataFromSocket();
@@ -48,6 +49,7 @@ class Connexion
 		sockaddr_in		_addr;
 		std::string		_bufferIn;
 		std::string		_bufferOut;
+		char			*_body;
 		HttpRequest		*_request;
 
 };
