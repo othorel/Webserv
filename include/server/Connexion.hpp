@@ -16,6 +16,7 @@
 # include <unistd.h>
 
 class RequestParser;
+class HttpRequest;
 class Connexion
 {
 	public:
@@ -31,10 +32,10 @@ class Connexion
 		int				getPort() const;
 		std::string		getBufferIn() const;
 		std::string		getBufferOut() const;
-		RequestParser	*getRequestParser() const;
+		HttpRequest		*getHttpRequest() const;
 
 		// Setters
-		void			setRequestParser(RequestParser	*requestParser);
+		void			setRequestParser(HttpRequest	*request);
 
 		// Runtime
 		ssize_t			readDataFromSocket();
@@ -47,7 +48,7 @@ class Connexion
 		sockaddr_in		_addr;
 		std::string		_bufferIn;
 		std::string		_bufferOut;
-		RequestParser	*_requestParser;
+		HttpRequest		*_request;
 
 };
 

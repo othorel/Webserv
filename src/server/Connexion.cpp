@@ -1,6 +1,7 @@
 
 #include "../../include/server/Connexion.hpp"
 #include "../../include/http/RequestParser.hpp"
+#include "../../include/http/HttpRequest.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 ///                               CANONIC +                                  ///
@@ -8,15 +9,15 @@
 
 Connexion::Connexion(){}
 
-Connexion::Connexion(int fd, sockaddr_in addr) : _fd(fd), _addr(addr), _requestParser(NULL)
+Connexion::Connexion(int fd, sockaddr_in addr) : _fd(fd), _addr(addr), _request(NULL)
 {
 	_isComplete = false;
 }
 
 Connexion::~Connexion()
 {
-	if (_requestParser)
-		delete _requestParser;
+	if (_request)
+		delete _request;
 }
 
 Connexion::Connexion(const Connexion & toCopy)
@@ -33,6 +34,7 @@ Connexion & Connexion::operator=(const Connexion & other)
 		this->_bufferOut = other._bufferOut;
 		this->_fd = other._fd;
 		this->_isComplete = other._isComplete;
+		this->_request = other._request;
 	}
 	return (*this);
 }
@@ -98,17 +100,19 @@ std::string	Connexion::getBufferOut() const
 	return (_bufferOut);
 }
 
-RequestParser	*Connexion::getRequestParser() const
+HttpRequest	*Connexion::getHttpRequest() const
 {
-	return (_requestParser);
+	return (_request);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 ///                                 SETTERS                                  ///
 ////////////////////////////////////////////////////////////////////////////////
 
-void	Connexion::setRequestParser(RequestParser	*requestParser)
+void	Connexion::setRequestParser(HttpRequest	*request)
 {
-	_requestParser = requestParser;
+	if (_request)
+		delete _request;
+ 	_request = request;
 }
 		
