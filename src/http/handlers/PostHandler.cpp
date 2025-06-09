@@ -40,7 +40,7 @@ PostHandler::~PostHandler()
 HttpResponse PostHandler::handle(
 	const HttpRequest & request, const Location & location , const ServerConfig & server)
 {
-	std::string path = selectRoot(server, location) + location.getUploadPath();
+	std::string path = selectRoot(server, location) + '/' + location.getUploadPath();
 	if (!path.empty() && path[path.size() - 1] == '/') {
 		path.erase(path.size() - 1); }
 
