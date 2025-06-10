@@ -6,6 +6,7 @@
 #include "../../include/config/ConfigParser.hpp"
 #include "../../include/http/RequestParser.hpp"
 #include "../../include/http/ProcessRequest.hpp"
+#include "../../include/http/HttpErrorException.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 ///                               CANONIC +                                  ///
@@ -150,44 +151,47 @@ void	Server::acceptNewConnexion(int fd)
 
 void	Server::handleEvent(int fdClient, size_t & i)
 {
-	ssize_t	bytes = _clientsMap[fdClient].readDataFromSocket(); // quoi qu'il arrive on lit le socket
-	if (bytes <= 0) //detecte la fermeture de la connexion
+	//checkTimeOut(fdClient, i); //on regarde si le timeout est depasse si c'est le cas tout s'arrete et le client est supprime
+
+	std::string		rawLineString;
+	ssize_t			bytes = _clientsMap[fdClient].readDataFromSocket(rawLineString); // quoi qu'il arrive on lit une ligne sur le socket et on l'ajoute a buffer_in
+	char			*rawLineChar = new char[rawLineString.size() + 1];
+	std::copy(rawLineString.begin(), rawLineString.end(), rawLineChar);
+	rawLineChar[rawLineString.size()] = '\0';
+
+	if (bytes <= 0) //si on detecte la fermeture de la connexion
 	{
-		_pollManager->removeSocket(i);
-		_clientsMap.erase(fdClient);
-		i--;
+		supressClient(fdClient, i); // peut etre en plus throw une exception ?
 		return ;
 	}
-	if (_clientsMap[fdClient].isComplete() == true) //si la lecture est terminee
+
+	if (_clientsMap[fdClient].isHeaderParsed() == false) //si les headers ne sont pas encore termines
+		parseHeader(fdClient, rawLineString); // c'est la qu'on cree une instance de HttpRequest et de ProcessRequest
+	
+	else //si les headers sont termines alors on passe au body ou on s'arrette si la requete n'a pas de body
 	{
-		std::string rawrequest = _clientsMap[fdClient].getBufferIn();
-		std::cout << "Raw Request:" << std::endl;
-		std::cout << rawrequest << std::endl;
-
-		bool	isBody = true;
-
-		if (_clientsMap[fdClient].getHttpRequest() == NULL)
+		switch (_clientsMap[fdClient].getProcessRequest()->getProcessStatus())
 		{
-			RequestParser	parser(rawrequest);
-			_clientsMap[fdClient].setRequestParser(parser.release());
-			_clientsMap[fdClient].getHttpRequest()->debug();
-			isBody = false;
-		}
-		int	bytesStillToRead = _clientsMap[fdClient].getHttpRequest()->getMissingBodyLength();
-		if (bytesStillToRead == 0)
-		{
-			ProcessRequest	ProcessRequest(*_clientsMap[fdClient].getHttpRequest(), this->_serverConfigVect);
-			_clientsMap[fdClient].writeDataToSocket(ProcessRequest.sendHttpResponse());
-			_pollManager->removeSocket(i);
-			_clientsMap.erase(fdClient);
-			i--;
-		}
-		else if (isBody == true)
-		{
-			_clientsMap[fdClient].getHttpRequest()->AppendBody(rawrequest);
+			case READY:
+				_clientsMap[fdClient].getProcessRequest()->process();
+				break;
+			case WAITING_BODY:
+				_clientsMap[fdClient].getProcessRequest()->receiveBodyChunk(rawLineChar, rawLineString.size());
+				break;
+			case RESPONSE_READY:
+				_clientsMap[fdClient].getProcessRequest()->sendHttpResponse();
+				break;
+			case SENDING_BODY:
+				_clientsMap[fdClient].getProcessRequest()->sendBodyChunk(rawLineChar, rawLineString.size());
+				break;
+			case DONE:
+				supressClient(fdClient, i);
+				break;
+			default:
+				throw HttpErrorException(500);
 		}
 	}
-	//sinon on ne fait rien de plus que d'appeler readDatafromSocket pour concatener les donnees lues tant que la requete n'est pas terminee
+	// 	//sinon on ne fait rien de plus que d'appeler readDatafromSocket pour concatener les donnees lues tant que la requete n'est pas terminee
 }
 
 void	Server::dealRequest(int fd)
@@ -223,6 +227,29 @@ void	Server::fillActiveListenVect()
 				}
 			}
 		}
+	}
+}
+
+const ServerConfig	&Server::getSingleServerConfig(struct sockaddr_in addr) const
+{
+	for(size_t i = 0; i < _serverConfigVect.size(); i++)
+	{
+		if (_serverConfigVect[i].getListen().first == ntohs(addr.sin_port) && _serverConfigVect[i].getListen().second == inet_ntoa(addr.sin_addr))
+			return (_serverConfigVect[i]);
+	}
+	throw std::runtime_error("No matching ServConfig for this given sockaddr_in");
+}
+
+void	Server::checkTimeOut(int fdClient, size_t & i)
+{
+	std::time_t		timeNow = std::time(NULL);
+	std::time_t		timeOut = static_cast<time_t>(this->getSingleServerConfig(_clientsMap[fdClient].getAddr()).getSessionTimeout());
+	std::time_t		timeEnd = _clientsMap[fdClient].getStartTime() + timeOut;
+
+	if (timeNow > timeEnd)
+	{
+		supressClient(fdClient, i);
+		throw HttpErrorException(408);
 	}
 }
 
@@ -267,5 +294,29 @@ void	Server::addPair(std::pair<int, std::string> listen)
 	if (it == _listenVect.end())
 	{
 		_listenVect.push_back(listen);
+	}
+}
+
+void	Server::supressClient(int fdClient, size_t & i)
+{
+	_pollManager->removeSocket(i);
+	_clientsMap.erase(fdClient);
+	i--;
+}
+
+void	Server::parseHeader(int fdClient, std::string &rawrequest)
+{
+	if (_clientsMap[fdClient].endTransmission() == false) //si on n'a pas encore rencontre de double saut de ligne ca veut dire qu'on est encore dans les headers
+		_clientsMap[fdClient].appendRaw("HEADER", rawrequest); //alors on ajoute la ligne actuelle a l'attribut _headers
+	else
+	{
+		_clientsMap[fdClient].setHeaderParsed(); //on indique que les headers ont ete parses
+		// if (_clientsMap[fdClient].getHttpRequest() == NULL)
+		// {
+		RequestParser	parser(rawrequest);                      //
+		_clientsMap[fdClient].setRequestParser(parser.release());//on initialise _httpRequest
+
+		_clientsMap[fdClient].setProcessRequest(new ProcessRequest(*_clientsMap[fdClient].getHttpRequest(), this->getServerConfig())); // on initialise _processRequest
+		// }
 	}
 }

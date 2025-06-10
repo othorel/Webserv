@@ -13,6 +13,7 @@
 # include <arpa/inet.h>
 # include <poll.h>
 # include <unistd.h>
+# include <ctime>
 
 class ConfigParser;
 class ServerConfig;
@@ -31,7 +32,7 @@ class Server
 		
 		Server & operator=(const Server & other);
 
-		void	StartEventLoop();
+		void										StartEventLoop();
 
 		std::vector<std::pair<int, std::string> >	getListenVect() const;
 		std::vector<std::pair<int, std::string> >	getActiveListenVec() const;
@@ -39,8 +40,13 @@ class Server
 		std::map<int, Connexion>					getClientsMap() const;
 		std::vector<int>							getFdSocketVect() const;
 		std::vector<ServerConfig> 					getServerConfig() const;
-
+		
 		void										setServerConfig(std::vector<ServerConfig> & servConfigVect);
+
+		void										supressClient(int fdClient, size_t & i);
+		void										parseHeader(int fdClient, std::string &rawrequest);
+
+		const ServerConfig							&getSingleServerConfig(struct sockaddr_in addr) const;
 		
 	private:
 		// Attributes
@@ -49,21 +55,22 @@ class Server
 		
 		
 		PollManager									*_pollManager; // classe contenant un vect de pollFd
-		std::map<int, Connexion>					_clientsMap;
+		std::map<int, Connexion>					_clientsMap; //Tous les clients actuellement en train de communiquer
 
 		std::vector<std::pair<int, std::string> >	_activeListenVect; // sous-partie de listen tab contenant uniquement les couples ports IP concernes par des evenements
 		std::vector<ServerConfig>					_serverConfigVect;		
 
 		// Initialization
-		void	Setup();
-		void	addPair(std::pair<int, std::string> listen);
-		void	fillActiveListenVect();
+		void										Setup();
+		void										addPair(std::pair<int, std::string> listen);
+		void										fillActiveListenVect();
 
 		// Runtime
-		void	dealClient(int fd, size_t & i);
-		void	acceptNewConnexion(int fd);
-		void	handleEvent(int fdClient, size_t & i);
-		void	dealRequest(int fd);	
+		void										dealClient(int fd, size_t & i);
+		void										acceptNewConnexion(int fd);
+		void										handleEvent(int fdClient, size_t & i);
+		void										dealRequest(int fd);	
+		void										checkTimeOut(int fdClient, size_t & i);
 
 };
 
