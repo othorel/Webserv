@@ -57,7 +57,6 @@ bool HttpUtils::isRegularFile(const std::string & path)
 	return S_ISREG(s.st_mode);
 }
 
-// Returns true if a file exists
 bool HttpUtils::fileExists(const std::string & path)
 {
 	struct stat s;

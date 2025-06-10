@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <iostream>
+#include <map>
 #include "../../include/http/File.hpp"
 #include "../../include/http/HttpErrorException.hpp"
 
@@ -33,7 +34,8 @@ File::File(const std::string & path, bool isWriteMode) :
 			throw HttpErrorException(403);
 		_size = getFileSize();
 		if (_size < 0)
-			throw (HttpErrorException(500));}
+			throw (HttpErrorException(500));
+	}
 	else {
 		if (!isWritableDirectory())
 			throw HttpErrorException(403);
@@ -42,9 +44,37 @@ File::File(const std::string & path, bool isWriteMode) :
 				throw HttpErrorException(403);
 			_size = getFileSize();
 			if (_size < 0)
-				throw HttpErrorException(500);}
+				throw HttpErrorException(500);
+		}
 		else
-			_size = 0;}
+			_size = 0;
+	}
+}
+
+File::File(const File & other) :
+	_path(other._path),
+	_size(other._size),
+	_fd(-1),
+	_offset(other._offset),
+	_isWriteMode(other._isWriteMode)
+{}
+
+/* ************************************************************************** */
+/*                                    operators                               */
+/* ************************************************************************** */
+
+File & File::operator=(const File & other)
+{
+	if (this != &other) {
+		if (_fd != -1)
+			close(_fd);
+		_path = other._path;
+		_size = other._size;
+		_fd = -1;
+		_offset = other._offset;
+		_isWriteMode = other._isWriteMode;
+	}
+	return (*this);
 }
 
 /* ************************************************************************** */
@@ -92,6 +122,33 @@ bool File::isWriteMode() const
 bool File::isOpen() const
 {
 	return (_fd >= 0);
+}
+
+std::string File::getMimeType() const
+{
+	size_t dot = _path.rfind('.');
+	if (dot == std::string::npos) {
+		return ("application/octet-stream"); }
+	std::string extension = _path.substr(dot +1);
+
+	static std::map<std::string, std::string> extensionMap;
+	if (extensionMap.empty()) {
+		extensionMap["html"] = "text/html";
+		extensionMap["htm"] = "text/html";
+		extensionMap["css"] = "text/css";
+		extensionMap["txt"] = "text/plain";
+		extensionMap["js"] = "application/javascript";
+		extensionMap["jpg"] = "image/jpeg";
+		extensionMap["jpeg"] = "image/jpeg";
+		extensionMap["png"] = "image/png";
+		extensionMap["gif"] = "image/gif";
+		extensionMap["ico"] = "image/x-icon";
+		extensionMap["json"] = "application/x-json";
+		extensionMap["pdf"] = "application/pdf"; }
+	
+	if (extensionMap.find(extension) != extensionMap.end()) {
+		return (extensionMap[extension]); }
+	return ("application/octet-stream");
 }
 
 /* ************************************************************************** */

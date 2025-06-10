@@ -25,6 +25,7 @@ class ServerConfig {
 
 	public:
 
+		ServerConfig();
 		ServerConfig(
 			std::pair<int, std::string> listen,
 			std::vector<std::string> _server_names,

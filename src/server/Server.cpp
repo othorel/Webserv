@@ -5,7 +5,7 @@
 #include "../../include/config/ServerConfig.hpp"
 #include "../../include/config/ConfigParser.hpp"
 #include "../../include/http/RequestParser.hpp"
-#include "../../include/http/ResponseBuilder.hpp"
+#include "../../include/http/ProcessRequest.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 ///                               CANONIC +                                  ///
@@ -176,8 +176,8 @@ void	Server::handleEvent(int fdClient, size_t & i)
 		int	bytesStillToRead = _clientsMap[fdClient].getHttpRequest()->getMissingBodyLength();
 		if (bytesStillToRead == 0)
 		{
-			ResponseBuilder	responsebuilder(*_clientsMap[fdClient].getHttpRequest(), this->_serverConfigVect);
-			_clientsMap[fdClient].writeDataToSocket(responsebuilder.getHttpResponse().toRawString());
+			ProcessRequest	ProcessRequest(*_clientsMap[fdClient].getHttpRequest(), this->_serverConfigVect);
+			_clientsMap[fdClient].writeDataToSocket(ProcessRequest.sendHttpResponse());
 			_pollManager->removeSocket(i);
 			_clientsMap.erase(fdClient);
 			i--;

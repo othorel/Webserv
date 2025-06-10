@@ -6,15 +6,12 @@ OBJDIR  := obj
 SRC     := $(SRCDIR)/config/ConfigParser.cpp     \
 		   $(SRCDIR)/config/Location.cpp         \
 		   $(SRCDIR)/config/ServerConfig.cpp     \
+		   $(SRCDIR)/http/File.cpp        \
 		   $(SRCDIR)/http/HttpRequest.cpp        \
 		   $(SRCDIR)/http/HttpResponse.cpp        \
 		   $(SRCDIR)/http/HttpUtils.cpp          \
 		   $(SRCDIR)/http/RequestParser.cpp      \
-		   $(SRCDIR)/http/ResponseBuilder.cpp    \
-		   $(SRCDIR)/http/handlers/AHandler.cpp  \
-		   $(SRCDIR)/http/handlers/GetHandler.cpp \
-		   $(SRCDIR)/http/handlers/PostHandler.cpp \
-		   $(SRCDIR)/http/handlers/DeleteHandler.cpp \
+		   $(SRCDIR)/http/ProcessRequest.cpp    \
 		   $(SRCDIR)/server/Server.cpp           \
 		   $(SRCDIR)/server/PollManager.cpp      \
 		   $(SRCDIR)/server/Connexion.cpp        \
