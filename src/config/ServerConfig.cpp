@@ -1,5 +1,17 @@
 #include "../../include/config/ServerConfig.hpp"
 
+ServerConfig::ServerConfig() :
+	_listen(),
+	_server_names(),
+	_root(),
+	_error_pages(),
+	_locations(),
+	_client_max_body_size(),
+	_sessionName(),
+	_sessionTimeout(),
+	_sessionEnable()
+{}
+
 ServerConfig::ServerConfig(
 	std::pair<int, std::string> listen,
 	std::vector<std::string> server_names,
