@@ -182,6 +182,7 @@ void	Server::handleEvent(int fdClient, size_t & i)
 			case READY:
 				std::cout << "\nI am ready\n" << std::endl;
 				_clientsMap[fdClient].getProcessRequest()->process();
+				break;
 			case WAITING_BODY:
 				std::cout << "\nI am receiving body chunk\n" << std::endl;
 				_clientsMap[fdClient].getProcessRequest()->receiveBodyChunk(rawLineChar, rawLineString.size());

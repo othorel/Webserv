@@ -69,6 +69,7 @@ Connexion & Connexion::operator=(const Connexion & other)
 ssize_t	Connexion::readDataFromSocket(std::string &line)
 {
 	char buf[1024];
+	memset(buf, 0, 1024);
 	ssize_t bytes = recv(_fd, buf, sizeof(buf), 0);
 
 	if (bytes > 0)
