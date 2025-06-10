@@ -1,4 +1,5 @@
 #include <string>
+#include <iostream>
 #include <sstream>
 #include <fstream>
 #include <stdexcept>
@@ -334,11 +335,15 @@ void ProcessRequest::postHandler()
 {
 	if (_processStatus != READY)
 		throw HttpErrorException(500);
-	
-	std::string path = selectRoot() + '/' + _location.getUploadPath();
 
-	if (!path.empty() && path[path.size() - 1] == '/') {
-		path.erase(path.size() - 1); }
+	std::string root = selectRoot();
+	std::string uploadPath = _location.getUploadPath();
+	if (uploadPath.empty())
+		throw HttpErrorException(403);
+	HttpUtils::trimFinalSlash(root);
+	HttpUtils::trimSlashes(uploadPath);
+	
+	std::string path = root + '/' + uploadPath;
 
 	checkPostValidity(_request, _location, _server, path);
 
@@ -346,7 +351,7 @@ void ProcessRequest::postHandler()
 
 	if (_file)
 		throw HttpErrorException(500);
-	_file = new File(filepath);
+	_file = new File(filepath, true);
 
 	_processStatus = WAITING_BODY;
 }

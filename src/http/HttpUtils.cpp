@@ -246,3 +246,17 @@ std::string HttpUtils::generateUniqueTimestamp()
 	oss << tv.tv_sec << "_" << tv.tv_usec;
 	return oss.str();
 }
+
+void HttpUtils::trimFinalSlash(std::string & string)
+{
+	if (!string.empty() && string[string.size() - 1] == '/')
+		string.erase(string.size() - 1);
+}
+
+void HttpUtils::trimSlashes(std::string & string)
+{
+	if (!string.empty() && string[0] == '/')
+		string.erase(0, 1);
+	if (!string.empty() && string[string.size() - 1] == '/')
+		string.erase(string.size() - 1);
+}

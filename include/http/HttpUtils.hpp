@@ -29,6 +29,8 @@ class HttpUtils
 		static bool hasWritePermission(const std::string & path);
 		static std::string getUnixTimestampString();
 		static std::string generateUniqueTimestamp();
+		static void trimFinalSlash(std::string & string);
+		static void trimSlashes(std::string & string);
 
 		template<typename T>
 		static std::string numberToString(T value)

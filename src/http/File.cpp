@@ -27,6 +27,7 @@ File::File(const std::string & path, bool isWriteMode) :
 	_offset(0),
 	_isWriteMode(isWriteMode)
 {
+	
 	if (!_isWriteMode) {
 		if (!isExistingFile())
 			throw HttpErrorException(404);
