@@ -158,6 +158,9 @@ void	Server::handleEvent(int fdClient, size_t & i)
 	char			*rawLineChar = new char[rawLineString.size() + 1];
 	std::copy(rawLineString.begin(), rawLineString.end(), rawLineChar);
 	rawLineChar[rawLineString.size()] = '\0';
+	std::string		responseHeaders;
+	ssize_t 		sent = 0;
+	size_t 			toSend = 0;
 
 	if (bytes <= 0) //si on detecte la fermeture de la connexion
 	{
@@ -179,10 +182,14 @@ void	Server::handleEvent(int fdClient, size_t & i)
 				_clientsMap[fdClient].getProcessRequest()->receiveBodyChunk(rawLineChar, rawLineString.size());
 				break;
 			case RESPONSE_READY:
-				_clientsMap[fdClient].getProcessRequest()->sendHttpResponse();
+				responseHeaders = _clientsMap[fdClient].getProcessRequest()->sendHttpResponse();
+               	sent = send(fdClient, responseHeaders.data(), responseHeaders.size(), 0);
 				break;
 			case SENDING_BODY:
-				_clientsMap[fdClient].getProcessRequest()->sendBodyChunk(rawLineChar, rawLineString.size());
+				char buffer[1024];
+                toSend = _clientsMap[fdClient].getProcessRequest()->sendBodyChunk(buffer, sizeof(buffer));
+                if (toSend > 0)
+                    sent = send(fdClient, buffer, toSend, 0);
 				break;
 			case DONE:
 				supressClient(fdClient, i);
