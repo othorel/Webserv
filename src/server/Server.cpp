@@ -164,41 +164,57 @@ void	Server::handleEvent(int fdClient, size_t & i)
 
 	if (bytes <= 0) //si on detecte la fermeture de la connexion
 	{
+		std::cout << "\nI did not read anything\n" << std::endl;
+		delete[] rawLineChar;
 		supressClient(fdClient, i); // peut etre en plus throw une exception ?
 		return ;
 	}
 
 	if (_clientsMap[fdClient].isHeaderParsed() == false) //si les headers ne sont pas encore termines
+	{
 		parseHeader(fdClient, rawLineString); // c'est la qu'on cree une instance de HttpRequest et de ProcessRequest
-	
+		delete[] rawLineChar;
+	}
 	else //si les headers sont termines alors on passe au body ou on s'arrette si la requete n'a pas de body
 	{
 		switch (_clientsMap[fdClient].getProcessRequest()->getProcessStatus())
 		{
 			case READY:
+				std::cout << "\nI am ready\n" << std::endl;
 				_clientsMap[fdClient].getProcessRequest()->process();
-				break;
 			case WAITING_BODY:
+				std::cout << "\nI am receiving body chunk\n" << std::endl;
 				_clientsMap[fdClient].getProcessRequest()->receiveBodyChunk(rawLineChar, rawLineString.size());
+				delete[] rawLineChar;
 				break;
 			case RESPONSE_READY:
+				std::cout << "\nI am creating response headers\n" << std::endl;
 				responseHeaders = _clientsMap[fdClient].getProcessRequest()->sendHttpResponse();
                	sent = send(fdClient, responseHeaders.data(), responseHeaders.size(), 0);
+				delete[] rawLineChar;
 				break;
 			case SENDING_BODY:
+				std::cout << "\nNow i send the body of the response\n" << std::endl;
 				char buffer[1024];
                 toSend = _clientsMap[fdClient].getProcessRequest()->sendBodyChunk(buffer, sizeof(buffer));
                 if (toSend > 0)
                     sent = send(fdClient, buffer, toSend, 0);
+				delete[] rawLineChar;
 				break;
 			case DONE:
+				std::cout << "\nI am done\n" << std::endl;
 				supressClient(fdClient, i);
+				delete[] rawLineChar;
 				break;
 			default:
+			{
+				std::cout << "\nDefault case\n" << std::endl;
+				delete[] rawLineChar;
 				throw HttpErrorException(500);
+			}
 		}
+		
 	}
-	// 	//sinon on ne fait rien de plus que d'appeler readDatafromSocket pour concatener les donnees lues tant que la requete n'est pas terminee
 }
 
 void	Server::dealRequest(int fd)
@@ -314,13 +330,16 @@ void	Server::supressClient(int fdClient, size_t & i)
 void	Server::parseHeader(int fdClient, std::string &rawrequest)
 {
 	if (_clientsMap[fdClient].endTransmission() == false) //si on n'a pas encore rencontre de double saut de ligne ca veut dire qu'on est encore dans les headers
+		
 		_clientsMap[fdClient].appendRaw("HEADER", rawrequest); //alors on ajoute la ligne actuelle a l'attribut _headers
 	else
 	{
 		_clientsMap[fdClient].setHeaderParsed(); //on indique que les headers ont ete parses
 		// if (_clientsMap[fdClient].getHttpRequest() == NULL)
 		// {
-		RequestParser	parser(rawrequest);                      //
+		std::cout << "\nHEADERS PARSED: \n" << _clientsMap[fdClient].getHeaders(); //debug
+//
+		RequestParser	parser(_clientsMap[fdClient].getHeaders());                      //
 		_clientsMap[fdClient].setRequestParser(parser.release());//on initialise _httpRequest
 
 		_clientsMap[fdClient].setProcessRequest(new ProcessRequest(*_clientsMap[fdClient].getHttpRequest(), this->getServerConfig())); // on initialise _processRequest

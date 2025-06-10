@@ -193,11 +193,11 @@ void	Connexion::appendRaw(std::string attribute, std::string content)
 {
 	if (attribute == "HEADER")
 	{
-		_body += content;
+		_headers += content;
 	}
 	else if (attribute == "BODY")
 	{
-
+		_body += content;
 	}
 	else
 		throw std::runtime_error("Invalid attribute");
