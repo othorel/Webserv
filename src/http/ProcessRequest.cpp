@@ -7,6 +7,7 @@
 #include <dirent.h>
 #include "../../include/http/ProcessRequest.hpp"
 # include "../../include/http/HttpErrorException.hpp"
+# include "../../include/http/RequestParser.hpp"
 # include "../../include/http/HttpUtils.hpp"
 #include "../../include/http/HttpRequest.hpp"
 #include "../../include/http/HttpResponse.hpp"
@@ -18,38 +19,44 @@
 /* ************************************************************************** */
 
 ProcessRequest::ProcessRequest() :
-	_processStatus(DONE),
+	_serversVector(),
+	_processStatus(WAITING_HEADERS),
 	_server(),
 	_request(NULL),
 	_location(),
 	_handler(NULL),
 	_file(NULL),
 	_httpResponse(),
+	_inputData(),
 	_rawString()
 {}
 
-ProcessRequest::ProcessRequest(const ServerConfig & server) :
+ProcessRequest::ProcessRequest(const std::vector<ServerConfig> & serversVector) :
+	_serversVector(serversVector),
 	_processStatus(WAITING_HEADERS),
-	_server(server),
+	_server(),
 	_request(NULL),
+	_location(),
 	_handler(NULL),
 	_file(NULL),
 	_httpResponse(),
+	_inputData(),
 	_rawString()
 {
-		selectLocation();
-		_httpResponse = HttpResponse();
+		// selectLocation();
+		// _httpResponse = HttpResponse();
 		// if (_location.hasRedirect()) 
 		// 	buildRedirect();
 }
 
 ProcessRequest::ProcessRequest(const ProcessRequest & other) :
+	_serversVector(other._serversVector),
 	_processStatus(other._processStatus),
-	_request(other._request),
 	_server(other._server),
 	_location(other._location),
 	_handler(other._handler),
 	_httpResponse(other._httpResponse),
+	_inputData(other._inputData),
 	_rawString(other._rawString)
 {
 	_file = other._file ? new File(*other._file) : NULL;
@@ -85,16 +92,20 @@ ProcessRequest::ProcessRequest(const ProcessRequest & other) :
 ProcessRequest & ProcessRequest::operator=(const ProcessRequest & other)
 {
 	if (&other != this) {
+		_serversVector = other._serversVector;
 		_processStatus = other._processStatus;
-		_request = other._request;
 		_server = other._server;
 		_location = other._location;
 		_handler = other._handler;
 		_httpResponse = other._httpResponse;
+		_inputData = other._inputData;
 		_rawString = other._rawString;
 		if (_file)
 			delete _file;
 		_file = other._file ? new File(*other._file) : NULL;
+		if (_request)
+			delete _request;
+		_request = other._request ? new HttpRequest(*other._request) : NULL;
 	}
 	return (*this);
 }
@@ -107,19 +118,39 @@ ProcessRequest::~ProcessRequest()
 {
 	if (_file)
 		delete _file;
+	if (_request)
+		delete _request;
 }
 
 /* ************************************************************************** */
-/*                                 public process                             */
+/*                                     process                                */
 /* ************************************************************************** */
 
 std::string ProcessRequest::process(std::string data)
 {
-	switch (_clientsMap[fdClient].getProcessRequest()->getProcessStatus())
+	// WAITING_HEADERS,
+	// REQUEST_READY,
+	// WAITING_BODY,
+	// RESPONSE_READY,
+	// SENDING_BODY,
+	// DONE
+	switch (_processStatus)
 		{
-			case READY:
-				std::cout << "\nI am ready\n" << std::endl;
-				_clientsMap[fdClient].getProcessRequest()->process();
+			case WAITING_HEADERS:
+				_inputData += data;
+				size_t pos = _inputData.find("\r\n\r\n");
+				if (pos != std::string::npos) {
+					std::string headersPart = _inputData.substr(0, pos + 4);
+					std::string bodyPart = _inputData.substr(pos + 4);
+					RequestParser parser(headersPart);
+					_request = parser.release();
+					_inputData = bodyPart;
+					selectServer();
+					selectLocation();
+					selectHandler();
+					_processStatus =REQUEST_READY;
+					handle();
+				}
 				break;
 			case WAITING_BODY:
 				std::cout << "\nI am receiving body chunk\n" << std::endl;
@@ -152,6 +183,94 @@ std::string ProcessRequest::process(std::string data)
 				throw HttpErrorException(500);
 			}
 		}
+}
+
+// When _processStatus is WAITING_HEADERS
+void ProcessRequest::waitingHeaders(const std::string & data)
+{
+	_inputData += data;
+	size_t pos = _inputData.find("\r\n\r\n");
+	if (pos != std::string::npos) {
+		std::string headersPart = _inputData.substr(0, pos + 4);
+		std::string bodyPart = _inputData.substr(pos + 4);
+		RequestParser parser(headersPart);
+		_request = parser.release();
+		_inputData = bodyPart;
+		selectServer();
+		selectLocation();
+		selectHandler();
+		_processStatus =REQUEST_READY;
+		handle();
+}
+
+// When _processStatus is HEADERS_READY
+void ProcessRequest::handle()
+{
+	if (!_handler)
+		throw HttpErrorException(500);
+	(this->*_handler)();
+}
+
+// When _processStatus is WAITING_BODY
+size_t ProcessRequest::receiveBodyChunk(char * buffer, size_t writesize)
+{
+	if (!_request)
+		throw HttpErrorException(500);
+	
+	if (_processStatus != WAITING_BODY || !_file || !buffer)
+		throw HttpErrorException(500);
+
+	size_t remainingBytes = _request->getContentLength() - _file->getOffset();
+	size_t bytesToWrite = (writesize > remainingBytes) ? remainingBytes : writesize;
+
+	size_t result = _file->WriteChunk(buffer, bytesToWrite);
+
+	if (_file->getOffset() >= _request->getContentLength()) {
+		std::map<std::string, std::string> headers;
+		std::string relativePath = _location.getUploadPath();
+		if (!relativePath.empty() && relativePath[relativePath.size() - 1] != '/') {
+			relativePath += "/"; }
+		relativePath += _file->getPath().substr(_file->getPath().find_last_of("/") + 1);
+		headers["location"] = relativePath;
+		headers["content-type"] = "text/html";
+		std::string body =
+			"<html><body><h1>201 Created</h1>\n"
+			"<p>The resource has been successfully created.</p>\n"
+			"<a href=\"" + relativePath  + "\">See file</a>\n"
+			"</body></html>";
+		headers["content-length"] = HttpUtils::numberToString(body.length());
+		buildResponse(201, headers, body);
+		if (_file) {
+			delete _file;
+			_file = NULL;
+		}
+		_processStatus = RESPONSE_READY;
+	}
+	return (result);
+}
+
+// When _processStatus is RESPONSE_READY
+const std::string & ProcessRequest::sendHttpResponse()
+{
+	if (_processStatus != RESPONSE_READY)
+		throw HttpErrorException(500);
+	if (_file != NULL)
+		_processStatus = SENDING_BODY;
+	else
+		_processStatus = DONE;
+	_rawString = _httpResponse.toRawString();
+	return (_rawString);
+}
+
+// When _processStatus is SENDING_BODY
+size_t ProcessRequest::sendBodyChunk(char * buffer, size_t readsize)
+{
+	if (_processStatus != SENDING_BODY || !_file  || !buffer)
+		throw HttpErrorException(500);
+	size_t result = _file->ReadChunk(buffer, readsize);
+	if (result == 0 || _file->getOffset() >= _file->getSize())
+		_processStatus = DONE;
+	return (result);
 }
 
 /* ************************************************************************** */
@@ -225,77 +344,9 @@ ProcessStatus ProcessRequest::getProcessStatus() const
 	return (_processStatus);
 }
 
-/* ************************************************************************** */
-/*                                     handlers                               */
-/* ************************************************************************** */
-
-// When _processStatus is READY
-void ProcessRequest::handle()
+const ServerConfig & ProcessRequest::getServer() const
 {
-	if (_handler)
-		(this->*_handler)();
-}
-
-// When _processStatus is WAITING_BODY
-size_t ProcessRequest::receiveBodyChunk(char * buffer, size_t writesize)
-{
-	if (!_request)
-		throw HttpErrorException(500);
-	
-	if (_processStatus != WAITING_BODY || !_file || !buffer)
-		throw HttpErrorException(500);
-
-	size_t remainingBytes = _request->getContentLength() - _file->getOffset();
-	size_t bytesToWrite = (writesize > remainingBytes) ? remainingBytes : writesize;
-
-	size_t result = _file->WriteChunk(buffer, bytesToWrite);
-
-	if (_file->getOffset() >= _request->getContentLength()) {
-		std::map<std::string, std::string> headers;
-		std::string relativePath = _location.getUploadPath();
-		if (!relativePath.empty() && relativePath[relativePath.size() - 1] != '/') {
-			relativePath += "/"; }
-		relativePath += _file->getPath().substr(_file->getPath().find_last_of("/") + 1);
-		headers["location"] = relativePath;
-		headers["content-type"] = "text/html";
-		std::string body =
-			"<html><body><h1>201 Created</h1>\n"
-			"<p>The resource has been successfully created.</p>\n"
-			"<a href=\"" + relativePath  + "\">See file</a>\n"
-			"</body></html>";
-		headers["content-length"] = HttpUtils::numberToString(body.length());
-		buildResponse(201, headers, body);
-		if (_file) {
-			delete _file;
-			_file = NULL;
-		}
-		_processStatus = RESPONSE_READY;
-	}
-	return (result);
-}
-
-// When _processStatus is RESPONSE_READY
-const std::string & ProcessRequest::sendHttpResponse()
-{
-	if (_processStatus != RESPONSE_READY)
-		throw HttpErrorException(500);
-	if (_file != NULL)
-		_processStatus = SENDING_BODY;
-	else
-		_processStatus = DONE;
-	_rawString = _httpResponse.toRawString();
-	return (_rawString);
-}
-
-// When _processStatus is SENDING_BODY
-size_t ProcessRequest::sendBodyChunk(char * buffer, size_t readsize)
-{
-	if (_processStatus != SENDING_BODY || !_file  || !buffer)
-		throw HttpErrorException(500);
-	size_t result = _file->ReadChunk(buffer, readsize);
-	if (result == 0 || _file->getOffset() >= _file->getSize())
-		_processStatus = DONE;
-	return (result);
+	return (_server);
 }
 
 /* ************************************************************************** */
@@ -307,7 +358,7 @@ void ProcessRequest::deleteHandler()
 	if (!_request)
 		throw HttpErrorException(500);
 
-	if (_processStatus != READY)
+	if (_processStatus != REQUEST_READY)
 		throw HttpErrorException(500);
 
 	std::string path = selectRoot() + _request->getTarget();
@@ -332,7 +383,7 @@ void ProcessRequest::getHandler()
 	if (!_request)
 		throw HttpErrorException(500);
 
-	if (_processStatus != READY)
+	if (_processStatus != REQUEST_READY)
 		throw HttpErrorException(500);
 	
 	std::string path = createPath(selectRoot(), _location.getPath());
@@ -379,7 +430,7 @@ void ProcessRequest::postHandler()
 	if (!_request)
 		throw HttpErrorException(500);
 
-	if (_processStatus != READY)
+	if (_processStatus != REQUEST_READY)
 		throw HttpErrorException(500);
 
 	std::string path = createPath(selectRoot(), _location.getUploadPath());
@@ -460,25 +511,27 @@ void ProcessRequest::buildRedirect()
 // 	addMandatoryHeaders();
 // }
 
-void Server::selectServer(const std::vector<ServerConfig> & serverVector)
+void ProcessRequest::selectServer()
 {
-	const std::map<std::string, std::string> & headers = _request.getHeaders();
+	if (!_request)
+		throw HttpErrorException(500);
+	
+	const std::map<std::string, std::string> & headers = _request->getHeaders();
 	std::map<std::string, std::string>::const_iterator headersCit = headers.find("host"); 
 	if (headersCit != headers.end()) {
-		std::vector<ServerConfig>::const_iterator serverCit = serverVector.begin();
-		for (; serverCit != serverVector.end(); ++serverCit) {
+		std::vector<ServerConfig>::const_iterator serverCit = _serversVector.begin();
+		for (; serverCit != _serversVector.end(); ++serverCit) {
 			if (serverCit->hasServerName(headersCit->second)) {
 				_server =  *serverCit;
 				return ;
 			}
 		}
 	}
-	if (serverVector.empty()) {
+	if (_serversVector.empty()) {
 		throw HttpErrorException(500);
 	}
-	_server = serverVector[0];
+	_server = _serversVector[0];
 }
-
 
 /* ************************************************************************** */
 /*                            non member functions                            */

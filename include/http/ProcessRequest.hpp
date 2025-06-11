@@ -25,29 +25,33 @@ class ProcessRequest
 {
 	private :
 
-		ProcessStatus	_processStatus;
-		HttpRequest		*_request;
-		ServerConfig	_server;
-		Location		_location;
+		std::vector<ServerConfig>	_serversVector;
+		ProcessStatus				_processStatus;
+		HttpRequest					*_request;
+		ServerConfig				_server;
+		Location					_location;
 		typedef void	(ProcessRequest::*HandlerFunction)();
-		HandlerFunction _handler;
-		File			*_file;
-		HttpResponse	_httpResponse;
-		std::string		_rawString;
+		HandlerFunction 			_handler;
+		File						*_file;
+		HttpResponse				_httpResponse;
+		std::string					_inputData;
+		std::string					_rawString;
 
+		void selectServer();
 		void selectLocation();
 		void selectHandler();
 		const std::string & selectRoot();
 		std::string selectErrorPage(int statusCode);
 
+		void waitingHeaders(const std::string & data);
 		void handle();
-		void deleteHandler();
-		void getHandler();
-		void postHandler();
-
 		size_t receiveBodyChunk(char * buffer, size_t writesize);
 		const std::string & sendHttpResponse();
 		size_t sendBodyChunk(char * buffer, size_t readsize);
+
+		void deleteHandler();
+		void getHandler();
+		void postHandler();
 
 		void buildResponse(int statusCode, const std::map<std::string, std::string> & headers, const std::string & body);
 		void buildRedirect();
@@ -56,13 +60,14 @@ class ProcessRequest
 	public :
 		
 		ProcessRequest();
-		ProcessRequest(const ServerConfig & server);
+		ProcessRequest(const std::vector<ServerConfig> & serversVector);
 		ProcessRequest(const ProcessRequest & other);
 		ProcessRequest & operator=(const ProcessRequest & other);
 		// void reset(const HttpRequest & request, const std::vector<ServerConfig> & serverVector);
-		// ~ProcessRequest();
+		~ProcessRequest();
 
 		ProcessStatus getProcessStatus() const;
+		const ServerConfig & getServer() const;
 		std::string process(std::string data);
 
 
