@@ -13,23 +13,16 @@
 
 Connexion::Connexion(){}
 
-// Connexion::Connexion(int fd, sockaddr_in addr, const ServerConfig &servconfig) : _fd(fd), _addr(addr), _request(NULL), _location(NULL), _processRequest(NULL), _servConfig(servconfig)
-// {
-// 	_endTransmission = false;
-// 	_headerIsParsed = false;
-// 	_startTime = std::time(NULL);
-// }
-
-Connexion::Connexion(int fd, sockaddr_in addr) : _fd(fd), _addr(addr), _request(NULL), _location(NULL), _processRequest(NULL)
+Connexion::Connexion(int fd, sockaddr_in addr, std::vector<ServerConfig> vectServerConfig) : _fd(fd), _addr(addr), _serverConfigVect(vectServerConfig), _processRequest(ProcessRequest(getServConfigVect()))
 {
-	_endTransmission = false;
 	_startTime = std::time(NULL);
+	_servConfig = NULL;
+	_bytesIn = 0;
+	_bytesOut = 0;
 }
 
 Connexion::~Connexion()
 {
-	if (_processRequest)
-		delete _processRequest;
 	if (_servConfig)
 		delete _servConfig;
 }
@@ -43,14 +36,16 @@ Connexion & Connexion::operator=(const Connexion & other)
 {
 	if (this != &other)
 	{
-		this->_addr = other._addr;
-		this->_bufferIn = other._bufferIn;
-		this->_bufferOut = other._bufferOut;
-		this->_fd = other._fd;
-		this->_endTransmission = other._endTransmission;
-		this->_processRequest = NULL;
-		this->_ = NULL;
-		this->_startTime = other._startTime;
+		_fd = other._fd;
+		_addr = other._addr;
+		_processRequest = other._processRequest;
+		_startTime = other._startTime;
+		_serverConfigVect = other._serverConfigVect;
+		_servConfig = new ServerConfig(*_servConfig);
+		_bytesIn = other._bytesIn;
+		_bytesOut = other._bytesOut;
+		_bufferIn = other._bufferIn;
+		_bufferOut = other._bufferOut;
 	}
 	return (*this);
 }
@@ -59,31 +54,27 @@ Connexion & Connexion::operator=(const Connexion & other)
 ///                                RUNTIME                                   ///
 ////////////////////////////////////////////////////////////////////////////////
 
-ssize_t	Connexion::readDataFromSocket(std::string &line)
+void	Connexion::readDataFromSocket(std::string &line)
 {
 	char buf[1024];
 	memset(buf, 0, 1024);
-	ssize_t bytes = recv(_fd, buf, sizeof(buf), 0);
+	_bytesIn = recv(_fd, buf, sizeof(buf), 0);
 
-	if (bytes > 0)
+	if (_bytesIn > 0)
 	{
 		std::cout << "Parsing request" << std::endl;
-		_bufferIn.append(buf, bytes);
-		line = buf;
+		_bufferIn = std::string(buf, _bytesIn);
 	}
-
-	return (bytes);
 }
 
-ssize_t	Connexion::writeDataToSocket(const std::string & response)
+void	Connexion::writeDataToSocket(const std::string & response)
 {
-	return send(_fd, response.c_str(), response.size(), 0);
+	_bytesOut = send(_fd, response.c_str(), response.size(), 0);
 }
 
 bool	Connexion::endTransmission()
 {
-	_endTransmission = (_bufferIn.find("\r\n\r\n") != std::string::npos);
-	return (_endTransmission);
+	return (_bufferIn.find("\r\n\r\n") != std::string::npos);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -112,108 +103,81 @@ std::string	Connexion::getBufferIn() const
 	return (_bufferIn);
 }
 
-// std::string	Connexion::getBufferOut() const
-// {
-// 	return (_bufferOut);
-// }
-
-HttpRequest	*Connexion::getHttpRequest() const
+std::string	Connexion::getBufferOut() const
 {
-	return (_request);
+	return (_bufferOut);
 }
 
-// ServerConfig	Connexion::getServConfig() const
-// {
-// 	return (_servConfig);
-// }
-
-Location	*Connexion::getLocation() const
+std::time_t	Connexion::getStartTime() const
 {
-	return (_location);
+	return (_startTime);
 }
 
-ProcessRequest	*Connexion::getProcessRequest() const
+ssize_t	Connexion::getBytesIn() const
 {
-	return (_processRequest);
+	return (_bytesIn);
 }
 
-bool	Connexion::isHeaderParsed() const
+ssize_t	Connexion::getBytesOut() const
 {
-	return (_headerIsParsed);
+	return (_bytesOut);
 }
 
-std::string		Connexion::getHeaders() const
+std::string	Connexion::getBufferIn() const
 {
-	return (this->_headers);
+	return (_bufferIn);
 }
 
-std::string		Connexion::getBody() const
+std::string	Connexion::getBufferOut() const
 {
-	return (this->_body);
+	return (_bufferOut);
 }
 
-std::time_t		Connexion::getStartTime() const
+std::vector<ServerConfig>	Connexion::getServConfigVect() const
 {
-	return (this->_startTime);
+	return (_serverConfigVect);
 }
 
-const sockaddr_in	&Connexion::getAddr() const
+ServerConfig	*Connexion::getServConfig() const
+{
+	return (_servConfig);
+}
+
+sockaddr_in	Connexion::getAddr() const
 {
 	return (_addr);
+}
+
+ProcessRequest	Connexion::getProcessRequest() const
+{
+	return (_processRequest);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 ///                                 SETTERS                                  ///
 ////////////////////////////////////////////////////////////////////////////////
 
-void	Connexion::setRequestParser(HttpRequest	*request)
+void	Connexion::setBytesIn(ssize_t bytes)
 {
-	if (_request)
-		delete _request;
- 	_request = request;
+	_bytesIn = bytes;
 }
 
-void	Connexion::setHeaderParsed()
+void	Connexion::setBytesOut(ssize_t bytes)
 {
-	_headerIsParsed = true;
+	_bytesOut = bytes;
 }
 
-void	Connexion::setProcessRequest(ProcessRequest *processrequest)
+void	Connexion::setBufferIn(std::string buffer)
 {
-	_processRequest = processrequest;
+	_bufferIn = buffer;
 }
 
-void	Connexion::appendRaw(std::string attribute, std::string content)
+void	Connexion::setBufferOut(std::string buffer)
 {
-	if (attribute == "HEADER")
-	{
-		_headers += content;
-	}
-	else if (attribute == "BODY")
-	{
-		_body += content;
-	}
-	else
-		throw std::runtime_error("Invalid attribute");
+	_bufferOut = buffer;
 }
 
-static Location *findMatchinglocation(
-		const std::map<std::string, Location> & locations,
-		const std::string & target)
+void	Connexion::setServConfig(ServerConfig *serverconfig)
 {
-	std::string bestMatch = "";
-	std::map<std::string, Location>::const_iterator it;
-	for (it = locations.begin(); it != locations.end(); ++it)
-	{
-		const std::string& path = it->first;
-		if (target.compare(0, path.size(), path) == 0)
-		{
-			if (path.size() > bestMatch.size())
-				bestMatch = path;
-		}
-	}
-	if (bestMatch.empty())
-		throw HttpErrorException(404);
-	
-	return (new Location(locations.find(bestMatch)->second));
+	_servConfig = serverconfig;
 }

@@ -28,16 +28,6 @@ Server::Server(const ConfigParser & Parser, const std::vector<ServerConfig> serv
 
 }
 
-Server::Server(const std::string str) : _pollManager(new PollManager())
-{
-	if (str == "debug")
-	{
-		addPair(std::make_pair(8080, "127.0.0.1"));
-		addPair(std::make_pair(8888, "127.0.0.1"));
-		Setup();
-	}
-}
-
 Server::Server(const Server & toCopy)
 {
 	*this = toCopy;
@@ -145,49 +135,43 @@ void	Server::acceptNewConnexion(int fd)
 	if (clientFd < 0)
 		return;
 	_pollManager->addSocket(clientFd, POLLIN);
-	_clientsMap.insert(std::make_pair(clientFd, Connexion(clientFd, clientAddr)));
+	_clientsMap.insert(std::make_pair(clientFd, Connexion(clientFd, clientAddr, _serverConfigVect)));
 	std::cout << "New connexion authorized" << std::endl;
 }
 
 void	Server::handleEvent(int fdClient, size_t & i)
 {
-	//checkTimeOut(fdClient, i); //on regarde si le timeout est depasse si c'est le cas tout s'arrete et le client est supprime
+	checkTimeOut(fdClient, i); //on regarde si le timeout est depasse si c'est le cas tout s'arrete et le client est supprime
 
 	std::string		rawLineString;
-	ssize_t			bytesReceived = _clientsMap[fdClient].readDataFromSocket(rawLineString); // quoi qu'il arrive on lit une ligne sur le socket et on l'ajoute a buffer_in
-	ssize_t			bytesSend = 0;
 
-	if (bytesReceived <= 0) //si on detecte la fermeture de la connexion
+	_clientsMap[fdClient].readDataFromSocket(rawLineString); // quoi qu'il arrive on lit une ligne sur le socket
+
+	if (_clientsMap[fdClient].getBytesIn() <= 0) //si on detecte la fermeture de la connexion
 	{
-		std::cout << "\nI did not read anything\n" << std::endl;
-		delete[] rawLineChar;
 		supressClient(fdClient, i); // peut etre en plus throw une exception ?
+		if (_clientsMap[fdClient].getBytesIn() < 0)
+			throw std::runtime_error("Error while reading from socket");
 		return ;
 	}
 	else
 	{
-		std::string	processed = _clientsMap[fdClient].getProcessRequest().process();
-		while (! processed.empty())
+		std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
+		if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == REQUEST_READY && _clientsMap[fdClient].getServConfig() == NULL)
+			_clientsMap[fdClient].setServConfig(new ServerConfig(_clientsMap[fdClient].getProcessRequest().getServConfig()));
+
+		if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == RESPONSE_READY
+			|| _clientsMap[fdClient].getProcessRequest().getProcessStatus() == SENDING_BODY) // Si le processRequest a fini de construire la reponse
 		{
-
-			processed = _clientsMap[fdClient].getProcessRequest().process();
+			while (! processed.empty())
+			{
+				_clientsMap[fdClient].writeDataToSocket(processed);
+				processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
+			}
 		}
-
-		
+		else if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == DONE)
+			supressClient(fdClient, i);
 	}
-}
-
-void	Server::dealRequest(int fd)
-{
-	const char *response =
-		"HTTP/1.1 200 OK\r\n"
-		"Content-Type: text/plain\r\n"
-		"Content-Length: 13\r\n"
-		"\r\n"
-		"Hello, world!";
-
-	send(fd, response, strlen(response), 0);
-	std::cout << "I just sent a response" << std::endl;
 }
 
 void	Server::fillActiveListenVect()
@@ -213,20 +197,12 @@ void	Server::fillActiveListenVect()
 	}
 }
 
-const ServerConfig	&Server::getSingleServerConfig(struct sockaddr_in addr) const
-{
-	for(size_t i = 0; i < _serverConfigVect.size(); i++)
-	{
-		if (_serverConfigVect[i].getListen().first == ntohs(addr.sin_port) && _serverConfigVect[i].getListen().second == inet_ntoa(addr.sin_addr))
-			return (_serverConfigVect[i]);
-	}
-	throw std::runtime_error("No matching ServConfig for this given sockaddr_in");
-}
-
 void	Server::checkTimeOut(int fdClient, size_t & i)
 {
+	if (_clientsMap[fdClient].getServConfig() == NULL)
+		return;
 	std::time_t		timeNow = std::time(NULL);
-	std::time_t		timeOut = static_cast<time_t>(this->getSingleServerConfig(_clientsMap[fdClient].getAddr()).getSessionTimeout());
+	std::time_t		timeOut = static_cast<time_t>(_clientsMap[fdClient].getServConfig()->getSessionTimeout());
 	std::time_t		timeEnd = _clientsMap[fdClient].getStartTime() + timeOut;
 
 	if (timeNow > timeEnd)
@@ -285,26 +261,6 @@ void	Server::supressClient(int fdClient, size_t & i)
 	_pollManager->removeSocket(i);
 	_clientsMap.erase(fdClient);
 	i--;
-}
-
-void	Server::parseHeader(int fdClient, std::string &rawrequest)
-{
-	if (_clientsMap[fdClient].endTransmission() == false) //si on n'a pas encore rencontre de double saut de ligne ca veut dire qu'on est encore dans les headers
-		
-		_clientsMap[fdClient].appendRaw("HEADER", rawrequest); //alors on ajoute la ligne actuelle a l'attribut _headers
-	else
-	{
-		_clientsMap[fdClient].setHeaderParsed(); //on indique que les headers ont ete parses
-		// if (_clientsMap[fdClient].getHttpRequest() == NULL)
-		// {
-		std::cout << "\nHEADERS PARSED: \n" << _clientsMap[fdClient].getHeaders(); //debug
-//
-		RequestParser	parser(_clientsMap[fdClient].getHeaders());                      //
-		_clientsMap[fdClient].setRequestParser(parser.release());//on initialise _httpRequest
-
-		_clientsMap[fdClient].setProcessRequest(new ProcessRequest(*_clientsMap[fdClient].getHttpRequest(), this->getServerConfig())); // on initialise _processRequest
-		// }
-	}
 }
 
 

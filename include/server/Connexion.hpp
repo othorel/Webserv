@@ -25,56 +25,53 @@ class Connexion
 {
 	public:
 		Connexion();
-		// Connexion(int fd, sockaddr_in addr, const ServerConfig &servconfig);
-		Connexion(int fd, sockaddr_in addr);
+		Connexion(int fd, sockaddr_in addr, std::vector<ServerConfig> vectServerConfig);
 		~Connexion();
 		Connexion(const Connexion & toCopy);
 		Connexion & operator=(const Connexion & other);
 
 		// Getters
-		int					getFd() const;
-		std::string			getIP() const;
-		int					getPort() const;
-		std::string			getBufferIn() const;
-		// std::string			getBufferOut() const;
-		const sockaddr_in	&getAddr() const;
-		bool				isHeaderParsed() const;
 
-		std::string			getHeaders() const;
-		std::string			getBody() const;
-
-		ServerConfig		getServConfig() const;
-		HttpRequest			*getHttpRequest() const;
-		Location			*getLocation() const;
-		ProcessRequest		*getProcessRequest() const;
-		std::time_t			getStartTime() const;
+		int								getFd() const;
+		std::string						getIP() const;
+		int								getPort() const;
+		sockaddr_in						getAddr() const;
+		ProcessRequest					getProcessRequest() const;
+		ssize_t							getBytesIn() const;
+		ssize_t							getBytesOut() const;
+		std::string						getBufferIn() const;
+		std::string						getBufferOut() const;
+		ServerConfig					*getServConfig() const;
+		std::vector<ServerConfig>		getServConfigVect() const;
+		std::time_t						getStartTime() const;
 
 		// Setters
-		void				setRequestParser(HttpRequest *request);
-		void				setHeaderParsed();
-		void				appendRaw(std::string attribute, std::string content);
-		void				setProcessRequest(ProcessRequest *processrequest);
-
-		// void			setBody();
+		void							setBytesIn(ssize_t bytes);
+		void							setBytesOut(ssize_t bytes);
+		void							setBufferIn(std::string buffer);
+		void							setBufferOut(std::string buffer);
+		void							setServConfig(ServerConfig *serverconfig);
+		void							setRawLine(std::string rawline);
 
 		// Runtime
-		ssize_t				readDataFromSocket(std::string &line);
-		ssize_t				writeDataToSocket(const std::string & response);
-		bool				endTransmission();
-
-		void				selectServer(const std::vector<ServerConfig> & serverVector);
+		void							readDataFromSocket(std::string &line);
+		void							writeDataToSocket(const std::string & response);
+		bool							endTransmission();
 
 	private:
-		bool				_endTransmission;
-		int					_fd;
-		sockaddr_in			_addr;
-		std::string			_bufferIn;
-		std::string			_bufferOut;
 
-		ProcessRequest		*_processRequest;
-		ServerConfig		*_servConfig;
-		
-		std::time_t			_startTime;
+		int								_fd;
+		sockaddr_in						_addr;
+		ProcessRequest					_processRequest;
+		std::time_t						_startTime;
+		std::vector<ServerConfig>		_serverConfigVect;
+		ServerConfig					*_servConfig;
+
+		ssize_t							_bytesIn;
+		ssize_t							_bytesOut;
+		std::string						_bufferIn;
+		std::string						_bufferOut;
+
 };
 
 #endif
