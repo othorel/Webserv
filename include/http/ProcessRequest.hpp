@@ -14,9 +14,9 @@
 
 enum ProcessStatus {
 	WAITING_HEADERS,
-	REQUEST_READY,
+	HANDLING_METHOD,
 	WAITING_BODY,
-	RESPONSE_READY,
+	SENDING_HEADERS,
 	SENDING_BODY,
 	DONE
 };
@@ -35,7 +35,7 @@ class ProcessRequest
 		File						*_file;
 		HttpResponse				_httpResponse;
 		std::string					_inputData;
-		std::string					_rawString;
+		std::string					_outputData;
 
 		void selectServer();
 		void selectLocation();
@@ -43,11 +43,11 @@ class ProcessRequest
 		const std::string & selectRoot();
 		std::string selectErrorPage(int statusCode);
 
-		void waitingHeaders(const std::string & data);
-		void handle();
-		size_t receiveBodyChunk(char * buffer, size_t writesize);
-		const std::string & sendHttpResponse();
-		size_t sendBodyChunk(char * buffer, size_t readsize);
+		void waitHeaders();
+		void handleMethod();
+		void waitBody();
+		void sendHeaders();
+		void sendBody();
 
 		void deleteHandler();
 		void getHandler();
@@ -56,6 +56,8 @@ class ProcessRequest
 		void buildResponse(int statusCode, const std::map<std::string, std::string> & headers, const std::string & body);
 		void buildRedirect();
 		// void buildError(int statusCode, const ServerConfig & server, const Location * location);
+
+		void checkMethodValidity();
 		
 	public :
 		
@@ -69,11 +71,11 @@ class ProcessRequest
 		ProcessStatus getProcessStatus() const;
 		const ServerConfig & getServer() const;
 		std::string process(std::string data);
+		void reset();
 
 
 };
 
-static std::string createAllowedMethodsList(const Location & location);
 static void checkDeleteValidity(const std::string & path);
 static std::string createIndexPath(std::string path, const Location & location);
 static std::string generateAutoIndex(const std::string & dirPath, const std::string & uriPath);

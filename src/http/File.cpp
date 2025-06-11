@@ -211,7 +211,7 @@ size_t	File::ReadChunk(char * buffer, size_t readSize)
 	return (static_cast<size_t>(bytesRead));
 }
 
-size_t	File::WriteChunk(char * src, size_t writeSize)
+size_t	File::WriteChunk(const char * src, size_t writeSize)
 {
 	if (!_isWriteMode)
 		throw HttpErrorException(500);

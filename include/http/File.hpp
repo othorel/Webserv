@@ -41,7 +41,7 @@ class File
 		bool closeFile();
 
 		size_t	ReadChunk(char * buffer, size_t readSize);
-		size_t	WriteChunk(char * src, size_t writeSize);
+		size_t	WriteChunk(const char * src, size_t writeSize);
 
 };
 
