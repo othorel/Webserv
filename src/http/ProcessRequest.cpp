@@ -44,6 +44,13 @@ ProcessRequest::ProcessRequest(const HttpRequest& request, std::vector<ServerCon
 		_httpResponse = HttpResponse();
 		if (_location.hasRedirect()) 
 			buildRedirect();
+
+
+
+	std::cout << "____________________\nPROCESS REQEST CREATED" << std::endl;
+	std::cout << "LOCATION : " << _location.getPath() << std::endl;
+	std::cout << "____________________\n" << std::endl;
+
 }
 
 ProcessRequest::ProcessRequest(const ProcessRequest & other) :
@@ -292,7 +299,7 @@ void ProcessRequest::getHandler()
 	if (_processStatus != READY)
 		throw HttpErrorException(500);
 	
-	std::string path = selectRoot();
+	std::string path = createPath(selectRoot(), _location.getPath());
 	if (!HttpUtils::fileExists(path))
 		throw HttpErrorException(404);
 
@@ -336,14 +343,7 @@ void ProcessRequest::postHandler()
 	if (_processStatus != READY)
 		throw HttpErrorException(500);
 
-	std::string root = selectRoot();
-	std::string uploadPath = _location.getUploadPath();
-	if (uploadPath.empty())
-		throw HttpErrorException(403);
-	HttpUtils::trimFinalSlash(root);
-	HttpUtils::trimSlashes(uploadPath);
-	
-	std::string path = root + '/' + uploadPath;
+	std::string path = createPath(selectRoot(), _location.getUploadPath());
 
 	checkPostValidity(_request, _location, _server, path);
 
@@ -528,4 +528,14 @@ static std::string createPostFileName(
 	if (!extension.empty()) {
 		filename += "." + extension; }
 	return (filename);
+}
+
+static std::string createPath(const std::string & root, const std::string & subpath)
+{
+	std::string cleanRoot = root;
+	HttpUtils::trimFinalSlash(cleanRoot);
+	std::string cleanSubpath = subpath;
+	HttpUtils::trimSlashes(cleanSubpath);
+	
+	return (cleanRoot + '/' + cleanSubpath);
 }

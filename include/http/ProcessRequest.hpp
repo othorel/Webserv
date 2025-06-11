@@ -74,5 +74,6 @@ static void checkPostValidity(
 	const ServerConfig & server, const std::string & path);
 static std::string createPostFileName(
 	const HttpRequest & request, const ServerConfig & server, const std::string & path);
+static std::string createPath(const std::string & root, const std::string & subpath);
 
 #endif
