@@ -56,20 +56,38 @@ Connexion & Connexion::operator=(const Connexion & other)
 
 void	Connexion::readDataFromSocket(std::string &line)
 {
-	char buf[1024];
-	memset(buf, 0, 1024);
-	_bytesIn = recv(_fd, buf, sizeof(buf), 0);
+	char bufIn[BUFFER_SIZE];
+	memset(bufIn, 0, BUFFER_SIZE);
+	_bytesIn = recv(_fd, bufIn, sizeof(bufIn), 0);
 
-	if (_bytesIn > 0)
+	if (_bytesIn <= 0)
+		return;
+	_bufferIn.append(bufIn, _bytesIn);
+	std::size_t pos = _bufferIn.find("\r\n\r\n");
+	if (pos != std::string::npos)
 	{
-		std::cout << "Parsing request" << std::endl;
-		_bufferIn = std::string(buf, _bytesIn);
+		line = _bufferIn.substr(0, pos + 4); //je recupere tout jusqu'a la fin du paquet
+		_bufferIn.erase(0, pos + 4); //si il y avait des caracteres apres la fin du paquet je les garde pour la prochaine lecture
 	}
 }
 
 void	Connexion::writeDataToSocket(const std::string & response)
 {
-	_bytesOut = send(_fd, response.c_str(), response.size(), 0);
+	ssize_t		totalSent = 0;
+	ssize_t		toSend = 0;
+	ssize_t		sent = 0;
+	while (totalSent < response.size())
+	{
+		toSend = std::min(static_cast<size_t>(BUFFER_SIZE), response.size() - totalSent);
+		sent = send(_fd, response.c_str() + totalSent, toSend, 0);
+		if (sent == -1)
+		{
+			_bytesOut = -1;
+			return;
+		}
+		totalSent += sent;
+	}
+	_bytesOut = totalSent;
 }
 
 bool	Connexion::endTransmission()

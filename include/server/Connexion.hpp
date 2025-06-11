@@ -31,7 +31,6 @@ class Connexion
 		Connexion & operator=(const Connexion & other);
 
 		// Getters
-
 		int								getFd() const;
 		std::string						getIP() const;
 		int								getPort() const;
@@ -51,7 +50,6 @@ class Connexion
 		void							setBufferIn(std::string buffer);
 		void							setBufferOut(std::string buffer);
 		void							setServConfig(ServerConfig *serverconfig);
-		void							setRawLine(std::string rawline);
 
 		// Runtime
 		void							readDataFromSocket(std::string &line);

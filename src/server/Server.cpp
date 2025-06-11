@@ -154,13 +154,13 @@ void	Server::handleEvent(int fdClient, size_t & i)
 			throw std::runtime_error("Error while reading from socket");
 		return ;
 	}
-	else
+	else if (_clientsMap[fdClient].endTransmission() == true)
 	{
 		std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
-		if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == REQUEST_READY && _clientsMap[fdClient].getServConfig() == NULL)
-			_clientsMap[fdClient].setServConfig(new ServerConfig(_clientsMap[fdClient].getProcessRequest().getServConfig()));
+		if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == WAITING_BODY && _clientsMap[fdClient].getServConfig() == NULL)
+			_clientsMap[fdClient].setServConfig(new ServerConfig(_clientsMap[fdClient].getProcessRequest().getServConfig())); //On initialise le pointeur vers servconfig
 
-		if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == RESPONSE_READY
+		if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == SENDING_HEADERS
 			|| _clientsMap[fdClient].getProcessRequest().getProcessStatus() == SENDING_BODY) // Si le processRequest a fini de construire la reponse
 		{
 			while (! processed.empty())
