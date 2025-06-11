@@ -162,17 +162,17 @@ void	Server::handleEvent(int fdClient, size_t & i)
 	}
 	else if (_clientsMap[fdClient].endTransmission(rawLineString) == true)
 	{
-		// std::cout << "Paquet:\n" << rawLineString << std::endl;
+		std::cout << "Paquet:\n" << rawLineString << std::endl;
 		std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
-		if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == WAITING_BODY && _clientsMap[fdClient].getServConfig() == NULL)
-			_clientsMap[fdClient].setServConfig(new ServerConfig(_clientsMap[fdClient].getProcessRequest().getServer())); //On initialise le pointeur vers servconfig
+		std::cout << "Processed:\n" << processed << std::endl;
 
-		if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == SENDING_HEADERS
-			|| _clientsMap[fdClient].getProcessRequest().getProcessStatus() == SENDING_BODY) // Si le processRequest a fini de construire la reponse
+		if (!processed.empty()) // Si le processRequest a fini de construire la reponse
 		{
-			while (! processed.empty())
+			// if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == WAITING_BODY && _clientsMap[fdClient].getServConfig() == NULL)
+			//  	_clientsMap[fdClient].setServConfig(new ServerConfig(_clientsMap[fdClient].getProcessRequest().getServer())); //On initialise le pointeur vers servconfig
+			while (!processed.empty())
 			{
-				// std::cout << "processing" << std::endl;
+				std::cout << "processing string: " << processed << std::endl;
 				_clientsMap[fdClient].writeDataToSocket(processed);
 				processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
 			}
