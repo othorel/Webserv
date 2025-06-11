@@ -18,7 +18,6 @@ Connexion::Connexion(int fd, sockaddr_in addr, std::vector<ServerConfig> vectSer
 	_startTime = std::time(NULL);
 	_bytesIn = 0;
 	_bytesOut = 0;
-	std::cout << getServConfigVect().size() << std::endl;
 	_processRequest = ProcessRequest(getServConfigVect());
 }
 
@@ -42,12 +41,6 @@ Connexion & Connexion::operator=(const Connexion & other)
 		_processRequest = other._processRequest;
 		_startTime = other._startTime;
 		_serverConfigVect = other._serverConfigVect;
-		// if (_servConfig)
-		// {
-		// 	delete _servConfig;
-		// 	_servConfig = NULL;
-		// }
-		//_servConfig = other._servConfig ? new ServerConfig(*other._servConfig) : NULL;
 		_servConfig = NULL;
 		_bytesIn = other._bytesIn;
 		_bytesOut = other._bytesOut;
@@ -69,7 +62,9 @@ void	Connexion::readDataFromSocket(std::string &line)
 
 	if (_bytesIn <= 0)
 		return;
+		
 	_bufferIn.append(bufIn, _bytesIn);
+	
 	std::size_t pos = _bufferIn.find("\r\n\r\n");
 	if (pos != std::string::npos)
 	{
@@ -97,9 +92,9 @@ void	Connexion::writeDataToSocket(const std::string & response)
 	_bytesOut = totalSent;
 }
 
-bool	Connexion::endTransmission()
+bool	Connexion::endTransmission(std::string line)
 {
-	return (_bufferIn.find("\r\n\r\n") != std::string::npos);
+	return (line.find("\r\n\r\n") != std::string::npos);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

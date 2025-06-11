@@ -54,7 +54,7 @@ class Connexion
 		// Runtime
 		void							readDataFromSocket(std::string &line);
 		void							writeDataToSocket(const std::string & response);
-		bool							endTransmission();
+		bool							endTransmission(std::string line);
 
 	private:
 

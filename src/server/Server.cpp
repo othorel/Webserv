@@ -141,7 +141,6 @@ void	Server::acceptNewConnexion(int fd)
 	if (clientFd < 0)
 		return;
 	_pollManager->addSocket(clientFd, POLLIN);
-	std::cout << "[DEBUG] Server::_serverConfigVect.size() = " << _serverConfigVect.size() << std::endl;
 	_clientsMap.insert(std::make_pair(clientFd, Connexion(clientFd, clientAddr, _serverConfigVect)));
 	std::cout << "New connexion authorized" << std::endl;
 }
@@ -161,8 +160,9 @@ void	Server::handleEvent(int fdClient, size_t & i)
 			throw std::runtime_error("Error while reading from socket");
 		return ;
 	}
-	else if (_clientsMap[fdClient].endTransmission() == true)
+	else if (_clientsMap[fdClient].endTransmission(rawLineString) == true)
 	{
+		// std::cout << "Paquet:\n" << rawLineString << std::endl;
 		std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
 		if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == WAITING_BODY && _clientsMap[fdClient].getServConfig() == NULL)
 			_clientsMap[fdClient].setServConfig(new ServerConfig(_clientsMap[fdClient].getProcessRequest().getServer())); //On initialise le pointeur vers servconfig
@@ -172,6 +172,7 @@ void	Server::handleEvent(int fdClient, size_t & i)
 		{
 			while (! processed.empty())
 			{
+				// std::cout << "processing" << std::endl;
 				_clientsMap[fdClient].writeDataToSocket(processed);
 				processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
 			}
