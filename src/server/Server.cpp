@@ -46,6 +46,9 @@ Server & Server::operator=(const Server & other)
 		this->_pollManager = other._pollManager;
 		this->_fdSocketVect = other._fdSocketVect;
 		this->_listenVect = other._listenVect;
+		this->_activeListenVect = other._activeListenVect;
+		this->_clientsMap = other._clientsMap;
+		this->_serverConfigVect = other._serverConfigVect;
 	}
 	return (*this);
 }
@@ -118,7 +121,10 @@ void	Server::StartEventLoop()
 void	Server::dealClient(int fd, size_t & i)
 {
 	if (std::find(_fdSocketVect.begin(), _fdSocketVect.end(), fd) != _fdSocketVect.end())
+	{
+		std::cout << "A new connexion want to join in" << std::endl;
 		acceptNewConnexion(fd);
+	}
 	else
 	{
 		std::cout << "New event to handle" << std::endl;
@@ -135,6 +141,7 @@ void	Server::acceptNewConnexion(int fd)
 	if (clientFd < 0)
 		return;
 	_pollManager->addSocket(clientFd, POLLIN);
+	std::cout << "[DEBUG] Server::_serverConfigVect.size() = " << _serverConfigVect.size() << std::endl;
 	_clientsMap.insert(std::make_pair(clientFd, Connexion(clientFd, clientAddr, _serverConfigVect)));
 	std::cout << "New connexion authorized" << std::endl;
 }
@@ -158,8 +165,7 @@ void	Server::handleEvent(int fdClient, size_t & i)
 	{
 		std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
 		if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == WAITING_BODY && _clientsMap[fdClient].getServConfig() == NULL)
-			_clientsMap[fdClient].setServConfig(new ServerConfig(_clientsMap[fdClient].getProcessRequest().getServConfig())); //On initialise le pointeur vers servconfig
-
+			_clientsMap[fdClient].setServConfig(new ServerConfig(_clientsMap[fdClient].getProcessRequest().getServer())); //On initialise le pointeur vers servconfig
 		if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == SENDING_HEADERS
 			|| _clientsMap[fdClient].getProcessRequest().getProcessStatus() == SENDING_BODY) // Si le processRequest a fini de construire la reponse
 		{
