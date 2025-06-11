@@ -26,14 +26,13 @@ class Server
 		Server();
 		Server(const ConfigParser & Parser, const std::vector<ServerConfig> servConfigVect);
 		Server(const Server & toCopy);
-		Server(const std::string str);
-
 		~Server();
-		
 		Server & operator=(const Server & other);
 
+		// Runtime
 		void										StartEventLoop();
 
+		// Getters
 		std::vector<std::pair<int, std::string> >	getListenVect() const;
 		std::vector<std::pair<int, std::string> >	getActiveListenVec() const;
 		PollManager									*getPollManager() const;
@@ -41,37 +40,29 @@ class Server
 		std::vector<int>							getFdSocketVect() const;
 		std::vector<ServerConfig> 					getServerConfig() const;
 		
+		// Setters
 		void										setServerConfig(std::vector<ServerConfig> & servConfigVect);
-
-		void										supressClient(int fdClient, size_t & i);
-		void										parseHeader(int fdClient, std::string &rawrequest);
-
-		const ServerConfig							&getSingleServerConfig(struct sockaddr_in addr) const;
 		
 	private:
 		// Attributes
 		std::vector<std::pair<int, std::string> > 	_listenVect; // couples port-IP a surveiller
 		std::vector<int>							_fdSocketVect; // si tout se passe bien doit faire la meme taille que _listenVect (sauf si certains coupls port ip ne ne sont pas accessibles)
-		
-		
-		PollManager									*_pollManager; // classe contenant un vect de pollFd
-		std::map<int, Connexion>					_clientsMap; //Tous les clients actuellement en train de communiquer
-
+		PollManager									*_pollManager; // classe permettant de manipuler mes sockets
+		std::map<int, Connexion>					_clientsMap; // Tous les clients actuellement en train de communiquer
 		std::vector<std::pair<int, std::string> >	_activeListenVect; // sous-partie de listen tab contenant uniquement les couples ports IP concernes par des evenements
-		std::vector<ServerConfig>					_serverConfigVect;		
+		std::vector<ServerConfig>					_serverConfigVect;
 
 		// Initialization
 		void										Setup();
 		void										addPair(std::pair<int, std::string> listen);
 		void										fillActiveListenVect();
 
-
 		// Runtime
+		void										checkTimeOut(int fdClient, size_t & i);
 		void										dealClient(int fd, size_t & i);
 		void										acceptNewConnexion(int fd);
-		void										handleEvent(int fdClient, size_t & i);
-		void										dealRequest(int fd);	
-		void										checkTimeOut(int fdClient, size_t & i);
+		void										handleEvent(int fdClient, size_t & i);	
+		void										supressClient(int fdClient, size_t & i);
 
 };
 
