@@ -20,8 +20,7 @@
 # include "../http/ProcessRequest.hpp"
 
 class RequestParser;
-class HttpRequest;
-class ProcessRequest;
+
 class Connexion
 {
 	public:
@@ -61,10 +60,10 @@ class Connexion
 
 		int								_fd;
 		sockaddr_in						_addr;
-		ProcessRequest					_processRequest;
 		std::time_t						_startTime;
 		std::vector<ServerConfig>		_serverConfigVect;
 		ServerConfig					*_servConfig;
+		ProcessRequest					_processRequest;
 
 		ssize_t							_bytesIn;
 		ssize_t							_bytesOut;

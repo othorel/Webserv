@@ -13,12 +13,13 @@
 
 Connexion::Connexion(){}
 
-Connexion::Connexion(int fd, sockaddr_in addr, std::vector<ServerConfig> vectServerConfig) : _fd(fd), _addr(addr), _serverConfigVect(vectServerConfig), _processRequest(ProcessRequest(getServConfigVect()))
+Connexion::Connexion(int fd, sockaddr_in addr, std::vector<ServerConfig> vectServerConfig) : _fd(fd), _addr(addr), _serverConfigVect(vectServerConfig), _servConfig(NULL)
 {
 	_startTime = std::time(NULL);
-	_servConfig = NULL;
 	_bytesIn = 0;
 	_bytesOut = 0;
+	std::cout << getServConfigVect().size() << std::endl;
+	_processRequest = ProcessRequest(getServConfigVect());
 }
 
 Connexion::~Connexion()
@@ -41,7 +42,13 @@ Connexion & Connexion::operator=(const Connexion & other)
 		_processRequest = other._processRequest;
 		_startTime = other._startTime;
 		_serverConfigVect = other._serverConfigVect;
-		_servConfig = new ServerConfig(*_servConfig);
+		// if (_servConfig)
+		// {
+		// 	delete _servConfig;
+		// 	_servConfig = NULL;
+		// }
+		//_servConfig = other._servConfig ? new ServerConfig(*other._servConfig) : NULL;
+		_servConfig = NULL;
 		_bytesIn = other._bytesIn;
 		_bytesOut = other._bytesOut;
 		_bufferIn = other._bufferIn;
