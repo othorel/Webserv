@@ -62,23 +62,19 @@ class Connexion
 		ssize_t				writeDataToSocket(const std::string & response);
 		bool				endTransmission();
 
+		void				selectServer(const std::vector<ServerConfig> & serverVector);
+
 	private:
 		bool				_endTransmission;
-		bool				_headerIsParsed;
 		int					_fd;
 		sockaddr_in			_addr;
 		std::string			_bufferIn;
 		std::string			_bufferOut;
-		std::string			_headers;
-		std::string			_body;
 
-		HttpRequest			*_request;
-		Location			*_location;
 		ProcessRequest		*_processRequest;
-		// ServerConfig		*_servConfig;
+		ServerConfig		*_servConfig;
 		
 		std::time_t			_startTime;
-		// ServerConfig		_servConfig;
 };
 
 #endif

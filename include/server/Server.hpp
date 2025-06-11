@@ -65,6 +65,7 @@ class Server
 		void										addPair(std::pair<int, std::string> listen);
 		void										fillActiveListenVect();
 
+
 		// Runtime
 		void										dealClient(int fd, size_t & i);
 		void										acceptNewConnexion(int fd);

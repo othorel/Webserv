@@ -23,18 +23,15 @@ Connexion::Connexion(){}
 Connexion::Connexion(int fd, sockaddr_in addr) : _fd(fd), _addr(addr), _request(NULL), _location(NULL), _processRequest(NULL)
 {
 	_endTransmission = false;
-	_headerIsParsed = false;
 	_startTime = std::time(NULL);
 }
 
 Connexion::~Connexion()
 {
-	if (_request)
-		delete _request;
-	if (_location)
-		delete _location;
 	if (_processRequest)
 		delete _processRequest;
+	if (_servConfig)
+		delete _servConfig;
 }
 
 Connexion::Connexion(const Connexion & toCopy)
@@ -51,12 +48,8 @@ Connexion & Connexion::operator=(const Connexion & other)
 		this->_bufferOut = other._bufferOut;
 		this->_fd = other._fd;
 		this->_endTransmission = other._endTransmission;
-		this->_body = other._body;
-		this->_headerIsParsed = other._headerIsParsed;
-		this->_headers = other._headers;
-		this->_request = NULL;
-		this->_location = NULL;
 		this->_processRequest = NULL;
+		this->_ = NULL;
 		this->_startTime = other._startTime;
 	}
 	return (*this);

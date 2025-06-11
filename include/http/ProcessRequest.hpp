@@ -10,8 +10,11 @@
 # include "../../include/config/ServerConfig.hpp"
 # include "../../include/http/File.hpp"
 
+# define BUFFER_SIZE 4096
+
 enum ProcessStatus {
-	READY,
+	WAITING_HEADERS,
+	REQUEST_READY,
 	WAITING_BODY,
 	RESPONSE_READY,
 	SENDING_BODY,
@@ -23,7 +26,7 @@ class ProcessRequest
 	private :
 
 		ProcessStatus	_processStatus;
-		HttpRequest		_request;
+		HttpRequest		*_request;
 		ServerConfig	_server;
 		Location		_location;
 		typedef void	(ProcessRequest::*HandlerFunction)();
@@ -32,15 +35,19 @@ class ProcessRequest
 		HttpResponse	_httpResponse;
 		std::string		_rawString;
 
-		void selectServer(const std::vector<ServerConfig> & serverVector);
 		void selectLocation();
 		void selectHandler();
 		const std::string & selectRoot();
 		std::string selectErrorPage(int statusCode);
 
+		void handle();
 		void deleteHandler();
 		void getHandler();
 		void postHandler();
+
+		size_t receiveBodyChunk(char * buffer, size_t writesize);
+		const std::string & sendHttpResponse();
+		size_t sendBodyChunk(char * buffer, size_t readsize);
 
 		void buildResponse(int statusCode, const std::map<std::string, std::string> & headers, const std::string & body);
 		void buildRedirect();
@@ -49,18 +56,15 @@ class ProcessRequest
 	public :
 		
 		ProcessRequest();
-		ProcessRequest(const HttpRequest& request, std::vector<ServerConfig> serverVector);
+		ProcessRequest(const ServerConfig & server);
 		ProcessRequest(const ProcessRequest & other);
 		ProcessRequest & operator=(const ProcessRequest & other);
-		void reset(const HttpRequest & request, const std::vector<ServerConfig> & serverVector);
-		~ProcessRequest();
-		
-		void process();
-		size_t receiveBodyChunk(char * buffer, size_t writesize);
-		const std::string & sendHttpResponse();
-		size_t sendBodyChunk(char * buffer, size_t readsize);
+		// void reset(const HttpRequest & request, const std::vector<ServerConfig> & serverVector);
+		// ~ProcessRequest();
 
 		ProcessStatus getProcessStatus() const;
+		std::string process(std::string data);
+
 
 };
 

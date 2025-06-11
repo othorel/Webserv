@@ -19,8 +19,8 @@
 
 ProcessRequest::ProcessRequest() :
 	_processStatus(DONE),
-	_request(),
 	_server(),
+	_request(NULL),
 	_location(),
 	_handler(NULL),
 	_file(NULL),
@@ -28,29 +28,19 @@ ProcessRequest::ProcessRequest() :
 	_rawString()
 {}
 
-ProcessRequest::ProcessRequest(const HttpRequest& request, std::vector<ServerConfig> serverVector) :
-	_processStatus(READY),
-	_request(request),
+ProcessRequest::ProcessRequest(const ServerConfig & server) :
+	_processStatus(WAITING_HEADERS),
+	_server(server),
+	_request(NULL),
+	_handler(NULL),
 	_file(NULL),
 	_httpResponse(),
 	_rawString()
 {
-		selectServer(serverVector);
 		selectLocation();
-		std::string method = request.getMethod();
-		if (!_location.isValidMethod(method))
-			throw HttpErrorException(405);
-		selectHandler();
 		_httpResponse = HttpResponse();
-		if (_location.hasRedirect()) 
-			buildRedirect();
-
-
-
-	std::cout << "____________________\nPROCESS REQEST CREATED" << std::endl;
-	std::cout << "LOCATION : " << _location.getPath() << std::endl;
-	std::cout << "____________________\n" << std::endl;
-
+		// if (_location.hasRedirect()) 
+		// 	buildRedirect();
 }
 
 ProcessRequest::ProcessRequest(const ProcessRequest & other) :
@@ -63,29 +53,30 @@ ProcessRequest::ProcessRequest(const ProcessRequest & other) :
 	_rawString(other._rawString)
 {
 	_file = other._file ? new File(*other._file) : NULL;
+	_request = other._request ? new HttpRequest(*other._request) : NULL;
 }
 
-void ProcessRequest::reset(const HttpRequest & request, const std::vector<ServerConfig> & serverVector)
-{
-	if (_file)
-	{
-		delete _file;
-		_file = NULL;
-	}
+// void ProcessRequest::reset(const HttpRequest & request, const std::vector<ServerConfig> & serverVector)
+// {
+// 	if (_file)
+// 	{
+// 		delete _file;
+// 		_file = NULL;
+// 	}
 
-	_processStatus = READY;
-	_request = request;
-	_rawString.clear();
-	_httpResponse = HttpResponse();
-	selectServer(serverVector);
-	selectLocation();
-	std::string method = _request.getMethod();
-	if (!_location.isValidMethod(method))
-		throw HttpErrorException(405);
-	selectHandler();
-	if (_location.hasRedirect())
-		buildRedirect();
-}
+// 	_processStatus = READY;
+// 	_request = request;
+// 	_rawString.clear();
+// 	_httpResponse = HttpResponse();
+// 	selectServer(serverVector);
+// 	selectLocation();
+// 	std::string method = _request.getMethod();
+// 	if (!_location.isValidMethod(method))
+// 		throw HttpErrorException(405);
+// 	selectHandler();
+// 	if (_location.hasRedirect())
+// 		buildRedirect();
+// }
 
 /* ************************************************************************** */
 /*                                    operators                               */
@@ -119,32 +110,63 @@ ProcessRequest::~ProcessRequest()
 }
 
 /* ************************************************************************** */
+/*                                 public process                             */
+/* ************************************************************************** */
+
+std::string ProcessRequest::process(std::string data)
+{
+	switch (_clientsMap[fdClient].getProcessRequest()->getProcessStatus())
+		{
+			case READY:
+				std::cout << "\nI am ready\n" << std::endl;
+				_clientsMap[fdClient].getProcessRequest()->process();
+				break;
+			case WAITING_BODY:
+				std::cout << "\nI am receiving body chunk\n" << std::endl;
+				_clientsMap[fdClient].getProcessRequest()->receiveBodyChunk(rawLineChar, rawLineString.size());
+				delete[] rawLineChar;
+				break;
+			case RESPONSE_READY:
+				std::cout << "\nI am creating response headers\n" << std::endl;
+				responseHeaders = _clientsMap[fdClient].getProcessRequest()->sendHttpResponse();
+               	sent = send(fdClient, responseHeaders.data(), responseHeaders.size(), 0);
+				delete[] rawLineChar;
+				break;
+			case SENDING_BODY:
+				std::cout << "\nNow i send the body of the response\n" << std::endl;
+				char buffer[1024];
+                toSend = _clientsMap[fdClient].getProcessRequest()->sendBodyChunk(buffer, sizeof(buffer));
+                if (toSend > 0)
+                    sent = send(fdClient, buffer, toSend, 0);
+				delete[] rawLineChar;
+				break;
+			case DONE:
+				std::cout << "\nI am done\n" << std::endl;
+				supressClient(fdClient, i);
+				delete[] rawLineChar;
+				break;
+			default:
+			{
+				std::cout << "\nDefault case\n" << std::endl;
+				delete[] rawLineChar;
+				throw HttpErrorException(500);
+			}
+		}
+}
+
+/* ************************************************************************** */
 /*                                   selectors                                */
 /* ************************************************************************** */
 
-void ProcessRequest::selectServer(const std::vector<ServerConfig> & serverVector)
-{
-	const std::map<std::string, std::string> & headers = _request.getHeaders();
-	std::map<std::string, std::string>::const_iterator headersCit = headers.find("host"); 
-	if (headersCit != headers.end()) {
-		std::vector<ServerConfig>::const_iterator serverCit = serverVector.begin();
-		for (; serverCit != serverVector.end(); ++serverCit) {
-			if (serverCit->hasServerName(headersCit->second)) {
-				_server =  *serverCit;
-				return ;
-			}
-		}
-	}
-	if (serverVector.empty()) {
-		throw HttpErrorException(500);
-	}
-	_server = serverVector[0];
-}
-
 void ProcessRequest::selectLocation()
 {
+	if (!_request)
+		throw HttpErrorException(500);
+
 	const std::map<std::string, Location> & locations = _server.getLocations();
-	const std::string & target = _request.getTarget();
+
+	const std::string & target = _request->getTarget();
+
 	std::string bestMatch = "";
 	std::map<std::string, Location>::const_iterator it;
 	for (it = locations.begin(); it != locations.end(); ++it)
@@ -169,7 +191,10 @@ const std::string & ProcessRequest::selectRoot()
 
 void ProcessRequest::selectHandler()
 {
-	const std::string & method = _request.getMethod();
+	if (!_request)
+		throw HttpErrorException(500);
+
+	const std::string & method = _request->getMethod();
 	if (method == "DELETE")
 		_handler = &ProcessRequest::deleteHandler;
 	else if (method == "POST")
@@ -177,6 +202,8 @@ void ProcessRequest::selectHandler()
 	else if (method == "GET")
 		_handler = &ProcessRequest::getHandler;
 	else
+		throw HttpErrorException(405);
+	if (!_location.isValidMethod(method))
 		throw HttpErrorException(405);
 }
 
@@ -199,11 +226,11 @@ ProcessStatus ProcessRequest::getProcessStatus() const
 }
 
 /* ************************************************************************** */
-/*                                     process                                */
+/*                                     handlers                               */
 /* ************************************************************************** */
 
 // When _processStatus is READY
-void ProcessRequest::process()
+void ProcessRequest::handle()
 {
 	if (_handler)
 		(this->*_handler)();
@@ -212,15 +239,18 @@ void ProcessRequest::process()
 // When _processStatus is WAITING_BODY
 size_t ProcessRequest::receiveBodyChunk(char * buffer, size_t writesize)
 {
+	if (!_request)
+		throw HttpErrorException(500);
+	
 	if (_processStatus != WAITING_BODY || !_file || !buffer)
 		throw HttpErrorException(500);
 
-	size_t remainingBytes = _request.getContentLength() - _file->getOffset();
+	size_t remainingBytes = _request->getContentLength() - _file->getOffset();
 	size_t bytesToWrite = (writesize > remainingBytes) ? remainingBytes : writesize;
 
 	size_t result = _file->WriteChunk(buffer, bytesToWrite);
 
-	if (_file->getOffset() >= _request.getContentLength()) {
+	if (_file->getOffset() >= _request->getContentLength()) {
 		std::map<std::string, std::string> headers;
 		std::string relativePath = _location.getUploadPath();
 		if (!relativePath.empty() && relativePath[relativePath.size() - 1] != '/') {
@@ -274,10 +304,13 @@ size_t ProcessRequest::sendBodyChunk(char * buffer, size_t readsize)
 
 void ProcessRequest::deleteHandler()
 {
+	if (!_request)
+		throw HttpErrorException(500);
+
 	if (_processStatus != READY)
 		throw HttpErrorException(500);
 
-	std::string path = selectRoot() + _request.getTarget();
+	std::string path = selectRoot() + _request->getTarget();
 
 	checkDeleteValidity(path);
 
@@ -296,6 +329,9 @@ void ProcessRequest::deleteHandler()
 
 void ProcessRequest::getHandler()
 {
+	if (!_request)
+		throw HttpErrorException(500);
+
 	if (_processStatus != READY)
 		throw HttpErrorException(500);
 	
@@ -308,7 +344,7 @@ void ProcessRequest::getHandler()
 		if (HttpUtils::fileExists(indexFile))
 			path = indexFile;
 		else if (_location.isAutoIndex()) {
-			std::string body = generateAutoIndex(path, _request.getTarget());
+			std::string body = generateAutoIndex(path, _request->getTarget());
 			std::map<std::string, std::string> headers;
 			headers["content-type"] = "text/html";
 			headers["content-length"] = HttpUtils::numberToString(body.length());
@@ -340,14 +376,17 @@ void ProcessRequest::getHandler()
 
 void ProcessRequest::postHandler()
 {
+	if (!_request)
+		throw HttpErrorException(500);
+
 	if (_processStatus != READY)
 		throw HttpErrorException(500);
 
 	std::string path = createPath(selectRoot(), _location.getUploadPath());
 
-	checkPostValidity(_request, _location, _server, path);
+	checkPostValidity(*_request, _location, _server, path);
 
-	std::string filepath = createPostFileName(_request, _server, path);
+	std::string filepath = createPostFileName(*_request, _server, path);
 
 	if (_file)
 		throw HttpErrorException(500);
@@ -420,6 +459,25 @@ void ProcessRequest::buildRedirect()
 // 	_httpResponse = HttpResponse("HTTP/1.1", statusCode, headers, body);
 // 	addMandatoryHeaders();
 // }
+
+void Server::selectServer(const std::vector<ServerConfig> & serverVector)
+{
+	const std::map<std::string, std::string> & headers = _request.getHeaders();
+	std::map<std::string, std::string>::const_iterator headersCit = headers.find("host"); 
+	if (headersCit != headers.end()) {
+		std::vector<ServerConfig>::const_iterator serverCit = serverVector.begin();
+		for (; serverCit != serverVector.end(); ++serverCit) {
+			if (serverCit->hasServerName(headersCit->second)) {
+				_server =  *serverCit;
+				return ;
+			}
+		}
+	}
+	if (serverVector.empty()) {
+		throw HttpErrorException(500);
+	}
+	_server = serverVector[0];
+}
 
 
 /* ************************************************************************** */
