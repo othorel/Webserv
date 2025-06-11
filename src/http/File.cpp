@@ -293,3 +293,67 @@ off_t File::getFileSize() const
 		return (s.st_size);
 	return (-1);
 }
+
+
+
+
+
+
+/* ************************************************************************** */
+/*                                     test                                   */
+/* ************************************************************************** */
+
+// test by GPT OK
+// compile with g++ src/http/File.cpp src/http/HttpUtils.cpp 
+
+// #include <iostream>
+// #include <string>
+// #include <cstdlib>
+
+// int main(int argc, char **argv)
+// {
+// 	if (argc != 3) {
+// 		std::cerr << "Usage: " << argv[0] << " <source_file> <destination_file>" << std::endl;
+// 		return 1;
+// 	}
+
+// 	std::string sourcePath = argv[1];
+// 	std::string destPath = argv[2];
+
+// 	try {
+// 		File reader(sourcePath, false); // mode lecture
+// 		File writer(destPath, true);    // mode écriture
+
+// 		const size_t chunkSize = 1024;
+// 		char buffer[chunkSize];
+
+// 		std::cout << "== Reader file before ==" << std::endl;
+// 		reader.debug();
+// 		std::cout << "== Writer file before ==" << std::endl;
+// 		writer.debug();
+
+// 		while (true)
+// 		{
+// 			size_t bytesRead = reader.ReadChunk(buffer, chunkSize);
+// 			if (bytesRead == 0)
+// 				break;
+// 			writer.WriteChunk(buffer, bytesRead);
+// 		}
+
+// 		std::cout << "\n== Reader file after ==" << std::endl;
+// 		reader.debug();
+// 		std::cout << "== Writer file after ==" << std::endl;
+// 		writer.debug();
+// 	}
+// 	catch (const HttpErrorException & e) {
+// 		std::cerr << "HttpErrorException: " << e.what() << std::endl;
+// 		return 1;
+// 	}
+// 	catch (const std::exception & e) {
+// 		std::cerr << "Exception: " << e.what() << std::endl;
+// 		return 1;
+// 	}
+
+// 	std::cout << "Copy complete!" << std::endl;
+// 	return 0;
+// }
