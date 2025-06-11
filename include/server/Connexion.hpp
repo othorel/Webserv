@@ -17,6 +17,7 @@
 # include <ctime>
 
 # include "../config/ServerConfig.hpp"
+# include "../http/ProcessRequest.hpp"
 
 class RequestParser;
 class HttpRequest;

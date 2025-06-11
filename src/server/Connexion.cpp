@@ -141,16 +141,6 @@ ssize_t	Connexion::getBytesOut() const
 	return (_bytesOut);
 }
 
-std::string	Connexion::getBufferIn() const
-{
-	return (_bufferIn);
-}
-
-std::string	Connexion::getBufferOut() const
-{
-	return (_bufferOut);
-}
-
 std::vector<ServerConfig>	Connexion::getServConfigVect() const
 {
 	return (_serverConfigVect);

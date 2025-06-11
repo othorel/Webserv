@@ -158,7 +158,7 @@ void	Server::handleEvent(int fdClient, size_t & i)
 	{
 		std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
 		if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == WAITING_BODY && _clientsMap[fdClient].getServConfig() == NULL)
-			_clientsMap[fdClient].setServConfig(new ServerConfig(_clientsMap[fdClient].getProcessRequest().getServConfig())); //On initialise le pointeur vers servconfig
+			_clientsMap[fdClient].setServConfig(new ServerConfig(_clientsMap[fdClient].getProcessRequest().getServer())); //On initialise le pointeur vers servconfig
 
 		if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == SENDING_HEADERS
 			|| _clientsMap[fdClient].getProcessRequest().getProcessStatus() == SENDING_BODY) // Si le processRequest a fini de construire la reponse
