@@ -35,7 +35,7 @@ class Connexion
 		std::string						getIP() const;
 		int								getPort() const;
 		sockaddr_in						getAddr() const;
-		ProcessRequest					*getProcessRequest() const;
+		ProcessRequest					getProcessRequest() const;
 		ssize_t							getBytesIn() const;
 		ssize_t							getBytesOut() const;
 		std::string						getBufferIn() const;
@@ -56,19 +56,21 @@ class Connexion
 		void							writeDataToSocket(const std::string & response);
 		bool							endTransmission(std::string line);
 
+		bool							_isRequestProcessCreated;
+
 	private:
 
 		int								_fd;
 		sockaddr_in						_addr;
 		std::time_t						_startTime;
 		ServerConfig					*_servConfig;
-		ProcessRequest					*_processRequest;
+		ProcessRequest					_processRequest;
 
 		ssize_t							_bytesIn;
 		ssize_t							_bytesOut;
 		std::string						_bufferIn;
 		std::string						_bufferOut;
-
+		
 };
 
 #endif

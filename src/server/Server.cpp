@@ -155,13 +155,16 @@ void	Server::handleEvent(int fdClient, size_t & i)
 
 	std::string		rawLineString;
 	_clientsMap[fdClient].readDataFromSocket(rawLineString); // quoi qu'il arrive on lit une ligne sur le socket
-	if (_clientsMap[fdClient].getProcessRequest() == NULL)
+	if (_clientsMap[fdClient]._isRequestProcessCreated == false)
+	{
 		_clientsMap[fdClient].setProcessRequest(_serverConfigVect);
+		_clientsMap[fdClient]._isRequestProcessCreated = true;
+	}
 
-	std::string	processed = _clientsMap[fdClient].getProcessRequest()->process(rawLineString);
+	std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
 	while (!processed.empty()) {
 		_clientsMap[fdClient].writeDataToSocket(processed);
-		processed = _clientsMap[fdClient].getProcessRequest()->process(rawLineString);
+		processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
 	}
 	// processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
 
