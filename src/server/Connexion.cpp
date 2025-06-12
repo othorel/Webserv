@@ -23,8 +23,7 @@ Connexion::Connexion(int fd, sockaddr_in addr) : _fd(fd), _addr(addr), _servConf
 
 Connexion::~Connexion()
 {
-	// if (_processRequest)
-	// 	delete _processRequest;
+
 }
 
 Connexion::Connexion(const Connexion & toCopy)
