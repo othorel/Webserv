@@ -13,7 +13,7 @@
 
 Connexion::Connexion(){}
 
-Connexion::Connexion(int fd, sockaddr_in addr, std::vector<ServerConfig> vectServerConfig) : _fd(fd), _addr(addr), _serverConfigVect(vectServerConfig), _servConfig(NULL), _processRequest(NULL)
+Connexion::Connexion(int fd, sockaddr_in addr, const std::vector<ServerConfig> & vectServerConfig) : _fd(fd), _addr(addr), _serverConfigVect(vectServerConfig), _servConfig(NULL), _processRequest(NULL)
 {
 	_startTime = std::time(NULL);
 	_bytesIn = 0;

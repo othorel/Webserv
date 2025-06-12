@@ -24,13 +24,14 @@ class Server
 {
 	public:
 		Server();
-		Server(const ConfigParser & Parser, const std::vector<ServerConfig> servConfigVect);
+		Server(const ConfigParser & Parser);
 		Server(const Server & toCopy);
 		~Server();
 		Server & operator=(const Server & other);
 
 		// Runtime
 		void										StartEventLoop();
+		void										logTime() const;
 
 		// Getters
 		std::vector<std::pair<int, std::string> >	getListenVect() const;
