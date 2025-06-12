@@ -158,7 +158,10 @@ void	Server::handleEvent(int fdClient, size_t & i)
 		_clientsMap[fdClient].setProcessRequest();
 
 	std::string	processed = _clientsMap[fdClient].getProcessRequest()->process(rawLineString);
-	_clientsMap[fdClient].writeDataToSocket(processed);
+	while (!processed.empty()) {
+		_clientsMap[fdClient].writeDataToSocket(processed);
+		processed = _clientsMap[fdClient].getProcessRequest()->process(rawLineString);
+	}
 	// processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
 
 	if (_clientsMap[fdClient].getBytesIn() <= 0) //si on detecte la fermeture de la connexion

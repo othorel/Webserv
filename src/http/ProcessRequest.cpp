@@ -140,6 +140,10 @@ std::string ProcessRequest::process(std::string data)
 				std::cout << "CASE HANDLING_METHOD " << std::endl;
 				handleMethod();
 				break ;
+			case WAITING_BODY:
+				std::cout << "CASE WAITING_BODY " << std::endl;
+				waitBody();
+				break ;
 			case SENDING_HEADERS:
 				std::cout << "CASE SENDING_HEADERS " << std::endl;
 				sendHeaders();
@@ -160,8 +164,7 @@ std::string ProcessRequest::process(std::string data)
 		}
 	std::string dataToSend = _outputData;
 	_outputData.clear();
-	std::cout << "STATUS : " << _processStatus << std::endl;
-	std::cout << "INPUT DATA TOTAL AT THE END : " << _inputData << std::endl;
+	std::cout << "\n\n\n____________________________\nOUTPUT  : " << dataToSend << "\n_________________________\n\n\n" <<std::endl;
 	return (dataToSend);
 }
 
@@ -251,7 +254,6 @@ void ProcessRequest::sendHeaders()
 	if (_file != NULL)
 	{
 		_processStatus = SENDING_BODY;
-		sendBody();
 	}
 	else
 		_processStatus = DONE;
