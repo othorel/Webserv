@@ -153,7 +153,6 @@ void	Server::handleEvent(int fdClient, size_t & i)
 	std::string		rawLineString;
 
 	_clientsMap[fdClient].readDataFromSocket(rawLineString); // quoi qu'il arrive on lit une ligne sur le socket
-	std::cout << "RAW : " << rawLineString << std::endl;
 	if (_clientsMap[fdClient].getProcessRequest() == NULL)
 		_clientsMap[fdClient].setProcessRequest();
 

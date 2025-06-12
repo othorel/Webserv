@@ -27,15 +27,15 @@ class ProcessRequest
 
 		std::vector<ServerConfig>	_serversVector;
 		ProcessStatus				_processStatus;
-		HttpRequest					*_request;
 		ServerConfig				_server;
 		Location					_location;
-		typedef void	(ProcessRequest::*HandlerFunction)();
-		HandlerFunction 			_handler;
-		File						*_file;
-		HttpResponse				_httpResponse;
 		std::string					_inputData;
 		std::string					_outputData;
+		HttpResponse				_httpResponse;
+		typedef void	(ProcessRequest::*HandlerFunction)();
+		HandlerFunction 			_handler;
+		HttpRequest					*_request;
+		File						*_file;
 
 		void selectServer();
 		void selectLocation();
@@ -46,7 +46,8 @@ class ProcessRequest
 		void waitHeaders();
 		void handleMethod();
 		void waitBody();
-		void sendHeaders();
+		void sendHeaders();		// void reset(const HttpRequest & request, const std::vector<ServerConfig> & serverVector);
+
 		void sendBody();
 
 		void deleteHandler();
@@ -58,7 +59,7 @@ class ProcessRequest
 		// void buildError(int statusCode, const ServerConfig & server, const Location * location);
 
 		void checkMethodValidity();
-		// std::string createPath();
+		std::string createPath(std::string locationPath);
 		
 	public :
 		
@@ -66,19 +67,12 @@ class ProcessRequest
 		ProcessRequest(const std::vector<ServerConfig> & serversVector);
 		ProcessRequest(const ProcessRequest & other);
 		ProcessRequest & operator=(const ProcessRequest & other);
-		// void reset(const HttpRequest & request, const std::vector<ServerConfig> & serverVector);
 		~ProcessRequest();
 
 		ProcessStatus getProcessStatus() const;
 		const ServerConfig & getServer() const;
 		std::string process(std::string data);
 		void reset();
-
-
-
-		void createId();
-
-
 
 };
 
@@ -90,7 +84,7 @@ static void checkPostValidity(
 	const HttpRequest & request, const Location & location ,
 	const ServerConfig & server, const std::string & path);
 static std::string createPostFileName(
-	const HttpRequest & request, const ServerConfig & server, const std::string & path);
-static std::string createPath(const std::string & root, const std::string & subpath);
+	const HttpRequest & request, const std::string & path);
+// static std::string createPath(const std::string & root, const std::string & subpath);
 
 #endif

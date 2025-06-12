@@ -22,43 +22,40 @@ ProcessRequest::ProcessRequest() :
 	_serversVector(),
 	_processStatus(WAITING_HEADERS),
 	_server(),
-	_request(NULL),
 	_location(),
-	_handler(NULL),
-	_file(NULL),
-	_httpResponse(),
 	_inputData(""),
-	_outputData("")
+	_outputData(""),
+	_httpResponse(),
+	_handler(NULL),
+	_request(NULL),
+	_file(NULL)
 {}
 
 ProcessRequest::ProcessRequest(const std::vector<ServerConfig> & serversVector) :
 	_serversVector(serversVector),
 	_processStatus(WAITING_HEADERS),
 	_server(),
-	_request(NULL),
 	_location(),
-	_handler(NULL),
-	_file(NULL),
-	_httpResponse(),
 	_inputData(""),
-	_outputData("")
-{
-std::cout << "CONSTRUCTOR CALLED " << std::endl;
-}
+	_outputData(""),
+	_httpResponse(),
+	_handler(NULL),
+	_request(NULL),
+	_file(NULL)
+{}
 
 ProcessRequest::ProcessRequest(const ProcessRequest & other) :
 	_serversVector(other._serversVector),
 	_processStatus(other._processStatus),
 	_server(other._server),
 	_location(other._location),
-	_handler(other._handler),
-	_httpResponse(other._httpResponse),
 	_inputData(other._inputData),
-	_outputData(other._outputData)
+	_outputData(other._outputData),
+	_httpResponse(other._httpResponse),
+	_handler(other._handler)
 {
 	_file = other._file ? new File(*other._file) : NULL;
 	_request = other._request ? new HttpRequest(*other._request) : NULL;
-	std::cout << "COPY CONSTRUCTOR CALLED " << std::endl;
 }
 
 void ProcessRequest::reset()
@@ -101,7 +98,6 @@ ProcessRequest & ProcessRequest::operator=(const ProcessRequest & other)
 		if (_request)
 			delete _request;
 		_request = other._request ? new HttpRequest(*other._request) : NULL;
-		std::cout << "OPERATOR = CALLED" << std::endl;
 	}
 	return (*this);
 }
@@ -116,7 +112,6 @@ ProcessRequest::~ProcessRequest()
 		delete _file;
 	if (_request)
 		delete _request;
-	std::cout << "DESTRUCTOR CALLED " << std::endl;
 }
 
 /* ************************************************************************** */
@@ -125,35 +120,25 @@ ProcessRequest::~ProcessRequest()
 
 std::string ProcessRequest::process(std::string data)
 {
-	std::cout << "STATUS : " << _processStatus << std::endl;
-	std::cout << "DATA RECEIVERD : " << data << std::endl;
-	std::cout << "INPUT DATA TOTAL BEFORE APPEND : " << _inputData << std::endl;
 	_inputData.append(data);
-	std::cout << "INPUT DATA TOTAL AFTER APPEND : " << _inputData << std::endl;
 	switch (_processStatus)
 		{
 			case WAITING_HEADERS:
-				std::cout << "CASE WAITING_HEADERS " << std::endl;
 				waitHeaders();
 				break ;
 			case HANDLING_METHOD:
-				std::cout << "CASE HANDLING_METHOD " << std::endl;
 				handleMethod();
 				break ;
 			case WAITING_BODY:
-				std::cout << "CASE WAITING_BODY " << std::endl;
 				waitBody();
 				break ;
 			case SENDING_HEADERS:
-				std::cout << "CASE SENDING_HEADERS " << std::endl;
 				sendHeaders();
 				break ;
 			case SENDING_BODY:
-				std::cout << "CASE SENDING_BODY " << std::endl;
 				sendBody();
 				break ;
 			case DONE:
-				std::cout << "CASE DONE " << std::endl;
 				if (!_inputData.empty())
 					_inputData.clear();
 				if (!_outputData.empty())
@@ -164,7 +149,6 @@ std::string ProcessRequest::process(std::string data)
 		}
 	std::string dataToSend = _outputData;
 	_outputData.clear();
-	std::cout << "\n\n\n____________________________\nOUTPUT  : " << dataToSend << "\n_________________________\n\n\n" <<std::endl;
 	return (dataToSend);
 }
 
@@ -272,7 +256,7 @@ void ProcessRequest::sendBody()
 	memset(buffer, 0, BUFFER_SIZE);
 
 	size_t result = _file->ReadChunk(buffer, BUFFER_SIZE);
-	if (result == 0 || _file->getOffset() >= _file->getSize())
+	if (result == 0 || _file->getOffset() >= static_cast<size_t>(_file->getSize()))
 		_processStatus = DONE;
 	
 	_outputData = std::string(buffer, result);
@@ -290,7 +274,7 @@ void ProcessRequest::deleteHandler()
 	if (_processStatus != HANDLING_METHOD)
 		throw HttpErrorException(500);
 
-	std::string path = selectRoot() + _request->getTarget();
+	std::string path = createPath(_location.getPath());
 
 	checkDeleteValidity(path);
 
@@ -300,10 +284,6 @@ void ProcessRequest::deleteHandler()
 	std::map<std::string, std::string> headers;
 	headers["content-length"] = "0";
 	buildResponse(204, headers, "");
-	if (_file) {
-		delete _file;
-		_file = NULL;
-	}
 	_processStatus = SENDING_HEADERS;
 	sendHeaders();
 }
@@ -316,7 +296,7 @@ void ProcessRequest::getHandler()
 	if (_processStatus != HANDLING_METHOD)
 		throw HttpErrorException(500);
 	
-	std::string path = createPath(selectRoot(), _location.getPath());
+	std::string path = createPath(_location.getPath());
 	if (!HttpUtils::fileExists(path))
 		throw HttpErrorException(404);
 
@@ -330,10 +310,6 @@ void ProcessRequest::getHandler()
 			headers["content-type"] = "text/html";
 			headers["content-length"] = HttpUtils::numberToString(body.length());
 			buildResponse(200, headers, body);
-			if (_file) {
-				delete _file;
-				_file = NULL;
-			}
 			_processStatus = SENDING_HEADERS;
 			sendHeaders();
 			return ;
@@ -364,11 +340,13 @@ void ProcessRequest::postHandler()
 	if (_processStatus != HANDLING_METHOD)
 		throw HttpErrorException(500);
 
-	std::string path = createPath(selectRoot(), _location.getUploadPath());
+	std::string path = createPath(_location.getUploadPath());
+	std::cout << "PATH : " << path << std::endl;
 
 	checkPostValidity(*_request, _location, _server, path);
 
-	std::string filepath = createPostFileName(*_request, _server, path);
+	std::string filepath = createPostFileName(*_request, path);
+	std::cout << "FILENAME : " << filepath << std::endl;;
 
 	if (_file)
 		throw HttpErrorException(500);
@@ -631,7 +609,7 @@ static std::string sanitizeFilenamePart(const std::string & input)
 }
 
 static std::string createPostFileName(
-	const HttpRequest & request, const ServerConfig & server, const std::string & path)
+	const HttpRequest & request, const std::string & path)
 {
 	std::string extension;
 	if (request.hasHeader("content-type")) {
@@ -649,26 +627,8 @@ static std::string createPostFileName(
 	return (filename);
 }
 
-static std::string createPath(const std::string & root, const std::string & subpath)
-{
-	std::string cleanRoot = root;
-	HttpUtils::trimFinalSlash(cleanRoot);
-	std::string cleanSubpath = subpath;
-	HttpUtils::trimSlashes(cleanSubpath);
-	
-	return (cleanRoot + '/' + cleanSubpath);
-}
-
-// std::string ProcessRequest::createPath()
+// static std::string createPath(const std::string & root, const std::string & subpath)
 // {
-// 	if (!_request)
-// 		throw HttpErrorException(500);
-
-// 	std::string target = _request->getTarget();
-// 	std::string path = _location.getPath();
-// 	std::string root = selectRoot();
-
-
 // 	std::string cleanRoot = root;
 // 	HttpUtils::trimFinalSlash(cleanRoot);
 // 	std::string cleanSubpath = subpath;
@@ -676,3 +636,19 @@ static std::string createPath(const std::string & root, const std::string & subp
 	
 // 	return (cleanRoot + '/' + cleanSubpath);
 // }
+
+std::string ProcessRequest::createPath(std::string locationPath)
+{
+	if (!_request)
+		throw HttpErrorException(500);
+
+	std::string target = _request->getTarget();
+	if (target.find(locationPath) != 0)
+		throw HttpErrorException(404);
+	std::string root = selectRoot();
+	HttpUtils::trimFinalSlash(root);
+	std::string relativePath = target.substr(locationPath.size());
+	HttpUtils::trimSlashes(relativePath);
+
+	return (root + '/' + relativePath);
+}

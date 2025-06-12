@@ -27,12 +27,12 @@ class RequestParser
 
 };
 
-static std::string	extractLineAndRemove(std::string & input);
-static std::string extractMethod(std::istringstream & iss);
-static std::string extractUri(std::istringstream & iss);
-static std::string extractVersion(std::istringstream & iss);
-static std::map<std::string, std::string> extractHeaders(std::string & buffer);
-static size_t calculateContentLength(const std::map<std::string, std::string> & headers);
-static std::string extractBody(std::string & buffer, int contentLength);
+// static std::string	extractLineAndRemove(std::string & input);
+// static std::string extractMethod(std::istringstream & iss);
+// static std::string extractUri(std::istringstream & iss);
+// static std::string extractVersion(std::istringstream & iss);
+// static std::map<std::string, std::string> extractHeaders(std::string & buffer);
+// static size_t calculateContentLength(const std::map<std::string, std::string> & headers);
+// static std::string extractBody(std::string & buffer, int contentLength);
 
 #endif
