@@ -42,7 +42,9 @@ ProcessRequest::ProcessRequest(const std::vector<ServerConfig> & serversVector) 
 	_httpResponse(),
 	_inputData(""),
 	_outputData("")
-{}
+{
+std::cout << "CONSTRUCTOR CALLED " << std::endl;
+}
 
 ProcessRequest::ProcessRequest(const ProcessRequest & other) :
 	_serversVector(other._serversVector),
@@ -56,6 +58,7 @@ ProcessRequest::ProcessRequest(const ProcessRequest & other) :
 {
 	_file = other._file ? new File(*other._file) : NULL;
 	_request = other._request ? new HttpRequest(*other._request) : NULL;
+	std::cout << "COPY CONSTRUCTOR CALLED " << std::endl;
 }
 
 void ProcessRequest::reset()
@@ -98,6 +101,7 @@ ProcessRequest & ProcessRequest::operator=(const ProcessRequest & other)
 		if (_request)
 			delete _request;
 		_request = other._request ? new HttpRequest(*other._request) : NULL;
+		std::cout << "OPERATOR = CALLED" << std::endl;
 	}
 	return (*this);
 }
@@ -112,6 +116,7 @@ ProcessRequest::~ProcessRequest()
 		delete _file;
 	if (_request)
 		delete _request;
+	std::cout << "DESTRUCTOR CALLED " << std::endl;
 }
 
 /* ************************************************************************** */
@@ -120,22 +125,31 @@ ProcessRequest::~ProcessRequest()
 
 std::string ProcessRequest::process(std::string data)
 {
-	_inputData += data;
+	std::cout << "STATUS : " << _processStatus << std::endl;
+	std::cout << "DATA RECEIVERD : " << data << std::endl;
+	std::cout << "INPUT DATA TOTAL BEFORE APPEND : " << _inputData << std::endl;
+	_inputData.append(data);
+	std::cout << "INPUT DATA TOTAL AFTER APPEND : " << _inputData << std::endl;
 	switch (_processStatus)
 		{
 			case WAITING_HEADERS:
+				std::cout << "CASE WAITING_HEADERS " << std::endl;
 				waitHeaders();
+				break ;
 			case HANDLING_METHOD:
+				std::cout << "CASE HANDLING_METHOD " << std::endl;
 				handleMethod();
+				break ;
 			case SENDING_HEADERS:
+				std::cout << "CASE SENDING_HEADERS " << std::endl;
 				sendHeaders();
-				if (!_outputData.empty())
-					break;
+				break ;
 			case SENDING_BODY:
+				std::cout << "CASE SENDING_BODY " << std::endl;
 				sendBody();
-				if (!_outputData.empty())
-					break;
+				break ;
 			case DONE:
+				std::cout << "CASE DONE " << std::endl;
 				if (!_inputData.empty())
 					_inputData.clear();
 				if (!_outputData.empty())
@@ -146,6 +160,8 @@ std::string ProcessRequest::process(std::string data)
 		}
 	std::string dataToSend = _outputData;
 	_outputData.clear();
+	std::cout << "STATUS : " << _processStatus << std::endl;
+	std::cout << "INPUT DATA TOTAL AT THE END : " << _inputData << std::endl;
 	return (dataToSend);
 }
 
@@ -161,6 +177,7 @@ void ProcessRequest::waitHeaders()
 		std::string bodyPart = _inputData.substr(pos + 4);
 		RequestParser parser(headersPart);
 		_request = parser.release();
+		_request->debug();
 		_inputData = bodyPart;
 		selectServer();
 		selectLocation();
@@ -168,6 +185,7 @@ void ProcessRequest::waitHeaders()
 		if (_location.hasRedirect()) 
 			buildRedirect();
 		_processStatus = HANDLING_METHOD;
+		handleMethod();
 	}
 }
 // From status HANDLING_METHOD to WAITING_BODY or SENDING_REQUEST
@@ -219,6 +237,7 @@ void ProcessRequest::waitBody()
 			_file = NULL;
 		}
 		_processStatus = SENDING_HEADERS;
+		sendHeaders();
 	}
 }
 
@@ -230,7 +249,10 @@ void ProcessRequest::sendHeaders()
 	
 	_outputData = _httpResponse.toRawString();
 	if (_file != NULL)
+	{
 		_processStatus = SENDING_BODY;
+		sendBody();
+	}
 	else
 		_processStatus = DONE;
 }
@@ -281,6 +303,7 @@ void ProcessRequest::deleteHandler()
 		_file = NULL;
 	}
 	_processStatus = SENDING_HEADERS;
+	sendHeaders();
 }
 
 void ProcessRequest::getHandler()
@@ -310,6 +333,7 @@ void ProcessRequest::getHandler()
 				_file = NULL;
 			}
 			_processStatus = SENDING_HEADERS;
+			sendHeaders();
 			return ;
 		}
 		else
@@ -327,6 +351,7 @@ void ProcessRequest::getHandler()
 	buildResponse(200, headers, "");
 
 	_processStatus = SENDING_HEADERS;
+	sendHeaders();
 }
 
 void ProcessRequest::postHandler()
@@ -348,6 +373,7 @@ void ProcessRequest::postHandler()
 	_file = new File(filepath, true);
 
 	_processStatus = WAITING_BODY;
+	waitBody();
 }
 
 /* ************************************************************************** */
@@ -630,3 +656,21 @@ static std::string createPath(const std::string & root, const std::string & subp
 	
 	return (cleanRoot + '/' + cleanSubpath);
 }
+
+// std::string ProcessRequest::createPath()
+// {
+// 	if (!_request)
+// 		throw HttpErrorException(500);
+
+// 	std::string target = _request->getTarget();
+// 	std::string path = _location.getPath();
+// 	std::string root = selectRoot();
+
+
+// 	std::string cleanRoot = root;
+// 	HttpUtils::trimFinalSlash(cleanRoot);
+// 	std::string cleanSubpath = subpath;
+// 	HttpUtils::trimSlashes(cleanSubpath);
+	
+// 	return (cleanRoot + '/' + cleanSubpath);
+// }

@@ -58,6 +58,7 @@ class ProcessRequest
 		// void buildError(int statusCode, const ServerConfig & server, const Location * location);
 
 		void checkMethodValidity();
+		// std::string createPath();
 		
 	public :
 		
@@ -72,6 +73,11 @@ class ProcessRequest
 		const ServerConfig & getServer() const;
 		std::string process(std::string data);
 		void reset();
+
+
+
+		void createId();
+
 
 
 };
