@@ -25,10 +25,10 @@ class Connexion
 {
 	public:
 		Connexion();
-		Connexion(int fd, sockaddr_in addr, const std::vector<ServerConfig> & vectServerConfig);
-		~Connexion();
+		Connexion(int fd, sockaddr_in addr);
 		Connexion(const Connexion & toCopy);
-		Connexion & operator=(const Connexion & other);
+		Connexion &operator=(const Connexion & other);
+		~Connexion();
 
 		// Getters
 		int								getFd() const;
@@ -41,7 +41,6 @@ class Connexion
 		std::string						getBufferIn() const;
 		std::string						getBufferOut() const;
 		ServerConfig					*getServConfig() const;
-		std::vector<ServerConfig>		getServConfigVect() const;
 		std::time_t						getStartTime() const;
 
 		// Setters
@@ -50,7 +49,7 @@ class Connexion
 		void							setBufferIn(std::string buffer);
 		void							setBufferOut(std::string buffer);
 		void							setServConfig(ServerConfig *serverconfig);
-		void							setProcessRequest();
+		void							setProcessRequest(const std::vector<ServerConfig> *_serverConfigVect);
 
 		// Runtime
 		void							readDataFromSocket(std::string &line);
@@ -62,7 +61,6 @@ class Connexion
 		int								_fd;
 		sockaddr_in						_addr;
 		std::time_t						_startTime;
-		std::vector<ServerConfig>		_serverConfigVect;
 		ServerConfig					*_servConfig;
 		ProcessRequest					*_processRequest;
 

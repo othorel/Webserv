@@ -26,15 +26,15 @@ int	main(int argc, char **argv)
 	{
 		ConfigParser parser(configFile);
 		
-		const std::vector<ServerConfig>& servers = parser.getServerConfigVector();
-		std::cout << "Nombre de serveurs parsés : " << servers.size() << std::endl;
+		// const std::vector<ServerConfig>& servers = parser.getServerConfigVector();
+		// std::cout << "Nombre de serveurs parsés : " << servers.size() << std::endl;
 
-		for (size_t i = 0; i < servers.size(); ++i)
-		{
-			servers[i].printServerConfig(i);
-		}
+		// for (size_t i = 0; i < servers.size(); ++i)
+		// {
+		// 	servers[i].printServerConfig(i);
+		// }
 
-		std::cout << "\nValidation réussie : la configuration est correcte." << std::endl;
+		// std::cout << "\nValidation réussie : la configuration est correcte." << std::endl;
 
 		Server server(parser);
 

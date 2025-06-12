@@ -15,11 +15,12 @@
 Server::Server()
 {
 	_pollManager = NULL;
+	_serverConfigVect = NULL;
 }
-Server::Server(const ConfigParser & Parser) : _pollManager(new PollManager()), _serverConfigVect(Parser.getServerConfigVector())
+Server::Server(const ConfigParser & Parser) : _pollManager(new PollManager()), _serverConfigVect(&Parser.getServerConfigVector())
 {
-	std::vector<ServerConfig>::const_iterator	it = _serverConfigVect.begin();
-	while (it != _serverConfigVect.end())
+	std::vector<ServerConfig>::const_iterator	it = (*_serverConfigVect).begin();
+	while (it != (*_serverConfigVect).end())
 	{
 		addPair(it->getListen());
 		it++;
@@ -43,12 +44,12 @@ Server & Server::operator=(const Server & other)
 {
 	if (this != &other)
 	{
-		this->_pollManager = other._pollManager;
+		this->_pollManager = NULL;
 		this->_fdSocketVect = other._fdSocketVect;
 		this->_listenVect = other._listenVect;
 		this->_activeListenVect = other._activeListenVect;
 		this->_clientsMap = other._clientsMap;
-		this->_serverConfigVect = other._serverConfigVect;
+		this->_serverConfigVect = NULL;
 	}
 	return (*this);
 }
@@ -82,7 +83,7 @@ std::vector<int>							Server::getFdSocketVect() const
 	return (this->_fdSocketVect);
 }
 
-std::vector<ServerConfig> 					Server::getServerConfig() const
+const std::vector<ServerConfig> 			*Server::getServerConfig() const
 {
 	return (this->_serverConfigVect);
 }
@@ -91,7 +92,7 @@ std::vector<ServerConfig> 					Server::getServerConfig() const
 ///                                 SETTERS                                  ///
 ////////////////////////////////////////////////////////////////////////////////
 
-void	Server::setServerConfig(std::vector<ServerConfig> & servConfigVect)
+void	Server::setServerConfig(const std::vector<ServerConfig> *servConfigVect)
 {
 	this->_serverConfigVect = servConfigVect;
 }
@@ -138,7 +139,7 @@ void	Server::acceptNewConnexion(int fd)
 	if (clientFd < 0)
 		return;
 	_pollManager->addSocket(clientFd, POLLIN);
-	_clientsMap[clientFd] = Connexion(clientFd, clientAddr, _serverConfigVect);
+	_clientsMap[clientFd] = Connexion(clientFd, clientAddr);
 	std::cout << "[INFO] New connexion authorized on:"
 			  << _clientsMap[clientFd].getIP() << ":"
 			  << _clientsMap[clientFd].getPort() << std::endl;
@@ -155,7 +156,7 @@ void	Server::handleEvent(int fdClient, size_t & i)
 	std::string		rawLineString;
 	_clientsMap[fdClient].readDataFromSocket(rawLineString); // quoi qu'il arrive on lit une ligne sur le socket
 	if (_clientsMap[fdClient].getProcessRequest() == NULL)
-		_clientsMap[fdClient].setProcessRequest();
+		_clientsMap[fdClient].setProcessRequest(_serverConfigVect);
 
 	std::string	processed = _clientsMap[fdClient].getProcessRequest()->process(rawLineString);
 	while (!processed.empty()) {

@@ -13,7 +13,7 @@
 
 Connexion::Connexion(){}
 
-Connexion::Connexion(int fd, sockaddr_in addr, const std::vector<ServerConfig> & vectServerConfig) : _fd(fd), _addr(addr), _serverConfigVect(vectServerConfig), _servConfig(NULL), _processRequest(NULL)
+Connexion::Connexion(int fd, sockaddr_in addr) : _fd(fd), _addr(addr), _servConfig(NULL), _processRequest(NULL)
 {
 	_startTime = std::time(NULL);
 	_bytesIn = 0;
@@ -22,10 +22,8 @@ Connexion::Connexion(int fd, sockaddr_in addr, const std::vector<ServerConfig> &
 
 Connexion::~Connexion()
 {
-	if (_servConfig)
-		delete _servConfig;
-	if (_processRequest)
-		delete _processRequest;
+	// if (_processRequest)
+	// 	delete _processRequest;
 }
 
 Connexion::Connexion(const Connexion & toCopy)
@@ -33,21 +31,19 @@ Connexion::Connexion(const Connexion & toCopy)
 	*this = toCopy;
 }
 
-Connexion & Connexion::operator=(const Connexion & other)
+Connexion &Connexion::operator=(const Connexion & other)
 {
 	if (this != &other)
 	{
-		_fd = other._fd;
-		_addr = other._addr;
-		_processRequest = other._processRequest;
-		_startTime = other._startTime;
-		_serverConfigVect = other._serverConfigVect;
-		_servConfig = NULL;
-		_processRequest = other._processRequest ? new ProcessRequest(*other._processRequest) : NULL;
-		_bytesIn = other._bytesIn;
-		_bytesOut = other._bytesOut;
-		_bufferIn = other._bufferIn;
-		_bufferOut = other._bufferOut;
+		this->_fd = other._fd;
+		this->_addr = other._addr;
+		this->_startTime = other._startTime;
+		this->_bytesIn = other._bytesIn;
+		this->_bytesOut = other._bytesOut;
+		this->_bufferIn = other._bufferIn;
+		this->_bufferOut = other._bufferOut;
+		this->_processRequest = NULL;
+		this->_servConfig = other._servConfig;
 	}
 	return (*this);
 }
@@ -147,11 +143,6 @@ ssize_t	Connexion::getBytesOut() const
 	return (_bytesOut);
 }
 
-std::vector<ServerConfig>	Connexion::getServConfigVect() const
-{
-	return (_serverConfigVect);
-}
-
 ServerConfig	*Connexion::getServConfig() const
 {
 	return (_servConfig);
@@ -196,7 +187,7 @@ void	Connexion::setServConfig(ServerConfig *serverconfig)
 	_servConfig = serverconfig;
 }
 
-void	Connexion::setProcessRequest()
+void	Connexion::setProcessRequest(const std::vector<ServerConfig> *_serverConfigVect)
 {
-	_processRequest = new ProcessRequest(_serverConfigVect);
+	_processRequest = new ProcessRequest(*_serverConfigVect);
 }
