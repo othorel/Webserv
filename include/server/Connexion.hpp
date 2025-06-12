@@ -35,7 +35,7 @@ class Connexion
 		std::string						getIP() const;
 		int								getPort() const;
 		sockaddr_in						getAddr() const;
-		ProcessRequest					getProcessRequest() const;
+		ProcessRequest					*getProcessRequest() const;
 		ssize_t							getBytesIn() const;
 		ssize_t							getBytesOut() const;
 		std::string						getBufferIn() const;
@@ -50,6 +50,7 @@ class Connexion
 		void							setBufferIn(std::string buffer);
 		void							setBufferOut(std::string buffer);
 		void							setServConfig(ServerConfig *serverconfig);
+		void							setProcessRequest();
 
 		// Runtime
 		void							readDataFromSocket(std::string &line);
@@ -63,7 +64,7 @@ class Connexion
 		std::time_t						_startTime;
 		std::vector<ServerConfig>		_serverConfigVect;
 		ServerConfig					*_servConfig;
-		ProcessRequest					_processRequest;
+		ProcessRequest					*_processRequest;
 
 		ssize_t							_bytesIn;
 		ssize_t							_bytesOut;

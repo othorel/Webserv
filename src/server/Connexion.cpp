@@ -13,18 +13,19 @@
 
 Connexion::Connexion(){}
 
-Connexion::Connexion(int fd, sockaddr_in addr, std::vector<ServerConfig> vectServerConfig) : _fd(fd), _addr(addr), _serverConfigVect(vectServerConfig), _servConfig(NULL)
+Connexion::Connexion(int fd, sockaddr_in addr, std::vector<ServerConfig> vectServerConfig) : _fd(fd), _addr(addr), _serverConfigVect(vectServerConfig), _servConfig(NULL), _processRequest(NULL)
 {
 	_startTime = std::time(NULL);
 	_bytesIn = 0;
 	_bytesOut = 0;
-	_processRequest = ProcessRequest(getServConfigVect());
 }
 
 Connexion::~Connexion()
 {
 	if (_servConfig)
 		delete _servConfig;
+	if (_processRequest)
+		delete _processRequest;
 }
 
 Connexion::Connexion(const Connexion & toCopy)
@@ -42,6 +43,7 @@ Connexion & Connexion::operator=(const Connexion & other)
 		_startTime = other._startTime;
 		_serverConfigVect = other._serverConfigVect;
 		_servConfig = NULL;
+		_processRequest = other._processRequest ? new ProcessRequest(*other._processRequest) : NULL;
 		_bytesIn = other._bytesIn;
 		_bytesOut = other._bytesOut;
 		_bufferIn = other._bufferIn;
@@ -63,14 +65,16 @@ void	Connexion::readDataFromSocket(std::string &line)
 	if (_bytesIn <= 0)
 		return;
 		
-	_bufferIn.append(bufIn, _bytesIn);
+	// _bufferIn.append(bufIn, _bytesIn);
+	_bufferIn = bufIn;
+	line = bufIn;
 	
-	std::size_t pos = _bufferIn.find("\r\n\r\n");
-	if (pos != std::string::npos)
-	{
-		line = _bufferIn.substr(0, pos + 4); //je recupere tout jusqu'a la fin du paquet
-		_bufferIn.erase(0, pos + 4); //si il y avait des caracteres apres la fin du paquet je les garde pour la prochaine lecture
-	}
+	// std::size_t pos = _bufferIn.find("\r\n\r\n");
+	// if (pos != std::string::npos)
+	// {
+	// 	line = _bufferIn.substr(0, pos + 4); //je recupere tout jusqu'a la fin du paquet
+	// 	_bufferIn.erase(0, pos + 4); //si il y avait des caracteres apres la fin du paquet je les garde pour la prochaine lecture
+	// }
 }
 
 void	Connexion::writeDataToSocket(const std::string & response)
@@ -158,7 +162,7 @@ sockaddr_in	Connexion::getAddr() const
 	return (_addr);
 }
 
-ProcessRequest	Connexion::getProcessRequest() const
+ProcessRequest	*Connexion::getProcessRequest() const
 {
 	return (_processRequest);
 }
@@ -190,4 +194,9 @@ void	Connexion::setBufferOut(std::string buffer)
 void	Connexion::setServConfig(ServerConfig *serverconfig)
 {
 	_servConfig = serverconfig;
+}
+
+void	Connexion::setProcessRequest()
+{
+	_processRequest = new ProcessRequest(_serverConfigVect);
 }

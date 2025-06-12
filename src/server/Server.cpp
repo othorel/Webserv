@@ -141,7 +141,8 @@ void	Server::acceptNewConnexion(int fd)
 	if (clientFd < 0)
 		return;
 	_pollManager->addSocket(clientFd, POLLIN);
-	_clientsMap.insert(std::make_pair(clientFd, Connexion(clientFd, clientAddr, _serverConfigVect)));
+	_clientsMap[clientFd] = Connexion(clientFd, clientAddr, _serverConfigVect);
+	// _clientsMap.insert(std::make_pair(clientFd, Connexion(clientFd, clientAddr, _serverConfigVect)));
 	std::cout << "New connexion authorized" << std::endl;
 }
 
@@ -152,6 +153,13 @@ void	Server::handleEvent(int fdClient, size_t & i)
 	std::string		rawLineString;
 
 	_clientsMap[fdClient].readDataFromSocket(rawLineString); // quoi qu'il arrive on lit une ligne sur le socket
+	std::cout << "RAW : " << rawLineString << std::endl;
+	if (_clientsMap[fdClient].getProcessRequest() == NULL)
+		_clientsMap[fdClient].setProcessRequest();
+
+	std::string	processed = _clientsMap[fdClient].getProcessRequest()->process(rawLineString);
+	_clientsMap[fdClient].writeDataToSocket(processed);
+	// processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
 
 	if (_clientsMap[fdClient].getBytesIn() <= 0) //si on detecte la fermeture de la connexion
 	{
@@ -160,26 +168,26 @@ void	Server::handleEvent(int fdClient, size_t & i)
 			throw std::runtime_error("Error while reading from socket");
 		return ;
 	}
-	else if (_clientsMap[fdClient].endTransmission(rawLineString) == true)
-	{
+	// else if (_clientsMap[fdClient].endTransmission(rawLineString) == true)
+	//{
 		// std::cout << "Paquet:\n" << rawLineString << std::endl;
-		std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
-		if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == WAITING_BODY && _clientsMap[fdClient].getServConfig() == NULL)
-			_clientsMap[fdClient].setServConfig(new ServerConfig(_clientsMap[fdClient].getProcessRequest().getServer())); //On initialise le pointeur vers servconfig
+		// std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
+		// if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == WAITING_BODY && _clientsMap[fdClient].getServConfig() == NULL)
+		// 	_clientsMap[fdClient].setServConfig(new ServerConfig(_clientsMap[fdClient].getProcessRequest().getServer())); //On initialise le pointeur vers servconfig
 
-		if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == SENDING_HEADERS
-			|| _clientsMap[fdClient].getProcessRequest().getProcessStatus() == SENDING_BODY) // Si le processRequest a fini de construire la reponse
-		{
-			while (! processed.empty())
-			{
+		// if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == SENDING_HEADERS
+		// 	|| _clientsMap[fdClient].getProcessRequest().getProcessStatus() == SENDING_BODY) // Si le processRequest a fini de construire la reponse
+		// {
+		// 	while (! processed.empty())
+		// 	{
 				// std::cout << "processing" << std::endl;
-				_clientsMap[fdClient].writeDataToSocket(processed);
-				processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
-			}
-		}
-		else if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == DONE)
-			supressClient(fdClient, i);
-	}
+				// _clientsMap[fdClient].writeDataToSocket(processed);
+				// processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
+		// 	}
+		// }
+		// else if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == DONE)
+		// 	supressClient(fdClient, i);
+	//}
 }
 
 void	Server::fillActiveListenVect()
