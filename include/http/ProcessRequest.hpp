@@ -76,15 +76,4 @@ class ProcessRequest
 
 };
 
-static void checkDeleteValidity(const std::string & path);
-static std::string createIndexPath(std::string path, const Location & location);
-static std::string generateAutoIndex(const std::string & dirPath, const std::string & uriPath);
-static std::string sanitizeFilenamePart(const std::string & input);
-static void checkPostValidity(
-	const HttpRequest & request, const Location & location ,
-	const ServerConfig & server, const std::string & path);
-static std::string createPostFileName(
-	const HttpRequest & request, const std::string & path);
-// static std::string createPath(const std::string & root, const std::string & subpath);
-
 #endif

@@ -6,6 +6,14 @@
 #include "../../include/http/HttpErrorException.hpp"
 #include "../../include/http/RequestParser.hpp"
 
+static std::string	extractLineAndRemove(std::string & input);
+static std::string extractMethod(std::istringstream & iss);
+static std::string extractUri(std::istringstream & iss);
+static std::string extractVersion(std::istringstream & iss);
+static std::map<std::string, std::string> extractHeaders(std::string & buffer);
+static size_t calculateContentLength(const std::map<std::string, std::string> & headers);
+static std::string extractBody(std::string & buffer, int contentLength);
+
 /* ************************************************************************** */
 /*                                constructors                                */
 /* ************************************************************************** */
@@ -106,7 +114,7 @@ HttpRequest * RequestParser::release()
 /*                            non member functions                            */
 /* ************************************************************************** */
 
-static std::string extractMethod(std::istringstream & iss)
+std::string extractMethod(std::istringstream & iss)
 {
 	std::string method;
 	if (!(iss >> method))
@@ -114,7 +122,7 @@ static std::string extractMethod(std::istringstream & iss)
 	return (method);
 }
 
-static std::string extractUri(std::istringstream & iss)
+std::string extractUri(std::istringstream & iss)
 {
 	std::string uri;
 	if (!(iss >> uri))
@@ -122,7 +130,7 @@ static std::string extractUri(std::istringstream & iss)
 	return (uri);
 }
 
-static std::string extractVersion(std::istringstream & iss)
+std::string extractVersion(std::istringstream & iss)
 {
 	std::string version;
 	if (!(iss >> version))
@@ -130,7 +138,7 @@ static std::string extractVersion(std::istringstream & iss)
 	return (version);
 }
 
-static std::map<std::string, std::string> extractHeaders(std::string & buffer)
+std::map<std::string, std::string> extractHeaders(std::string & buffer)
 {
 	if (buffer.empty())
 		throw HttpErrorException(400);
@@ -162,7 +170,7 @@ static std::map<std::string, std::string> extractHeaders(std::string & buffer)
 	return (headers);
 }
 
-static size_t calculateContentLength(const std::map<std::string, std::string> & headers)
+size_t calculateContentLength(const std::map<std::string, std::string> & headers)
 {
 	size_t contentLength = 0;
 	std::map<std::string, std::string>::const_iterator cit = headers.find("content-length");
@@ -180,7 +188,7 @@ static size_t calculateContentLength(const std::map<std::string, std::string> & 
 	return (contentLength);
 }
 
-static std::string extractBody(std::string & buffer, int contentLength)
+std::string extractBody(std::string & buffer, int contentLength)
 {
 	std::string body;
 
@@ -199,7 +207,7 @@ static std::string extractBody(std::string & buffer, int contentLength)
 // and truncates the input by removing the substring (and the '\n') from the it.
 // Returns an empty string if the input is empty.
 // Returns a copy of the whole input if there is no '\n', and earases the input.
-static std::string extractLineAndRemove(std::string & input)
+std::string extractLineAndRemove(std::string & input)
 {
 	if (input.empty())
 		return ("");
