@@ -15,11 +15,12 @@
 Server::Server()
 {
 	_pollManager = NULL;
+	_serverConfigVect = NULL;
 }
-Server::Server(const ConfigParser & Parser, const std::vector<ServerConfig> servConfigVect) : _pollManager(new PollManager()), _serverConfigVect(servConfigVect)
+Server::Server(const ConfigParser & Parser) : _pollManager(new PollManager()), _serverConfigVect(&Parser.getServerConfigVector())
 {
-	std::vector<ServerConfig>::const_iterator	it = Parser.getServerConfigVector().begin();
-	while (it != Parser.getServerConfigVector().end())
+	std::vector<ServerConfig>::const_iterator	it = (*_serverConfigVect).begin();
+	while (it != (*_serverConfigVect).end())
 	{
 		addPair(it->getListen());
 		it++;
@@ -43,12 +44,12 @@ Server & Server::operator=(const Server & other)
 {
 	if (this != &other)
 	{
-		this->_pollManager = other._pollManager;
+		this->_pollManager = NULL;
 		this->_fdSocketVect = other._fdSocketVect;
 		this->_listenVect = other._listenVect;
 		this->_activeListenVect = other._activeListenVect;
 		this->_clientsMap = other._clientsMap;
-		this->_serverConfigVect = other._serverConfigVect;
+		this->_serverConfigVect = NULL;
 	}
 	return (*this);
 }
@@ -82,7 +83,7 @@ std::vector<int>							Server::getFdSocketVect() const
 	return (this->_fdSocketVect);
 }
 
-std::vector<ServerConfig> 					Server::getServerConfig() const
+const std::vector<ServerConfig> 			*Server::getServerConfig() const
 {
 	return (this->_serverConfigVect);
 }
@@ -91,7 +92,7 @@ std::vector<ServerConfig> 					Server::getServerConfig() const
 ///                                 SETTERS                                  ///
 ////////////////////////////////////////////////////////////////////////////////
 
-void	Server::setServerConfig(std::vector<ServerConfig> & servConfigVect)
+void	Server::setServerConfig(const std::vector<ServerConfig> *servConfigVect)
 {
 	this->_serverConfigVect = servConfigVect;
 }
@@ -106,10 +107,6 @@ void	Server::StartEventLoop()
 	{
 		_pollManager->pollExec(-1);
 		fillActiveListenVect();
-		for (size_t i = 0; i < _activeListenVect.size(); i++)
-		{
-			std::cout << "Something happens on: " << _activeListenVect[i].second << ":" << _activeListenVect[i].first << std::endl;
-		}
 		for (size_t i = 0; i != _pollManager->getPollFdVector().size(); i++)
 		{
 			if (_pollManager->getPollFdVector()[i].revents & POLLIN)
@@ -122,12 +119,13 @@ void	Server::dealClient(int fd, size_t & i)
 {
 	if (std::find(_fdSocketVect.begin(), _fdSocketVect.end(), fd) != _fdSocketVect.end())
 	{
-		std::cout << "A new connexion want to join in" << std::endl;
+		logTime();
+		std::cout << "[INFO] New connexion request" << std::endl;
 		acceptNewConnexion(fd);
 	}
 	else
 	{
-		std::cout << "New event to handle" << std::endl;
+		
 		handleEvent(fd, i);
 	}
 }
@@ -141,25 +139,32 @@ void	Server::acceptNewConnexion(int fd)
 	if (clientFd < 0)
 		return;
 	_pollManager->addSocket(clientFd, POLLIN);
-	_clientsMap[clientFd] = Connexion(clientFd, clientAddr, _serverConfigVect);
-	// _clientsMap.insert(std::make_pair(clientFd, Connexion(clientFd, clientAddr, _serverConfigVect)));
-	std::cout << "New connexion authorized" << std::endl;
+	_clientsMap[clientFd] = Connexion(clientFd, clientAddr);
+	std::cout << "[INFO] New connexion authorized on:"
+			  << _clientsMap[clientFd].getIP() << ":"
+			  << _clientsMap[clientFd].getPort() << std::endl;
 }
 
 void	Server::handleEvent(int fdClient, size_t & i)
 {
+	std::cout << "[INFO] Reading on: "
+			  << _clientsMap[fdClient].getIP() << ":"
+			  << _clientsMap[fdClient].getPort() << std::endl;
+
 	checkTimeOut(fdClient, i); //on regarde si le timeout est depasse si c'est le cas tout s'arrete et le client est supprime
 
 	std::string		rawLineString;
-
 	_clientsMap[fdClient].readDataFromSocket(rawLineString); // quoi qu'il arrive on lit une ligne sur le socket
-	if (_clientsMap[fdClient].getProcessRequest() == NULL)
-		_clientsMap[fdClient].setProcessRequest();
+	if (_clientsMap[fdClient]._isRequestProcessCreated == false)
+	{
+		_clientsMap[fdClient].setProcessRequest(_serverConfigVect);
+		_clientsMap[fdClient]._isRequestProcessCreated = true;
+	}
 
-	std::string	processed = _clientsMap[fdClient].getProcessRequest()->process(rawLineString);
+	std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
 	while (!processed.empty()) {
 		_clientsMap[fdClient].writeDataToSocket(processed);
-		processed = _clientsMap[fdClient].getProcessRequest()->process(rawLineString);
+		processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
 	}
 	// processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
 
@@ -281,6 +286,12 @@ void	Server::supressClient(int fdClient, size_t & i)
 	i--;
 }
 
+void	Server::logTime() const
+{
+	std::time_t	now = std::time(NULL);
+	char		timeStamp[20];
+	std::strftime(timeStamp, sizeof(timeStamp), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
 
-
+	std::cout << "[" << timeStamp << "] ";
+}
 
