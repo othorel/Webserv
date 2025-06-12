@@ -59,7 +59,8 @@ class ProcessRequest
 		// void buildError(int statusCode, const ServerConfig & server, const Location * location);
 
 		void checkMethodValidity();
-		std::string createPath(std::string locationPath);
+		std::string createPath();
+		std::string createPostPath();
 		
 	public :
 		

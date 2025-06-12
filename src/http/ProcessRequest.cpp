@@ -285,7 +285,7 @@ void ProcessRequest::deleteHandler()
 	if (_processStatus != HANDLING_METHOD)
 		throw HttpErrorException(500);
 
-	std::string path = createPath(_location.getPath());
+	std::string path = createPath();
 
 	checkDeleteValidity(path);
 
@@ -307,7 +307,7 @@ void ProcessRequest::getHandler()
 	if (_processStatus != HANDLING_METHOD)
 		throw HttpErrorException(500);
 	
-	std::string path = createPath(_location.getPath());
+	std::string path = createPath();
 	if (!HttpUtils::fileExists(path))
 		throw HttpErrorException(404);
 
@@ -351,13 +351,11 @@ void ProcessRequest::postHandler()
 	if (_processStatus != HANDLING_METHOD)
 		throw HttpErrorException(500);
 
-	std::string path = createPath(_location.getUploadPath());
-	std::cout << "PATH : " << path << std::endl;
+	std::string path = createPostPath();
 
 	checkPostValidity(*_request, _location, _server, path);
 
 	std::string filepath = createPostFileName(*_request, path);
-	std::cout << "FILENAME : " << filepath << std::endl;;
 
 	if (_file)
 		throw HttpErrorException(500);
@@ -541,7 +539,7 @@ void ProcessRequest::checkMethodValidity()
 		if (*cit == _request->getMethod())
 			return ;
 	}
-	buildRedirect();
+	throw HttpErrorException (405);
 }
 
 /* ************************************************************************** */
@@ -648,18 +646,35 @@ static std::string createPostFileName(
 // 	return (cleanRoot + '/' + cleanSubpath);
 // }
 
-std::string ProcessRequest::createPath(std::string locationPath)
+std::string ProcessRequest::createPath()
 {
 	if (!_request)
 		throw HttpErrorException(500);
 
+	std::string locationPath = _location.getPath();
 	std::string target = _request->getTarget();
+	std::string root = selectRoot();
+
 	if (target.find(locationPath) != 0)
 		throw HttpErrorException(404);
-	std::string root = selectRoot();
-	HttpUtils::trimFinalSlash(root);
+
 	std::string relativePath = target.substr(locationPath.size());
+	HttpUtils::trimFinalSlash(root);
 	HttpUtils::trimSlashes(relativePath);
 
 	return (root + '/' + relativePath);
 }
+
+std::string ProcessRequest::createPostPath()
+{
+	if (!_request)
+		throw HttpErrorException(500);
+
+	std::string root = selectRoot();
+	std::string locationPath = _location.getUploadPath();
+	HttpUtils::trimFinalSlash(root);
+	HttpUtils::trimSlashes(locationPath);
+
+	return (root + '/' + locationPath);
+}
+

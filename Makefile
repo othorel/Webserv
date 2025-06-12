@@ -21,8 +21,8 @@ SRC     := $(SRCDIR)/config/ConfigParser.cpp     \
 OBJ     := $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRC))
 
 CXX     := c++
-CXXFLAGS := -Wall -Wextra -Werror -std=c++98 -I$(INCDIR)
-# CXXFLAGS := -g -I$(INCDIR)
+# CXXFLAGS := -Wall -Wextra -Werror -std=c++98 -I$(INCDIR)
+CXXFLAGS := -g -I$(INCDIR)
 
 GREEN   := \033[1;32m
 CYAN    := \033[1;36m
