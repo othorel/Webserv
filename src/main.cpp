@@ -25,21 +25,11 @@ int	main(int argc, char **argv)
 	try
 	{
 		ConfigParser parser(configFile);
-		
-		// const std::vector<ServerConfig>& servers = parser.getServerConfigVector();
-		// std::cout << "Nombre de serveurs parsés : " << servers.size() << std::endl;
 
-		// for (size_t i = 0; i < servers.size(); ++i)
-		// {
-		// 	servers[i].printServerConfig(i);
-		// }
-
-		// std::cout << "\nValidation réussie : la configuration est correcte." << std::endl;
-
+		parser.debug();
 		Server server(parser);
 
-		std::cout << "\nCréation des sockets" << std::endl;
-
+		server.announce();
 		server.StartEventLoop();
 	}
 	catch (const HttpErrorException& e)
@@ -54,5 +44,3 @@ int	main(int argc, char **argv)
 	}	
 }
 
-
-// pour tester ecrire sur un deuxieme terminal : curl http://127.0.0.1:8080/ (ou un des couples IP port correspondant au parsing)

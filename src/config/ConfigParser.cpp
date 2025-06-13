@@ -147,6 +147,18 @@ size_t parseSizeWithUnit(const std::string& value) {
 	return (static_cast<size_t>(number) * mul);
 }
 
+void	ConfigParser::debug() const
+{
+		std::cout << "Nombre de serveurs parsés : " << _serverConfigVector.size() << std::endl;
+
+		for (size_t i = 0; i < _serverConfigVector.size(); ++i)
+		{
+			_serverConfigVector[i].printServerConfig(i);
+		}
+
+		std::cout << "\nValidation réussie : la configuration est correcte." << std::endl;
+}
+
 //Parser
 void ConfigParser::parsefile(const std::string& filepath) {
 	std::ifstream file(filepath.c_str());

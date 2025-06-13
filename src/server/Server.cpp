@@ -148,6 +148,7 @@ void	Server::acceptNewConnexion(int fd)
 
 void	Server::handleEvent(int fdClient, size_t & i)
 {
+	int		status = 0;
 	logTime();
 	std::cout << "[INFO] Reading on: "
 			  << _clientsMap[fdClient].getIP() << ":"
@@ -159,10 +160,12 @@ void	Server::handleEvent(int fdClient, size_t & i)
 	_clientsMap[fdClient].readDataFromSocket(rawLineString); // quoi qu'il arrive on lit une ligne sur le socket
 	
 	std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
+	status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
 
 	while (!processed.empty()) {
 		_clientsMap[fdClient].writeDataToSocket(processed);
 		processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
+		status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
 	}
 
 	if (_clientsMap[fdClient].getBytesIn() <= 0) //si on detecte la fermeture de la connexion
@@ -172,11 +175,16 @@ void	Server::handleEvent(int fdClient, size_t & i)
 			throw std::runtime_error("Error while reading from socket");
 		return ;
 	}
-	if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == DONE)
+	if (status == 5)
 	{
+		logTime();
+		std::cout << "[INFO] Client closed on: "
+			  << _clientsMap[fdClient].getIP() << ":"
+			  << _clientsMap[fdClient].getPort() << std::endl;
 		supressClient(fdClient, i);
 		return;
 	}
+	
 	// if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == DONE)
 	// {
 	// 	_clientsMap[fdClient].mustStop = true;
@@ -267,6 +275,7 @@ void	Server::addPair(std::pair<int, std::string> listen)
 
 void	Server::supressClient(int fdClient, size_t & i)
 {
+	close(fdClient);
 	_pollManager->removeSocket(i);
 	_clientsMap.erase(fdClient);
 	i--;
@@ -279,5 +288,12 @@ void	Server::logTime() const
 	std::strftime(timeStamp, sizeof(timeStamp), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
 
 	std::cout << "[" << timeStamp << "] ";
+}
+
+void	Server::announce() const
+{
+	std::cout << "\n\n";
+	logTime();
+	std::cout << "[INFO] Server successfully launched\n\n" << std::endl;
 }
 
