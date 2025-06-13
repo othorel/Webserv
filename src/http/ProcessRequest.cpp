@@ -159,7 +159,7 @@ std::string ProcessRequest::process(std::string data)
 				throw HttpErrorException(500);
 		}
 	std::string dataToSend = _outputData;
-	_outputData.clear();
+	_outputData.clear();	
 	return (dataToSend);
 }
 
