@@ -32,6 +32,7 @@ class Server
 		// Runtime
 		void										StartEventLoop();
 		void										logTime() const;
+		void										announce() const;
 
 		// Getters
 		std::vector<std::pair<int, std::string> >	getListenVect() const;
