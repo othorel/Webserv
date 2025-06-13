@@ -172,8 +172,8 @@ void	Server::handleEvent(int fdClient, size_t & i)
 			  << _clientsMap[fdClient].getIP() << ":"
 			  << _clientsMap[fdClient].getLocalPort() << std::endl;
 
-		// if (_clientsMap[fdClient].getServConfig() != NULL)
-		// 	checkTimeOut(fdClient, i);
+		if (_clientsMap[fdClient].getServConfig() != NULL)
+		 	checkTimeOut(fdClient, i);
 
 		std::string		rawLineString;
 		_clientsMap[fdClient].readDataFromSocket(rawLineString); // quoi qu'il arrive on lit une ligne sur le socket
@@ -215,6 +215,7 @@ void	Server::checkTimeOut(int fdClient, size_t & i)
 {
 	if (_clientsMap[fdClient].getServConfig() == NULL)
 		return;
+	std::cout << "servConfig ptr: " << _clientsMap[fdClient].getServConfig() << std::endl;
 	std::time_t		timeNow = std::time(NULL);
 	std::cout << "timeout : " << _clientsMap[fdClient].getServConfig()->getSessionTimeout() << std::endl;
 	std::time_t		timeOut = static_cast<time_t>(_clientsMap[fdClient].getServConfig()->getSessionTimeout());
