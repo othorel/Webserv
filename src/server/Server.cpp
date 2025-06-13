@@ -158,14 +158,12 @@ void	Server::handleEvent(int fdClient, size_t & i)
 	std::string		rawLineString;
 	_clientsMap[fdClient].readDataFromSocket(rawLineString); // quoi qu'il arrive on lit une ligne sur le socket
 	
-	std::cout << "rawline :" << rawLineString << std::endl;
 	std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
-	std::cout << "processed :" << processed << std::endl;
+
 	while (!processed.empty()) {
 		_clientsMap[fdClient].writeDataToSocket(processed);
 		processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
 	}
-	// processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
 
 	if (_clientsMap[fdClient].getBytesIn() <= 0) //si on detecte la fermeture de la connexion
 	{
@@ -174,26 +172,15 @@ void	Server::handleEvent(int fdClient, size_t & i)
 			throw std::runtime_error("Error while reading from socket");
 		return ;
 	}
-	// else if (_clientsMap[fdClient].endTransmission(rawLineString) == true)
-	//{
-		// std::cout << "Paquet:\n" << rawLineString << std::endl;
-		// std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
-		// if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == WAITING_BODY && _clientsMap[fdClient].getServConfig() == NULL)
-		// 	_clientsMap[fdClient].setServConfig(new ServerConfig(_clientsMap[fdClient].getProcessRequest().getServer())); //On initialise le pointeur vers servconfig
-
-		// if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == SENDING_HEADERS
-		// 	|| _clientsMap[fdClient].getProcessRequest().getProcessStatus() == SENDING_BODY) // Si le processRequest a fini de construire la reponse
-		// {
-		// 	while (! processed.empty())
-		// 	{
-				// std::cout << "processing" << std::endl;
-				// _clientsMap[fdClient].writeDataToSocket(processed);
-				// processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
-		// 	}
-		// }
-		// else if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == DONE)
-		// 	supressClient(fdClient, i);
-	//}
+	if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == DONE)
+	{
+		supressClient(fdClient, i);
+		return;
+	}
+	// if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == DONE)
+	// {
+	// 	_clientsMap[fdClient].mustStop = true;
+	// }
 }
 
 void	Server::fillActiveListenVect()

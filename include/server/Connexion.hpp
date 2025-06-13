@@ -35,7 +35,8 @@ class Connexion
 		std::string						getIP() const;
 		int								getPort() const;
 		sockaddr_in						getAddr() const;
-		ProcessRequest					getProcessRequest() const;
+		ProcessRequest					&getProcessRequest();
+		const ProcessRequest			&getProcessRequest() const;
 		ssize_t							getBytesIn() const;
 		ssize_t							getBytesOut() const;
 		std::string						getBufferIn() const;
@@ -54,6 +55,8 @@ class Connexion
 		void							readDataFromSocket(std::string &line);
 		void							writeDataToSocket(const std::string & response);
 		bool							endTransmission(std::string line);
+
+		bool							mustStop;
 
 	private:
 
