@@ -6,6 +6,7 @@
 # include <cstring>
 # include <stdexcept>
 # include <algorithm>
+# include <iostream>
 # include "Location.hpp"
 
 class ServerConfig {
@@ -54,6 +55,7 @@ class ServerConfig {
 		int getSessionTimeout() const;
 		bool isSessionEnable() const;
 		bool hasServerName(const std::string & nameToFind) const;
+		void printServerConfig(int index) const;
 };
 
 #endif
