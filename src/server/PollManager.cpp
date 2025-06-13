@@ -5,7 +5,14 @@
 ///                               CANONIC +                                  ///
 ////////////////////////////////////////////////////////////////////////////////
 
-PollManager::PollManager(){}
+PollManager::PollManager()
+{
+	struct	pollfd stdIn;
+	stdIn.fd = STDIN_FILENO;
+	stdIn.events = POLLIN;
+	stdIn.revents = 0;
+	_fdPollVect.push_back(stdIn);
+}
 
 PollManager::~PollManager(){}
 

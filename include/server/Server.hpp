@@ -36,7 +36,6 @@ class Server
 
 		// Getters
 		std::vector<std::pair<int, std::string> >	getListenVect() const;
-		std::vector<std::pair<int, std::string> >	getActiveListenVec() const;
 		PollManager									*getPollManager() const;
 		std::map<int, Connexion>					getClientsMap() const;
 		std::vector<int>							getFdSocketVect() const;
@@ -51,13 +50,11 @@ class Server
 		std::vector<int>							_fdSocketVect; // si tout se passe bien doit faire la meme taille que _listenVect (sauf si certains coupls port ip ne ne sont pas accessibles)
 		PollManager									*_pollManager; // classe permettant de manipuler mes sockets
 		std::map<int, Connexion>					_clientsMap; // Tous les clients actuellement en train de communiquer
-		std::vector<std::pair<int, std::string> >	_activeListenVect; // sous-partie de listen tab contenant uniquement les couples ports IP concernes par des evenements
 		const std::vector<ServerConfig>				*_serverConfigVect;
 
 		// Initialization
 		void										Setup();
 		void										addPair(std::pair<int, std::string> listen);
-		void										fillActiveListenVect();
 
 		// Runtime
 		void										checkTimeOut(int fdClient, size_t & i);
