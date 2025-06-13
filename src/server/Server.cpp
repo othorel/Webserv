@@ -172,7 +172,8 @@ void	Server::handleEvent(int fdClient, size_t & i)
 			  << _clientsMap[fdClient].getIP() << ":"
 			  << _clientsMap[fdClient].getLocalPort() << std::endl;
 
-		checkTimeOut(fdClient, i);
+		// if (_clientsMap[fdClient].getServConfig() != NULL)
+		// 	checkTimeOut(fdClient, i);
 
 		std::string		rawLineString;
 		_clientsMap[fdClient].readDataFromSocket(rawLineString); // quoi qu'il arrive on lit une ligne sur le socket
@@ -180,6 +181,9 @@ void	Server::handleEvent(int fdClient, size_t & i)
 		std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
 		status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
 
+		if (_clientsMap[fdClient].getServConfig() == NULL)
+			_clientsMap[fdClient].setServConfig(&_clientsMap[fdClient].getProcessRequest().getServer());
+		
 		while (!processed.empty()) {
 			_clientsMap[fdClient].writeDataToSocket(processed);
 			processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
@@ -212,9 +216,13 @@ void	Server::checkTimeOut(int fdClient, size_t & i)
 	if (_clientsMap[fdClient].getServConfig() == NULL)
 		return;
 	std::time_t		timeNow = std::time(NULL);
+	std::cout << "timeout : " << _clientsMap[fdClient].getServConfig()->getSessionTimeout() << std::endl;
 	std::time_t		timeOut = static_cast<time_t>(_clientsMap[fdClient].getServConfig()->getSessionTimeout());
 	std::time_t		timeEnd = _clientsMap[fdClient].getStartTime() + timeOut;
 
+	std::cout << "\nTime: " << timeNow << std::endl;
+	std::cout << "timeout: " << timeOut << std::endl;
+	std::cout << "Will throw 408 exception at: " << timeEnd << "\n" << std::endl; 
 	if (timeNow > timeEnd)
 	{
 		supressClient(fdClient, i);

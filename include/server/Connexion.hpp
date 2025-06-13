@@ -42,7 +42,7 @@ class Connexion
 		ssize_t							getBytesOut() const;
 		std::string						getBufferIn() const;
 		std::string						getBufferOut() const;
-		ServerConfig					*getServConfig() const;
+		const ServerConfig				*getServConfig() const;
 		std::time_t						getStartTime() const;
 
 		// Setters
@@ -50,7 +50,7 @@ class Connexion
 		void							setBytesOut(ssize_t bytes);
 		void							setBufferIn(std::string buffer);
 		void							setBufferOut(std::string buffer);
-		void							setServConfig(ServerConfig *serverconfig);
+		void							setServConfig(const ServerConfig *serverconfig);
 
 		// Runtime
 		void							readDataFromSocket(std::string &line);
@@ -62,7 +62,7 @@ class Connexion
 		int								_fd;
 		sockaddr_in						_addr;
 		std::time_t						_startTime;
-		ServerConfig					*_servConfig;
+		const ServerConfig				*_servConfig;
 		ProcessRequest					_processRequest;
 
 		ssize_t							_bytesIn;

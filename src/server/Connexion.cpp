@@ -155,7 +155,7 @@ ssize_t	Connexion::getBytesOut() const
 	return (_bytesOut);
 }
 
-ServerConfig	*Connexion::getServConfig() const
+const ServerConfig	*Connexion::getServConfig() const
 {
 	return (_servConfig);
 }
@@ -199,7 +199,7 @@ void	Connexion::setBufferOut(std::string buffer)
 	_bufferOut = buffer;
 }
 
-void	Connexion::setServConfig(ServerConfig *serverconfig)
+void	Connexion::setServConfig(const ServerConfig *serverconfig)
 {
 	_servConfig = serverconfig;
 }
