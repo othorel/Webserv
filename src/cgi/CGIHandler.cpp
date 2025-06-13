@@ -33,27 +33,94 @@ std::vector<std::string> CGIHandler::buildEnv() const {
 	return (env);
 }
 
+// std::string CGIHandler::execute() {
+// 	int inputPipe[2];
+// 	int outputPipe[2];
+// 	if (pipe(inputPipe) == -1 || pipe(outputPipe) == -1)
+// 		throw CGIException("Failed to create pipes");
+// 	pid_t pid = fork();
+// 	if (pid < 0)
+// 		throw CGIException("Fork failed");
+// 	if (pid == 0) {
+// 		dup2(inputPipe[0], STDIN_FILENO);
+// 		dup2(outputPipe[1], STDOUT_FILENO);
+// 		close(inputPipe[1]);
+// 		close(outputPipe[0]);
+// 		std::vector<std::string> envVec = buildEnv();
+// 		std::vector<char*> envp;
+// 		for (size_t i = 0; i < envVec.size(); i++)
+// 			envp.push_back(const_cast<char*>(envVec[i].c_str()));
+// 		envp.push_back(NULL);
+// 		char* av[] = {const_cast<char*>(_scriptPath.c_str()), NULL};
+// 		std::cerr << "Trying to execve: " << _scriptPath << std::endl;
+// 		execve(_scriptPath.c_str(), av, &envp[0]);
+// 		perror("execve");
+// 		exit(1);
+// 	}
+// 	else {
+// 		close(inputPipe[0]);
+// 		close(outputPipe[1]);
+// 		if (_method == "POST" && !_body.empty())
+// 			write(inputPipe[1], _body.c_str(), _body.size());
+// 		close(inputPipe[1]);
+// 		char buffer[4096];
+// 		std::string result;
+// 		ssize_t bytes;
+// 		while ((bytes = read(outputPipe[0], buffer, sizeof(buffer))) > 0)
+// 			result.append(buffer, bytes);
+// 		close(outputPipe[0]);
+// 		int status;
+// 		waitpid(pid, &status, 0);
+// 		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+// 			throw CGIException("CGI script execution failed");
+// 		return (result);
+// 	}
+// }
+
 std::string CGIHandler::execute() {
 	int inputPipe[2];
 	int outputPipe[2];
 	if (pipe(inputPipe) == -1 || pipe(outputPipe) == -1)
 		throw CGIException("Failed to create pipes");
+
 	pid_t pid = fork();
 	if (pid < 0)
 		throw CGIException("Fork failed");
+
 	if (pid == 0) {
 		dup2(inputPipe[0], STDIN_FILENO);
 		dup2(outputPipe[1], STDOUT_FILENO);
 		close(inputPipe[1]);
 		close(outputPipe[0]);
+
 		std::vector<std::string> envVec = buildEnv();
 		std::vector<char*> envp;
 		for (size_t i = 0; i < envVec.size(); i++)
 			envp.push_back(const_cast<char*>(envVec[i].c_str()));
 		envp.push_back(NULL);
-		char* av[] = {const_cast<char*>(_scriptPath.c_str()), NULL};
-		std::cerr << "Trying to execve: " << _scriptPath << std::endl;
-		execve(_scriptPath.c_str(), av, &envp[0]);
+
+		// 🔎 Détermination de l'interpréteur
+		std::string extension = _scriptPath.substr(_scriptPath.find_last_of('.'));
+		std::map<std::string, std::string> interpreters;
+		interpreters[".py"]  = "/usr/bin/python3";
+		interpreters[".pl"]  = "/usr/bin/perl";
+		interpreters[".php"] = "/usr/bin/php-cgi";
+
+		std::string interpreter;
+		std::map<std::string, std::string>::const_iterator it = interpreters.find(extension);
+		if (it != interpreters.end())
+			interpreter = it->second;
+		else
+			throw CGIException("Unsupported CGI script type: " + extension);
+
+		char* av[] = {
+			const_cast<char*>(interpreter.c_str()),
+			const_cast<char*>(_scriptPath.c_str()),
+			NULL
+		};
+
+		std::cerr << "Trying to execve: " << interpreter << " " << _scriptPath << std::endl;
+		execve(interpreter.c_str(), av, &envp[0]);
 		perror("execve");
 		exit(1);
 	}
@@ -63,16 +130,20 @@ std::string CGIHandler::execute() {
 		if (_method == "POST" && !_body.empty())
 			write(inputPipe[1], _body.c_str(), _body.size());
 		close(inputPipe[1]);
+
 		char buffer[4096];
 		std::string result;
 		ssize_t bytes;
 		while ((bytes = read(outputPipe[0], buffer, sizeof(buffer))) > 0)
 			result.append(buffer, bytes);
 		close(outputPipe[0]);
+
 		int status;
 		waitpid(pid, &status, 0);
 		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
 			throw CGIException("CGI script execution failed");
-		return (result);
+
+		return result;
 	}
 }
+
