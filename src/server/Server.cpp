@@ -17,7 +17,9 @@ Server::Server()
 	_pollManager = NULL;
 	_serverConfigVect = NULL;
 }
-Server::Server(const ConfigParser & Parser) : _pollManager(new PollManager()), _serverConfigVect(&Parser.getServerConfigVector())
+Server::Server(const ConfigParser & Parser) :
+	_pollManager(new PollManager()),
+	_serverConfigVect(&Parser.getServerConfigVector())
 {
 	std::vector<ServerConfig>::const_iterator	it = (*_serverConfigVect).begin();
 	while (it != (*_serverConfigVect).end())
@@ -47,7 +49,6 @@ Server & Server::operator=(const Server & other)
 		this->_pollManager = NULL;
 		this->_fdSocketVect = other._fdSocketVect;
 		this->_listenVect = other._listenVect;
-		this->_activeListenVect = other._activeListenVect;
 		this->_clientsMap = other._clientsMap;
 		this->_serverConfigVect = NULL;
 	}
@@ -61,11 +62,6 @@ Server & Server::operator=(const Server & other)
 std::vector<std::pair<int, std::string> >	Server::getListenVect() const
 {
 	return (this->_listenVect);
-}
-
-std::vector<std::pair<int, std::string> >	Server::getActiveListenVec() const
-{
-	return (this->_activeListenVect);
 }
 
 PollManager									*Server::getPollManager() const
@@ -106,11 +102,27 @@ void	Server::StartEventLoop()
 	while (1)
 	{
 		_pollManager->pollExec(-1);
-		fillActiveListenVect();
 		for (size_t i = 0; i != _pollManager->getPollFdVector().size(); i++)
 		{
-			if (_pollManager->getPollFdVector()[i].revents & POLLIN)
-				dealClient(_pollManager->getPollFdVector()[i].fd, i);
+			int		fd = _pollManager->getPollFdVector()[i].fd;
+			short	revents = _pollManager->getPollFdVector()[i].revents;
+			if (revents & POLLIN)
+			{
+				if (fd == STDIN_FILENO)
+				{
+					char	buffer[256];
+					if (fgets(buffer, sizeof(buffer), stdin))
+					{
+						buffer[strcspn(buffer, "\n")] = 0;
+						if (strcmp(buffer, "Exit") == 0)
+							return;
+					}
+				}
+				else
+				{
+					dealClient(fd, i);
+				}
+			}
 		}
 	}
 }
@@ -160,7 +172,7 @@ void	Server::handleEvent(int fdClient, size_t & i)
 			  << _clientsMap[fdClient].getIP() << ":"
 			  << _clientsMap[fdClient].getLocalPort() << std::endl;
 
-		checkTimeOut(fdClient, i); //on regarde si le timeout est depasse si c'est le cas tout s'arrete et le client est supprime
+		checkTimeOut(fdClient, i);
 
 		std::string		rawLineString;
 		_clientsMap[fdClient].readDataFromSocket(rawLineString); // quoi qu'il arrive on lit une ligne sur le socket
@@ -192,29 +204,6 @@ void	Server::handleEvent(int fdClient, size_t & i)
 	 	std::cerr << e.what() << " " << e.getStatusCode() << std::endl;
 		supressClient(fdClient, i);
 	 	return;
-	}
-}
-
-void	Server::fillActiveListenVect()
-{
-	const std::vector<struct pollfd>& pollFds = _pollManager->getPollFdVector();
-
-	for (size_t i = 0; i < pollFds.size(); ++i)
-	{
-		int fd = pollFds[i].fd;
-		if ((pollFds[i].revents & POLLIN) &&
-			(std::find(_fdSocketVect.begin(), _fdSocketVect.end(), fd) != _fdSocketVect.end())) // Si l'événement est actif (POLLIN) et que c'est un socket d'écoute
-		{
-			
-			for (size_t j = 0; j < _fdSocketVect.size(); ++j)// On recupere lec couple IP Port associé à ce fd
-			{
-				if (_fdSocketVect[j] == fd)
-				{
-					_activeListenVect.push_back(_listenVect[j]);
-					break;
-				}
-			}
-		}
 	}
 }
 
