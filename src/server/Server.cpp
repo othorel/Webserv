@@ -119,13 +119,13 @@ void	Server::dealClient(int fd, size_t & i)
 {
 	if (std::find(_fdSocketVect.begin(), _fdSocketVect.end(), fd) != _fdSocketVect.end())
 	{
+		std::cout << std::endl;
 		logTime();
 		std::cout << "[INFO] New connexion request" << std::endl;
 		acceptNewConnexion(fd);
 	}
 	else
 	{
-		
 		handleEvent(fd, i);
 	}
 }
@@ -141,54 +141,58 @@ void	Server::acceptNewConnexion(int fd)
 	_pollManager->addSocket(clientFd, POLLIN);
 	_clientsMap[clientFd] = Connexion(clientFd, clientAddr, _serverConfigVect);
 	logTime();
-	std::cout << "[INFO] New connexion authorized on:"
+	std::cout << "[INFO] New client "
+			  << _clientsMap[clientFd].getClientPort()
+			  << " authorized on: "
 			  << _clientsMap[clientFd].getIP() << ":"
-			  << _clientsMap[clientFd].getPort() << std::endl;
+			  << _clientsMap[clientFd].getLocalPort() << std::endl;
 }
 
 void	Server::handleEvent(int fdClient, size_t & i)
 {
-	int		status = 0;
-	logTime();
-	std::cout << "[INFO] Reading on: "
-			  << _clientsMap[fdClient].getIP() << ":"
-			  << _clientsMap[fdClient].getPort() << std::endl;
-
-	checkTimeOut(fdClient, i); //on regarde si le timeout est depasse si c'est le cas tout s'arrete et le client est supprime
-
-	std::string		rawLineString;
-	_clientsMap[fdClient].readDataFromSocket(rawLineString); // quoi qu'il arrive on lit une ligne sur le socket
-	
-	std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
-	status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
-
-	while (!processed.empty()) {
-		_clientsMap[fdClient].writeDataToSocket(processed);
-		processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
-		status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
-	}
-
-	if (_clientsMap[fdClient].getBytesIn() <= 0) //si on detecte la fermeture de la connexion
+	try
 	{
-		supressClient(fdClient, i); // peut etre en plus throw une exception ?
-		if (_clientsMap[fdClient].getBytesIn() < 0)
-			throw std::runtime_error("Error while reading from socket");
-		return ;
-	}
-	if (status == 5)
-	{
+		int		status = 0;
 		logTime();
-		std::cout << "[INFO] Client closed on: "
+		std::cout << "[INFO] Reading from client "
+			  << _clientsMap[fdClient].getClientPort()
+			  << " on: "
 			  << _clientsMap[fdClient].getIP() << ":"
-			  << _clientsMap[fdClient].getPort() << std::endl;
-		supressClient(fdClient, i);
-		return;
-	}
+			  << _clientsMap[fdClient].getLocalPort() << std::endl;
+
+		checkTimeOut(fdClient, i); //on regarde si le timeout est depasse si c'est le cas tout s'arrete et le client est supprime
+
+		std::string		rawLineString;
+		_clientsMap[fdClient].readDataFromSocket(rawLineString); // quoi qu'il arrive on lit une ligne sur le socket
 	
-	// if (_clientsMap[fdClient].getProcessRequest().getProcessStatus() == DONE)
-	// {
-	// 	_clientsMap[fdClient].mustStop = true;
-	// }
+		std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
+		status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
+
+		while (!processed.empty()) {
+			_clientsMap[fdClient].writeDataToSocket(processed);
+			processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
+			status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
+		}
+
+		if (_clientsMap[fdClient].getBytesIn() <= 0) //si on detecte la fermeture de la connexion
+		{
+			supressClient(fdClient, i); // peut etre en plus throw une exception ?
+			if (_clientsMap[fdClient].getBytesIn() < 0)
+				throw std::runtime_error("Error while reading from socket");
+			return ;
+		}
+		if (status == 5)
+		{
+			supressClient(fdClient, i);
+			return;
+		}
+	}
+	catch (const HttpErrorException& e)
+	{
+	 	std::cerr << e.what() << " " << e.getStatusCode() << std::endl;
+		supressClient(fdClient, i);
+	 	return;
+	}
 }
 
 void	Server::fillActiveListenVect()
@@ -275,6 +279,11 @@ void	Server::addPair(std::pair<int, std::string> listen)
 
 void	Server::supressClient(int fdClient, size_t & i)
 {
+	logTime();
+	std::cout << "[INFO] Client " << _clientsMap[fdClient].getClientPort()
+			  << " closed on: "
+			  << _clientsMap[fdClient].getIP() << ":"
+			  << _clientsMap[fdClient].getLocalPort() << "\n" << std::endl;
 	close(fdClient);
 	_pollManager->removeSocket(i);
 	_clientsMap.erase(fdClient);

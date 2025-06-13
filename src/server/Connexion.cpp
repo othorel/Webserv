@@ -22,7 +22,6 @@ _processRequest(*_serverConfigVect)
 	_startTime = std::time(NULL);
 	_bytesIn = 0;
 	_bytesOut = 0;
-	mustStop = false;
 }
 
 Connexion::~Connexion()
@@ -48,7 +47,6 @@ Connexion &Connexion::operator=(const Connexion & other)
 		this->_bufferOut = other._bufferOut;
 		this->_processRequest = other._processRequest;
 		this->_servConfig = other._servConfig;
-		this->mustStop = other.mustStop;
 	}
 	return (*this);
 }
@@ -118,9 +116,18 @@ std::string	Connexion::getIP() const
     return (std::string(buf));
 }
 
-int	Connexion::getPort() const
+int	Connexion::getClientPort() const
 {
 	return (ntohs(_addr.sin_port));
+}
+
+int Connexion::getLocalPort() const
+{
+    struct sockaddr_in local_addr;
+    socklen_t len = sizeof(local_addr);
+    if (getsockname(_fd, (struct sockaddr*)&local_addr, &len) == -1)
+        return -1; // ou gère l'erreur comme tu veux
+    return ntohs(local_addr.sin_port);
 }
 
 std::string	Connexion::getBufferIn() const

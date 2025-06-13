@@ -32,12 +32,12 @@ int	main(int argc, char **argv)
 		server.announce();
 		server.StartEventLoop();
 	}
-	catch (const HttpErrorException& e)
-	{
-		std::cerr << e.what() << " " << e.getStatusCode() << std::endl;
-		return (1);
-	}
-	catch (const std::exception& e)
+	// catch (const HttpErrorException& e)
+	// {
+	// 	std::cerr << e.what() << " " << e.getStatusCode() << std::endl;
+	// 	return (1);
+	// }
+	catch (const std::runtime_error& e)
 	{
 		std::cerr << e.what() << std::endl;
 		return (1);
