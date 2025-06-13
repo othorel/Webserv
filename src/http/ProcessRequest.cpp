@@ -40,7 +40,9 @@ ProcessRequest::ProcessRequest() :
 	_handler(NULL),
 	_request(NULL),
 	_file(NULL)
-{}
+{
+	std::cout << "Default Creation of ProcessRequest" << std::endl;
+}
 
 ProcessRequest::ProcessRequest(const std::vector<ServerConfig> & serversVector) :
 	_serversVector(serversVector),
@@ -53,7 +55,9 @@ ProcessRequest::ProcessRequest(const std::vector<ServerConfig> & serversVector) 
 	_handler(NULL),
 	_request(NULL),
 	_file(NULL)
-{}
+{
+	std::cout << "Creation of ProcessRequest" << std::endl;
+}
 
 ProcessRequest::ProcessRequest(const ProcessRequest & other) :
 	_serversVector(other._serversVector),
@@ -67,6 +71,7 @@ ProcessRequest::ProcessRequest(const ProcessRequest & other) :
 {
 	_file = other._file ? new File(*other._file) : NULL;
 	_request = other._request ? new HttpRequest(*other._request) : NULL;
+	std::cout << "Copy Creation of ProcessRequest" << std::endl;
 }
 
 void ProcessRequest::reset()
@@ -110,6 +115,7 @@ ProcessRequest & ProcessRequest::operator=(const ProcessRequest & other)
 			delete _request;
 		_request = other._request ? new HttpRequest(*other._request) : NULL;
 	}
+	std::cout << "Operator = of ProcessRequest" << std::endl;
 	return (*this);
 }
 
@@ -123,6 +129,7 @@ ProcessRequest::~ProcessRequest()
 		delete _file;
 	if (_request)
 		delete _request;
+	std::cout << "Destruction of ProcessRequest" << std::endl;
 }
 
 /* ************************************************************************** */

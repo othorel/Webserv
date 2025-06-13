@@ -25,7 +25,7 @@ class Connexion
 {
 	public:
 		Connexion();
-		Connexion(int fd, sockaddr_in addr);
+		Connexion(int fd, sockaddr_in addr, const std::vector<ServerConfig> *_serverConfigVect);
 		Connexion(const Connexion & toCopy);
 		Connexion &operator=(const Connexion & other);
 		~Connexion();
@@ -49,14 +49,11 @@ class Connexion
 		void							setBufferIn(std::string buffer);
 		void							setBufferOut(std::string buffer);
 		void							setServConfig(ServerConfig *serverconfig);
-		void							setProcessRequest(const std::vector<ServerConfig> *_serverConfigVect);
 
 		// Runtime
 		void							readDataFromSocket(std::string &line);
 		void							writeDataToSocket(const std::string & response);
 		bool							endTransmission(std::string line);
-
-		bool							_isRequestProcessCreated;
 
 	private:
 

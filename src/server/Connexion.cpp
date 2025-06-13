@@ -13,12 +13,11 @@
 
 Connexion::Connexion(){}
 
-Connexion::Connexion(int fd, sockaddr_in addr) : _fd(fd), _addr(addr), _servConfig(NULL)
+Connexion::Connexion(int fd, sockaddr_in addr, const std::vector<ServerConfig> *_serverConfigVect) : _fd(fd), _addr(addr), _servConfig(NULL), _processRequest(*_serverConfigVect)
 {
 	_startTime = std::time(NULL);
 	_bytesIn = 0;
 	_bytesOut = 0;
-	_isRequestProcessCreated = false;
 }
 
 Connexion::~Connexion()
@@ -44,7 +43,6 @@ Connexion &Connexion::operator=(const Connexion & other)
 		this->_bufferOut = other._bufferOut;
 		this->_processRequest = other._processRequest;
 		this->_servConfig = other._servConfig;
-		_isRequestProcessCreated = other._isRequestProcessCreated;
 	}
 	return (*this);
 }
@@ -186,9 +184,4 @@ void	Connexion::setBufferOut(std::string buffer)
 void	Connexion::setServConfig(ServerConfig *serverconfig)
 {
 	_servConfig = serverconfig;
-}
-
-void	Connexion::setProcessRequest(const std::vector<ServerConfig> *_serverConfigVect)
-{
-	_processRequest = ProcessRequest(*_serverConfigVect);
 }

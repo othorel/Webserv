@@ -139,7 +139,8 @@ void	Server::acceptNewConnexion(int fd)
 	if (clientFd < 0)
 		return;
 	_pollManager->addSocket(clientFd, POLLIN);
-	_clientsMap[clientFd] = Connexion(clientFd, clientAddr);
+	_clientsMap[clientFd] = Connexion(clientFd, clientAddr, _serverConfigVect);
+	logTime();
 	std::cout << "[INFO] New connexion authorized on:"
 			  << _clientsMap[clientFd].getIP() << ":"
 			  << _clientsMap[clientFd].getPort() << std::endl;
@@ -147,6 +148,7 @@ void	Server::acceptNewConnexion(int fd)
 
 void	Server::handleEvent(int fdClient, size_t & i)
 {
+	logTime();
 	std::cout << "[INFO] Reading on: "
 			  << _clientsMap[fdClient].getIP() << ":"
 			  << _clientsMap[fdClient].getPort() << std::endl;
@@ -155,13 +157,10 @@ void	Server::handleEvent(int fdClient, size_t & i)
 
 	std::string		rawLineString;
 	_clientsMap[fdClient].readDataFromSocket(rawLineString); // quoi qu'il arrive on lit une ligne sur le socket
-	if (_clientsMap[fdClient]._isRequestProcessCreated == false)
-	{
-		_clientsMap[fdClient].setProcessRequest(_serverConfigVect);
-		_clientsMap[fdClient]._isRequestProcessCreated = true;
-	}
-
+	
+	std::cout << "rawline :" << rawLineString << std::endl;
 	std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
+	std::cout << "processed :" << processed << std::endl;
 	while (!processed.empty()) {
 		_clientsMap[fdClient].writeDataToSocket(processed);
 		processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
