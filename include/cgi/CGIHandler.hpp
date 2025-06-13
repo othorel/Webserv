@@ -11,27 +11,27 @@
 # include <cstdio>
 # include <iostream>
 
+# include "../http/HttpRequest.hpp"
+
 class CGIHandler {
 
 	private:
 
 		std::string _scriptPath;
 		std::string _method;
-		std::string _queryString;
+		std::string	_target;
+		std::string _version;
 		std::string _body;
+		std::string	_queryString;
 		std::map<std::string, std::string> _headers;
 
 		std::vector<std::string> buildEnv() const;
 
 	public:
 
-		CGIHandler(
-			const std::string& scriptPath,
-			const std::string& method,
-			const std::string& queryString,
-			const std::string& body,
-			const std::map<std::string, std::string>& headers
-		);
+		CGIHandler();
+		CGIHandler(const std::string & path, const HttpRequest & request);
+
 		std::string execute();
 	
 	class CGIException : public std::exception {

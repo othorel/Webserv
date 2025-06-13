@@ -1,16 +1,26 @@
+#include <iostream>
 #include "../../include/cgi/CGIHandler.hpp"
+#include "../../include/http/HttpErrorException.hpp"
 
-CGIHandler::CGIHandler(
-	const std::string& scriptPath,
-	const std::string& method,
-	const std::string& queryString,
-	const std::string& body,
-	const std::map<std::string, std::string>& headers
-) : _scriptPath(scriptPath),
-	_method(method),
-	_queryString(queryString),
-	_body(body),
-	_headers(headers)
+CGIHandler::CGIHandler(const std::string & path, const HttpRequest & request) :
+	_scriptPath(path),
+	_method(request.getMethod()),
+	_target(request.getTarget()),
+	_version(request.getVersion()),
+	_body(request.getBody()),
+	_queryString(""),
+	_headers(request.getHeaders())
+{}
+
+// a refaire
+CGIHandler::CGIHandler() :
+	_scriptPath(""),
+	_method(""),
+	_target(""),
+	_version(""),
+	_body(""),
+	_queryString(""),
+	_headers()
 {}
 
 std::vector<std::string> CGIHandler::buildEnv() const {
@@ -77,15 +87,23 @@ std::vector<std::string> CGIHandler::buildEnv() const {
 // 	}
 // }
 
-std::string CGIHandler::execute() {
+std::string CGIHandler::execute()
+{
+	size_t pos = _target.find('?');
+	if (pos == std::string::npos)
+		_queryString = "";
+	else
+		_queryString = _target.substr(pos + 1);
+
+
 	int inputPipe[2];
 	int outputPipe[2];
 	if (pipe(inputPipe) == -1 || pipe(outputPipe) == -1)
-		throw CGIException("Failed to create pipes");
+		throw HttpErrorException(500);
 
 	pid_t pid = fork();
 	if (pid < 0)
-		throw CGIException("Fork failed");
+		throw HttpErrorException(500);
 
 	if (pid == 0) {
 		dup2(inputPipe[0], STDIN_FILENO);
@@ -99,7 +117,7 @@ std::string CGIHandler::execute() {
 			envp.push_back(const_cast<char*>(envVec[i].c_str()));
 		envp.push_back(NULL);
 
-		// 🔎 Détermination de l'interpréteur
+		// Détermination de l'interpréteur
 		std::string extension = _scriptPath.substr(_scriptPath.find_last_of('.'));
 		std::map<std::string, std::string> interpreters;
 		interpreters[".py"]  = "/usr/bin/python3";
@@ -111,7 +129,11 @@ std::string CGIHandler::execute() {
 		if (it != interpreters.end())
 			interpreter = it->second;
 		else
-			throw CGIException("Unsupported CGI script type: " + extension);
+			throw HttpErrorException(500);
+
+		std::cout << "QUERY STRING : " << _queryString << std::endl;
+		std::cout << "INTERPRETEUR : " << interpreter << std::endl;
+		std::cout << "PATH : " << _scriptPath << std::endl;
 
 		char* av[] = {
 			const_cast<char*>(interpreter.c_str()),
@@ -141,7 +163,7 @@ std::string CGIHandler::execute() {
 		int status;
 		waitpid(pid, &status, 0);
 		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
-			throw CGIException("CGI script execution failed");
+			throw HttpErrorException(500);
 
 		return result;
 	}

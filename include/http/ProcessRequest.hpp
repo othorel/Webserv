@@ -28,6 +28,7 @@ class ProcessRequest
 		std::vector<ServerConfig>	_serversVector;
 		ProcessStatus				_processStatus;
 		ServerConfig				_server;
+		int							_serverTimeout;
 		Location					_location;
 		std::string					_inputData;
 		std::string					_outputData;
@@ -61,6 +62,7 @@ class ProcessRequest
 		void checkMethodValidity();
 		std::string createPath();
 		std::string createPostPath();
+		void cgiGetHandler(const std::string & path);
 		
 	public :
 		
@@ -72,6 +74,7 @@ class ProcessRequest
 
 		ProcessStatus getProcessStatus() const;
 		const ServerConfig & getServer() const;
+		int getServerTimeout() const;
 		std::string process(std::string data);
 		void reset();
 

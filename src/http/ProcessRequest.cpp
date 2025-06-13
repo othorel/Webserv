@@ -13,6 +13,7 @@
 #include "../../include/http/HttpResponse.hpp"
 #include "../../include/config/Location.hpp"
 #include "../../include/config/ServerConfig.hpp"
+#include "../../include/cgi/CGIHandler.hpp"
 
 static void checkDeleteValidity(const std::string & path);
 static std::string createIndexPath(std::string path, const Location & location);
@@ -23,6 +24,8 @@ static void checkPostValidity(
 	const ServerConfig & server, const std::string & path);
 static std::string createPostFileName(
 	const HttpRequest & request, const std::string & path);
+static bool isCgi(const std::string & path);
+
 // static std::string createPath(const std::string & root, const std::string & subpath);
 
 /* ************************************************************************** */
@@ -33,6 +36,7 @@ ProcessRequest::ProcessRequest() :
 	_serversVector(),
 	_processStatus(WAITING_HEADERS),
 	_server(),
+	_serverTimeout(0),
 	_location(),
 	_inputData(""),
 	_outputData(""),
@@ -46,6 +50,7 @@ ProcessRequest::ProcessRequest(const std::vector<ServerConfig> & serversVector) 
 	_serversVector(serversVector),
 	_processStatus(WAITING_HEADERS),
 	_server(),
+	_serverTimeout(0),
 	_location(),
 	_inputData(""),
 	_outputData(""),
@@ -59,6 +64,7 @@ ProcessRequest::ProcessRequest(const ProcessRequest & other) :
 	_serversVector(other._serversVector),
 	_processStatus(other._processStatus),
 	_server(other._server),
+	_serverTimeout(other._serverTimeout),
 	_location(other._location),
 	_inputData(other._inputData),
 	_outputData(other._outputData),
@@ -86,6 +92,7 @@ void ProcessRequest::reset()
 	_httpResponse = HttpResponse();
 	_inputData.clear();
 	_outputData.clear();
+	_serverTimeout = 0;
 }
 
 /* ************************************************************************** */
@@ -98,7 +105,9 @@ ProcessRequest & ProcessRequest::operator=(const ProcessRequest & other)
 		_serversVector = other._serversVector;
 		_processStatus = other._processStatus;
 		_server = other._server;
+		_serverTimeout = other._serverTimeout;
 		_location = other._location;
+		_serverTimeout = other._serverTimeout;
 		_handler = other._handler;
 		_httpResponse = other._httpResponse;
 		_inputData = other._inputData;
@@ -178,6 +187,7 @@ void ProcessRequest::waitHeaders()
 		_request->debug();
 		_inputData = bodyPart;
 		selectServer();
+		_serverTimeout = _server.getSessionTimeout();
 		selectLocation();
 		checkMethodValidity();
 		if (_location.hasRedirect()) 
@@ -311,6 +321,11 @@ void ProcessRequest::getHandler()
 	if (!HttpUtils::fileExists(path))
 		throw HttpErrorException(404);
 
+	if (isCgi(path)) {
+		cgiGetHandler(path);
+		return ;
+	}
+
 	if (HttpUtils::isDirectory(path)) {
 		std::string indexFile = createIndexPath(path, _location);
 		if (HttpUtils::fileExists(indexFile))
@@ -363,6 +378,24 @@ void ProcessRequest::postHandler()
 
 	_processStatus = WAITING_BODY;
 	waitBody();
+}
+
+/* ************************************************************************** */
+/*                                 Cgi handlers                               */
+/* ************************************************************************** */
+
+void ProcessRequest::cgiGetHandler(const std::string & path)
+{
+	CGIHandler cgi(path, *_request);
+	std::string cgiOutput = cgi.execute();
+	std::cout << "OUTPUT DATA : " << cgiOutput;
+
+	_outputData =
+		"<html><body><h1>Cgi Script" +
+			cgiOutput + "</h1></body></html>";
+
+	_processStatus = SENDING_HEADERS;
+	sendHeaders();
 }
 
 /* ************************************************************************** */
@@ -439,6 +472,11 @@ ProcessStatus ProcessRequest::getProcessStatus() const
 const ServerConfig & ProcessRequest::getServer() const
 {
 	return (_server);
+}
+
+int ProcessRequest::getServerTimeout() const
+{
+	return (_serverTimeout);
 }
 
 /* ************************************************************************** */
@@ -636,6 +674,15 @@ static std::string createPostFileName(
 	return (filename);
 }
 
+static bool isCgi(const std::string & path)
+{
+	size_t pos = path.find_last_of('.');
+	if (pos == std::string::npos)
+		return (false);
+	std::string ext = path.substr(pos);
+	return (ext == ".py" || ext == ".php" || ext == ".pl");
+}
+
 // static std::string createPath(const std::string & root, const std::string & subpath)
 // {
 // 	std::string cleanRoot = root;
@@ -677,4 +724,3 @@ std::string ProcessRequest::createPostPath()
 
 	return (root + '/' + locationPath);
 }
-
