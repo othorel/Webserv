@@ -7,6 +7,7 @@
 #include <map>
 #include "../../include/http/File.hpp"
 #include "../../include/http/HttpErrorException.hpp"
+#include "../../include/http/HttpUtils.hpp"
 
 /* ************************************************************************** */
 /*                                   constructors                             */
@@ -131,6 +132,10 @@ std::string File::getMimeType() const
 	if (dot == std::string::npos) {
 		return ("application/octet-stream"); }
 	std::string extension = _path.substr(dot +1);
+	HttpUtils::stringToLower(extension);
+
+	//debug 
+	std::cout << "EXTENSION IS : " << extension << std::endl;
 
 	static std::map<std::string, std::string> extensionMap;
 	if (extensionMap.empty()) {

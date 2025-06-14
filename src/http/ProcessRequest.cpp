@@ -201,6 +201,9 @@ void ProcessRequest::handleMethod()
 {
 	if (_processStatus != HANDLING_METHOD)
 		return ;
+		
+	if (isCgi(_request->getTarget()))
+		cgiHandler();
 
 	selectHandler();
 	if (!_handler)
@@ -256,12 +259,23 @@ void ProcessRequest::sendHeaders()
 		return ;
 	
 	_outputData = _httpResponse.toRawString();
+
+	// debug
+	std::cout << "OUTPUT HEADERS IN SEND HEADERS :\n" << _outputData << std::endl;
+	std::map<std::string, std::string> headers = _httpResponse.getHeaders();
+	std::map<std::string, std::string>::const_iterator cit = headers.begin();
+	for (; cit != headers.end(); ++cit) {
+		std::cout << cit->first << ": " << cit->second << std::endl;
+	}
+
 	if (_file != NULL)
 	{
 		_processStatus = SENDING_BODY;
 	}
-	else
+	else {
+		std::cout << "DONE" << std::endl;
 		_processStatus = DONE;
+	}
 }
 
 // From status SENDING_BODY to DONE
@@ -293,7 +307,7 @@ void ProcessRequest::deleteHandler()
 		throw HttpErrorException(500);
 
 	if (_processStatus != HANDLING_METHOD)
-		throw HttpErrorException(500);
+		return ;
 
 	std::string path = createPath();
 
@@ -315,16 +329,11 @@ void ProcessRequest::getHandler()
 		throw HttpErrorException(500);
 
 	if (_processStatus != HANDLING_METHOD)
-		throw HttpErrorException(500);
+		return ;
 	
 	std::string path = createPath();
 	if (!HttpUtils::fileExists(path))
 		throw HttpErrorException(404);
-
-	if (isCgi(path)) {
-		cgiGetHandler(path);
-		return ;
-	}
 
 	if (HttpUtils::isDirectory(path)) {
 		std::string indexFile = createIndexPath(path, _location);
@@ -364,7 +373,7 @@ void ProcessRequest::postHandler()
 		throw HttpErrorException(500);
 
 	if (_processStatus != HANDLING_METHOD)
-		throw HttpErrorException(500);
+		return ;
 
 	std::string path = createPostPath();
 
@@ -384,15 +393,18 @@ void ProcessRequest::postHandler()
 /*                                 Cgi handlers                               */
 /* ************************************************************************** */
 
-void ProcessRequest::cgiGetHandler(const std::string & path)
+void ProcessRequest::cgiHandler()
 {
-	CGIHandler cgi(path, *_request);
-	std::string cgiOutput = cgi.execute();
-	std::cout << "OUTPUT DATA : " << cgiOutput;
+	std::string path = createPath();
+	std::cout << "IF CGI HANDLER PATH IS : " << path << std::endl;
 
-	_outputData =
-		"<html><body><h1>Cgi Script" +
-			cgiOutput + "</h1></body></html>";
+	CGIHandler cgi(*_request, path);
+	_httpResponse = cgi.getHttpResponse();
+	addFinalHeaders();
+
+	// debug bloc
+	std::cout << "======AFTER CGI HANDLER :=======" << std::endl;
+	std::cout << _httpResponse.toRawString() << "\n" << std::endl;
 
 	_processStatus = SENDING_HEADERS;
 	sendHeaders();
@@ -486,16 +498,27 @@ int ProcessRequest::getServerTimeout() const
 void ProcessRequest::buildResponse(int statusCode, const std::map<std::string, std::string> & headers, const std::string & body)
 {
 	_httpResponse = HttpResponse("HTTP/1.1", statusCode, headers, body);
-	_httpResponse.addHeader("date", HttpUtils::getCurrentDate());
-	_httpResponse.addHeader("connection", "close");
-	std::ostringstream oss;
-	std::vector<std::string>::const_iterator cit = _server.getServerNames().begin();
-	if (cit != _server.getServerNames().end()) {
-		oss << *cit;
-		++cit;
-		for (; cit != _server.getServerNames().end(); ++cit) {
-			oss << " " << *cit; }}
-	_httpResponse.addHeader("server", oss.str());
+	addFinalHeaders();
+}
+
+void ProcessRequest::addFinalHeaders()
+{
+	if (_httpResponse.getHeaders().find("date") == _httpResponse.getHeaders().end())
+		_httpResponse.addHeader("date", HttpUtils::getCurrentDate());
+	if (_httpResponse.getHeaders().find("connection") == _httpResponse.getHeaders().end())
+		_httpResponse.addHeader("connection", "close");
+	if (_httpResponse.getHeaders().find("server") == _httpResponse.getHeaders().end()) {
+		std::ostringstream oss;
+		std::vector<std::string>::const_iterator cit = _server.getServerNames().begin();
+		if (cit != _server.getServerNames().end()) {
+			oss << *cit;
+			++cit;
+			for (; cit != _server.getServerNames().end(); ++cit) {
+				oss << " " << *cit; }}
+		_httpResponse.addHeader("server", oss.str());
+	}
+	if (_httpResponse.getHeaders().find("content-length") == _httpResponse.getHeaders().end())
+		_httpResponse.addHeader("content-length", HttpUtils::numberToString(_httpResponse.getBody().size()));
 }
 
 void ProcessRequest::buildRedirect()
@@ -578,6 +601,38 @@ void ProcessRequest::checkMethodValidity()
 			return ;
 	}
 	throw HttpErrorException (405);
+}
+
+std::string ProcessRequest::createPath()
+{
+	if (!_request)
+		throw HttpErrorException(500);
+
+	std::string locationPath = _location.getPath();
+	std::string target = _request->getTarget();
+	std::string root = selectRoot();
+
+	if (target.find(locationPath) != 0)
+		throw HttpErrorException(404);
+
+	std::string relativePath = target.substr(locationPath.size());
+	HttpUtils::trimFinalSlash(root);
+	HttpUtils::trimSlashes(relativePath);
+
+	return (root + '/' + relativePath);
+}
+
+std::string ProcessRequest::createPostPath()
+{
+	if (!_request)
+		throw HttpErrorException(500);
+
+	std::string root = selectRoot();
+	std::string locationPath = _location.getUploadPath();
+	HttpUtils::trimFinalSlash(root);
+	HttpUtils::trimSlashes(locationPath);
+
+	return (root + '/' + locationPath);
 }
 
 /* ************************************************************************** */
@@ -681,46 +736,4 @@ static bool isCgi(const std::string & path)
 		return (false);
 	std::string ext = path.substr(pos);
 	return (ext == ".py" || ext == ".php" || ext == ".pl");
-}
-
-// static std::string createPath(const std::string & root, const std::string & subpath)
-// {
-// 	std::string cleanRoot = root;
-// 	HttpUtils::trimFinalSlash(cleanRoot);
-// 	std::string cleanSubpath = subpath;
-// 	HttpUtils::trimSlashes(cleanSubpath);
-	
-// 	return (cleanRoot + '/' + cleanSubpath);
-// }
-
-std::string ProcessRequest::createPath()
-{
-	if (!_request)
-		throw HttpErrorException(500);
-
-	std::string locationPath = _location.getPath();
-	std::string target = _request->getTarget();
-	std::string root = selectRoot();
-
-	if (target.find(locationPath) != 0)
-		throw HttpErrorException(404);
-
-	std::string relativePath = target.substr(locationPath.size());
-	HttpUtils::trimFinalSlash(root);
-	HttpUtils::trimSlashes(relativePath);
-
-	return (root + '/' + relativePath);
-}
-
-std::string ProcessRequest::createPostPath()
-{
-	if (!_request)
-		throw HttpErrorException(500);
-
-	std::string root = selectRoot();
-	std::string locationPath = _location.getUploadPath();
-	HttpUtils::trimFinalSlash(root);
-	HttpUtils::trimSlashes(locationPath);
-
-	return (root + '/' + locationPath);
 }

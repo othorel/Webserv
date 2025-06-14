@@ -47,22 +47,23 @@ class ProcessRequest
 		void waitHeaders();
 		void handleMethod();
 		void waitBody();
-		void sendHeaders();		// void reset(const HttpRequest & request, const std::vector<ServerConfig> & serverVector);
+		void sendHeaders();
 
 		void sendBody();
 
 		void deleteHandler();
 		void getHandler();
 		void postHandler();
+		void cgiHandler();
 
 		void buildResponse(int statusCode, const std::map<std::string, std::string> & headers, const std::string & body);
+		void addFinalHeaders();
 		void buildRedirect();
 		// void buildError(int statusCode, const ServerConfig & server, const Location * location);
 
 		void checkMethodValidity();
 		std::string createPath();
 		std::string createPostPath();
-		void cgiGetHandler(const std::string & path);
 		
 	public :
 		
