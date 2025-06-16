@@ -1,58 +1,156 @@
+#include <iostream>
+#include <sstream>
 #include "../../include/cgi/CGIHandler.hpp"
+#include "../../include/http/HttpErrorException.hpp"
+#include "../../include/http/HttpResponse.hpp"
+#include "../../include/http/HttpUtils.hpp"
 
-CGIHandler::CGIHandler(
-	const std::string& scriptPath,
-	const std::string& method,
-	const std::string& queryString,
-	const std::string& body,
-	const std::map<std::string, std::string>& headers
-) : _scriptPath(scriptPath),
-	_method(method),
-	_queryString(queryString),
-	_body(body),
-	_headers(headers)
+static void trimWhiteSpaces(std::string & string);
+static void stringToLower(std::string & string);
+
+/* ************************************************************************** */
+/*                                   constructors                             */
+/* ************************************************************************** */
+
+CGIHandler::CGIHandler() :
+	_request(),
+	_scriptPath(""),
+	_queryString(""),
+	_response()
 {}
 
-std::vector<std::string> CGIHandler::buildEnv() const {
+CGIHandler::CGIHandler(const HttpRequest & request, const std::string & scriptPath) :
+	_request(request),
+	_scriptPath(scriptPath),
+	_queryString(""),
+	_response()
+{
+	buildResponse();
+}
+
+CGIHandler::CGIHandler(const CGIHandler & other) :
+	_request(other._request),
+	_scriptPath(other._scriptPath),
+	_queryString(other._queryString),
+	_response(other._response)
+{}
+
+/* ************************************************************************** */
+/*                                    operators                               */
+/* ************************************************************************** */
+
+CGIHandler & CGIHandler::operator=(const CGIHandler & other)
+{
+	if (this != &other) {
+		_request = other._request;
+		_scriptPath = other._scriptPath;
+		_queryString = other._queryString;
+		_response = other._response;
+	}
+	return (*this);
+}
+
+/* ************************************************************************** */
+/*                                 build response                             */
+/* ************************************************************************** */
+
+void CGIHandler::buildResponse()
+{
+	std::string rawResponse = execute();
+
+	std::cout << "IN CGI RAW RESPONSE : " << rawResponse << std::endl;
+
+	size_t pos = rawResponse.find("\r\n\r\n");
+	if (pos == std::string::npos) {
+		std::cout << "HERE DID NOT FOUND \\r\\n\\r\\n" << std::endl;
+		throw HttpErrorException(500);
+	}
+	
+	std::string headersPart = rawResponse.substr(0, pos);
+	std::string body = rawResponse.substr(pos + 4);
+
+	std::map<std::string, std::string> headers;
+	std::istringstream headersStream(headersPart);
+	std::string line;
+	while (std::getline(headersStream, line)) {
+		pos = line.find(':');
+		if (pos != std::string::npos) {
+			if (line[line.size() - 1] == '\r')
+				line.erase(line.size() - 1);
+			std::string key = line.substr(0, pos);
+			trimWhiteSpaces(key);
+			stringToLower(key);
+			std::string value = line.substr(pos + 1);
+			trimWhiteSpaces(value);
+			headers[key] = value;
+		}
+	}
+	int status = 200;
+	if (headers.find("status") != headers.end())
+		status = HttpUtils::stringToInt(headers["status"]);
+	_response = HttpResponse(_request.getVersion(), status, headers, body);
+}
+
+std::vector<std::string> CGIHandler::buildEnv()
+{
 	std::vector<std::string> env;
 
 	env.push_back("GATEWAY_INTERFACE=CGI/1.1");
-	env.push_back("REQUEST_METHOD=" + _method);
+	env.push_back("REQUEST_METHOD=" + _request.getMethod());
 	env.push_back("SCRIPT_FILENAME=" + _scriptPath);
 	env.push_back("QUERY_STRING=" + _queryString);
-	env.push_back("SERVER_PROTOCOL=HTTP/1.1");
+	env.push_back("SERVER_PROTOCOL=" + _request.getVersion());
 	env.push_back("SERVER_SOFTWARE=MiniWebServ/1.0");
 
 	std::map<std::string, std::string>::const_iterator it;
-	it =_headers.find("Content-Type");
-	if (it != _headers.end())
+	it =_request.getHeaders().find("Content-Type");
+	if (it != _request.getHeaders().end())
 		env.push_back("CONTENT_TYPE=" + it->second);
-	it =_headers.find("Content-Length");
-	if (it != _headers.end())
+	it =_request.getHeaders().find("Content-Length");
+	if (it != _request.getHeaders().end())
 		env.push_back("CONTENT_LENGTH=" + it->second);
 	return (env);
 }
 
-std::string CGIHandler::execute() {
+std::string CGIHandler::execute()
+{
+	size_t pos = _request.getTarget().find('?');
+	if (pos == std::string::npos)
+		_queryString = "";
+	else
+		_queryString = _request.getTarget().substr(pos + 1);
+
 	int inputPipe[2];
 	int outputPipe[2];
-	if (pipe(inputPipe) == -1 || pipe(outputPipe) == -1)
-		throw CGIException("Failed to create pipes");
+	if (pipe(inputPipe) == -1 || pipe(outputPipe) == -1) {
+		std::cout << "CGI PIPE ERROR" << std::endl;
+		throw HttpErrorException(500);
+	}
+
 	pid_t pid = fork();
-	if (pid < 0)
-		throw CGIException("Fork failed");
+	if (pid < 0) {
+		std::cout << "CGI FORK ERROR" << std::endl;
+		throw HttpErrorException(500);
+	}
+
 	if (pid == 0) {
 		dup2(inputPipe[0], STDIN_FILENO);
 		dup2(outputPipe[1], STDOUT_FILENO);
 		close(inputPipe[1]);
 		close(outputPipe[0]);
+
 		std::vector<std::string> envVec = buildEnv();
 		std::vector<char*> envp;
 		for (size_t i = 0; i < envVec.size(); i++)
 			envp.push_back(const_cast<char*>(envVec[i].c_str()));
 		envp.push_back(NULL);
+
+		// debug bloc
+		// std::cout << "IN CGI SCRIPT :" << std::endl;
+		// std::cout << "QUERY STRING : " << _queryString << std::endl;
+		// std::cout << "PATH : " << _scriptPath << std::endl;
+	
 		char* av[] = {const_cast<char*>(_scriptPath.c_str()), NULL};
-		std::cerr << "Trying to execve: " << _scriptPath << std::endl;
 		execve(_scriptPath.c_str(), av, &envp[0]);
 		perror("execve");
 		exit(1);
@@ -60,19 +158,100 @@ std::string CGIHandler::execute() {
 	else {
 		close(inputPipe[0]);
 		close(outputPipe[1]);
-		if (_method == "POST" && !_body.empty())
-			write(inputPipe[1], _body.c_str(), _body.size());
+		if (_request.getMethod() == "POST" && !_request.getBody().empty())
+			write(inputPipe[1], _request.getBody().c_str(), _request.getBody().size());
 		close(inputPipe[1]);
+
 		char buffer[4096];
 		std::string result;
 		ssize_t bytes;
 		while ((bytes = read(outputPipe[0], buffer, sizeof(buffer))) > 0)
 			result.append(buffer, bytes);
 		close(outputPipe[0]);
+
 		int status;
 		waitpid(pid, &status, 0);
-		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
-			throw CGIException("CGI script execution failed");
-		return (result);
+		// if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+		// 	std::cerr << "CGI script exited abnormally." << std::endl;
+		// 	std::cerr << "WIFEXITED = " << WIFEXITED(status) << std::endl;
+		// 	std::cerr << "Exit code = " << WEXITSTATUS(status) << std::endl;
+		// 	std::cerr << "Script output:\n" << result << std::endl;
+		// 	throw HttpErrorException(500);
+		// }
+		return result;
 	}
 }
+
+/* ************************************************************************** */
+/*                                     getters                                */
+/* ************************************************************************** */
+
+const HttpResponse & CGIHandler::getHttpResponse()
+{
+	return (_response);
+}
+
+/* ************************************************************************** */
+/*                              non member functions                          */
+/* ************************************************************************** */
+
+static void trimWhiteSpaces(std::string & string)
+{
+	if (string.empty())
+		return ;
+
+	while (!string.empty() && (string[0] == ' ' || string[0] == '\t'))
+		string.erase(0, 1);
+	while (!string.empty() && (string[string.size() - 1] == ' ' || string[string.size() - 1] == '\t'))
+		string.erase(string.size() - 1);
+}
+
+static void stringToLower(std::string & string)
+{
+	for (size_t i = 0; i < string.size(); ++i)
+		string[i] = static_cast<char>(std::tolower(string[i]));
+}
+
+// std::string CGIHandler::execute() {
+// 	int inputPipe[2];
+// 	int outputPipe[2];
+// 	if (pipe(inputPipe) == -1 || pipe(outputPipe) == -1)
+// 		throw CGIException("Failed to create pipes");
+// 	pid_t pid = fork();
+// 	if (pid < 0)
+// 		throw CGIException("Fork failed");
+// 	if (pid == 0) {
+// 		dup2(inputPipe[0], STDIN_FILENO);
+// 		dup2(outputPipe[1], STDOUT_FILENO);
+// 		close(inputPipe[1]);
+// 		close(outputPipe[0]);
+// 		std::vector<std::string> envVec = buildEnv();
+// 		std::vector<char*> envp;
+// 		for (size_t i = 0; i < envVec.size(); i++)
+// 			envp.push_back(const_cast<char*>(envVec[i].c_str()));
+// 		envp.push_back(NULL);
+// 		char* av[] = {const_cast<char*>(_scriptPath.c_str()), NULL};
+// 		std::cerr << "Trying to execve: " << _scriptPath << std::endl;
+// 		execve(_scriptPath.c_str(), av, &envp[0]);
+// 		perror("execve");
+// 		exit(1);
+// 	}
+// 	else {
+// 		close(inputPipe[0]);
+// 		close(outputPipe[1]);
+// 		if (_method == "POST" && !_body.empty())
+// 			write(inputPipe[1], _body.c_str(), _body.size());
+// 		close(inputPipe[1]);
+// 		char buffer[4096];
+// 		std::string result;
+// 		ssize_t bytes;
+// 		while ((bytes = read(outputPipe[0], buffer, sizeof(buffer))) > 0)
+// 			result.append(buffer, bytes);
+// 		close(outputPipe[0]);
+// 		int status;
+// 		waitpid(pid, &status, 0);
+// 		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+// 			throw CGIException("CGI script execution failed");
+// 		return (result);
+// 	}
+// }

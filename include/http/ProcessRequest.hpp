@@ -28,6 +28,7 @@ class ProcessRequest
 		std::vector<ServerConfig>	_serversVector;
 		ProcessStatus				_processStatus;
 		ServerConfig				_server;
+		int							_serverTimeout;
 		Location					_location;
 		std::string					_inputData;
 		std::string					_outputData;
@@ -46,15 +47,17 @@ class ProcessRequest
 		void waitHeaders();
 		void handleMethod();
 		void waitBody();
-		void sendHeaders();		// void reset(const HttpRequest & request, const std::vector<ServerConfig> & serverVector);
+		void sendHeaders();
 
 		void sendBody();
 
 		void deleteHandler();
 		void getHandler();
 		void postHandler();
+		void cgiHandler();
 
 		void buildResponse(int statusCode, const std::map<std::string, std::string> & headers, const std::string & body);
+		void addFinalHeaders();
 		void buildRedirect();
 		// void buildError(int statusCode, const ServerConfig & server, const Location * location);
 
@@ -72,6 +75,7 @@ class ProcessRequest
 
 		ProcessStatus getProcessStatus() const;
 		const ServerConfig & getServer() const;
+		int getServerTimeout() const;
 		std::string process(std::string data);
 		void reset();
 

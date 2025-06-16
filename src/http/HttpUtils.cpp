@@ -3,6 +3,7 @@
 #include <sstream>
 #include <ctime>
 #include <iomanip>
+#include <iostream>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <map>
@@ -182,6 +183,10 @@ std::string HttpUtils::getMimeType(const std::string & path)
 	if (dot == std::string::npos) {
 		return ("application/octet-stream"); }
 	std::string extension = path.substr(dot +1);
+	stringToLower(extension);
+
+	//debug
+	std::cout << "EXTENSION : " << extension << std::endl;
 
 	static std::map<std::string, std::string> extensionMap;
 	if (extensionMap.empty()) {
@@ -259,4 +264,10 @@ void HttpUtils::trimSlashes(std::string & string)
 		string.erase(0, 1);
 	if (!string.empty() && string[string.size() - 1] == '/')
 		string.erase(string.size() - 1);
+}
+
+void HttpUtils::stringToLower(std::string & string)
+{
+	for (size_t i = 0; i < string.size(); ++i)
+		string[i] = static_cast<char>(std::tolower(string[i]));
 }

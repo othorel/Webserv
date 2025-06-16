@@ -101,21 +101,3 @@ std::string HttpResponse::toRawString() const
 	oss << "\r\n" << _body;
 	return (oss.str());
 }
-
-/* ************************************************************************** */
-/*                                      tests                                 */
-/* ************************************************************************** */
-
-// Uncomment the main and include and compile with:
-// g++ HttpResponse.cpp httpUtils.cpp
-
-// #include <iostream>
-// int main()
-// {
-// 	std::map<std::string, std::string> headers;
-// 	headers["Content-Type"] = "text/plain";
-// 	headers["Content-Length"] = "13";
-
-// 	HttpResponse res("HTTP/1.1", 200, headers, "Hello, world!");
-// 	std::cout << res.toRawString() << std::endl;
-// }

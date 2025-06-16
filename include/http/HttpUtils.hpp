@@ -20,7 +20,6 @@ class HttpUtils
 		static bool isDirectory(const std::string & path);
 		static bool isRegularFile(const std::string & path);
 		static bool fileExists(const std::string & path);
-		static std::string generateAutoIndex(const std::string & dirPath, const std::string & uriPath);
 		static std::string httpStatusMessage(int code);
 		static int stringToInt(std::string string);
 		static std::string getCurrentDate();
@@ -31,6 +30,7 @@ class HttpUtils
 		static std::string generateUniqueTimestamp();
 		static void trimFinalSlash(std::string & string);
 		static void trimSlashes(std::string & string);
+		static void stringToLower(std::string & string);
 
 		template<typename T>
 		static std::string numberToString(T value)

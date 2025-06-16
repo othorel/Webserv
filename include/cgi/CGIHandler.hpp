@@ -11,42 +11,31 @@
 # include <cstdio>
 # include <iostream>
 
-class CGIHandler {
+# include "../http/HttpRequest.hpp"
+# include "../http/HttpResponse.hpp"
+
+class CGIHandler
+{
 
 	private:
 
-		std::string _scriptPath;
-		std::string _method;
-		std::string _queryString;
-		std::string _body;
-		std::map<std::string, std::string> _headers;
-
-		std::vector<std::string> buildEnv() const;
+		HttpRequest		_request;
+		std::string		_scriptPath;
+		std::string		_queryString;
+		HttpResponse	_response;
+		
+		void buildResponse();
+		std::string execute();
+		std::vector<std::string> buildEnv();
 
 	public:
 
-		CGIHandler(
-			const std::string& scriptPath,
-			const std::string& method,
-			const std::string& queryString,
-			const std::string& body,
-			const std::map<std::string, std::string>& headers
-		);
-		std::string execute();
-	
-	class CGIException : public std::exception {
+		CGIHandler();
+		CGIHandler(const HttpRequest & request, const std::string & scriptPath);
+		CGIHandler(const CGIHandler & other);
+		CGIHandler & operator=(const CGIHandler & other);
 
-		private:
-
-			std::string _msg;
-
-		public:
-
-			CGIException(const std::string& msg) : _msg(msg) {}
-			virtual ~CGIException() throw() {}
-			virtual const char* what() const throw() {return _msg.c_str(); }
-	};
-		
+		const HttpResponse & getHttpResponse();
 };
 
 #endif

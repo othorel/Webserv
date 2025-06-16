@@ -162,8 +162,8 @@ void	Server::acceptNewConnexion(int fd)
 
 void	Server::handleEvent(int fdClient, size_t & i)
 {
-	try
-	{
+	// try
+	// {
 		int		status = 0;
 		logTime();
 		std::cout << "[INFO] Reading from client "
@@ -202,13 +202,13 @@ void	Server::handleEvent(int fdClient, size_t & i)
 			supressClient(fdClient, i);
 			return;
 		}
-	}
-	catch (const HttpErrorException& e)
-	{
-	 	std::cerr << e.what() << " " << e.getStatusCode() << std::endl;
-		supressClient(fdClient, i);
-	 	return;
-	}
+	// }
+	// catch (const HttpErrorException& e)
+	// {
+	//  	std::cerr << e.what() << " " << e.getStatusCode() << std::endl;
+	// 	supressClient(fdClient, i);
+	//  	return;
+	// }
 }
 
 void	Server::checkTimeOut(int fdClient, size_t & i)

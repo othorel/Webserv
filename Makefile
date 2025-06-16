@@ -15,6 +15,7 @@ SRC     := $(SRCDIR)/config/ConfigParser.cpp     \
 		   $(SRCDIR)/server/Server.cpp           \
 		   $(SRCDIR)/server/PollManager.cpp      \
 		   $(SRCDIR)/server/Connexion.cpp        \
+		   $(SRCDIR)/cgi/CGIHandler.cpp        \
 		   $(SRCDIR)/main.cpp					 \
 		   
 		
