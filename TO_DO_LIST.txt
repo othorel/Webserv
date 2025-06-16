@@ -1,26 +1,10 @@
-A vérifier dans le parsing :
-que dans le parsing du fichier de config, si une location a une méthode POST elle doit obligatoirement avoir un upload_path valide
+- toLower dans Exit du serveur
+- timeout dans serveur
+- config par default
 
-Dans la boucle du serveur qui reçoit les requetes :
-créer le ParseRequest dans un try / catch et attraper l'exception pour faire appel au HttpRequest::buildError
-en lui transmettant le code d'erreur de l'exception (mais il sera peut etre nécessaire de modifier ou surcharger builError)
+- verif content-lenght (bodyMax) dans Http 
+- faire fonctionner POST dans cgi
 
-Transformer la classe RequestParser pour allouer dynamiquement son HttpRequest :
-Avoir une méthode pour transférer la propriété:
-HttpRequest *release() {
-	HttpRequest *temp = _httpRequest;
-	_httpRequest = NULL; // empêche le destructeur de delete
-	return temp;         // transfert de propriété
-}
+- erreurs http a catch pour lancer une reponse d erreur
 
-Classe pour envoyer le body par paquets à créer :
-class ResponseSender {
-public:
-    ResponseSender(const HttpResponse& resp);
-    bool sendNextChunk(int client_fd); // Appelable dans une boucle
-private:
-    int file_fd;
-    size_t offset;
-    // etc.
-};
-
+- parse config : erreur si pas de location et serveur
