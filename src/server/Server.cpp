@@ -8,6 +8,8 @@
 #include "../../include/http/ProcessRequest.hpp"
 #include "../../include/http/HttpErrorException.hpp"
 
+static void	strToLower(char *str);
+
 ////////////////////////////////////////////////////////////////////////////////
 ///                               CANONIC +                                  ///
 ////////////////////////////////////////////////////////////////////////////////
@@ -114,7 +116,8 @@ void	Server::StartEventLoop()
 					if (fgets(buffer, sizeof(buffer), stdin))
 					{
 						buffer[strcspn(buffer, "\n")] = 0;
-						if (strcmp(buffer, "Exit") == 0)
+						strToLower(buffer);
+						if (strcmp(buffer, "exit") == 0)
 							return;
 					}
 				}
@@ -302,5 +305,14 @@ void	Server::announce() const
 	std::cout << "\n\n";
 	logTime();
 	std::cout << "[INFO] Server successfully launched\n\n" << std::endl;
+}
+
+void strToLower(char *str)
+{
+	while (*str)
+	{
+		*str = (char)tolower((unsigned char)*str);
+		str++;
+	}
 }
 
