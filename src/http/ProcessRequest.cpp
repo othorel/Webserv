@@ -184,11 +184,9 @@ void ProcessRequest::waitHeaders()
 		std::string bodyPart = _inputData.substr(pos + 4);
 		RequestParser parser(headersPart);
 		_request = parser.release();
+
 		if (_request->getContentLength() > _server.getClientMaxBodySize())
 			throw HttpErrorException(413);
-
-		// debug
-		_request->debug();
 		
 		_inputData = bodyPart;
 		selectServer();
@@ -260,15 +258,7 @@ void ProcessRequest::waitBody()
 	}
 	// if body is not a file to upload
 	else {
-		// debug
-		std::cout << "IN WAIT BODY :" <<std::endl;
-		std::cout << "input data : " << _inputData << std::endl;
-		std::cout << "body before append : " << _request->getBody() << std::endl;
-
 		size_t remainingBytes = _request->getContentLength() - _request->getBody().size();
-
-		// debug
-		std::cout << "remainning bytes : " << remainingBytes << std::endl;
 
 		std::string dataToAppend;
 		if (_inputData.size() <= remainingBytes)
@@ -276,14 +266,7 @@ void ProcessRequest::waitBody()
 		else
 			dataToAppend = _inputData.substr(0, remainingBytes);
 
-		// debug
-		std::cout << "bytes to add : " << dataToAppend << std::endl;
-
 		_request->AppendBody(dataToAppend);
-
-		// debug
-		std::cout << "body after append : " << _request->getBody() << std::endl;
-		_request->debug();
 
 		_inputData.clear();
 		
@@ -311,22 +294,10 @@ void ProcessRequest::sendHeaders()
 	
 	_outputData = _httpResponse.toRawString();
 
-	// debug
-	// std::cout << "OUTPUT HEADERS IN SEND HEADERS :\n" << _outputData << std::endl;
-	// std::map<std::string, std::string> headers = _httpResponse.getHeaders();
-	// std::map<std::string, std::string>::const_iterator cit = headers.begin();
-	// for (; cit != headers.end(); ++cit) {
-	// 	std::cout << cit->first << ": " << cit->second << std::endl;
-	// }
-
 	if (_file != NULL)
-	{
 		_processStatus = SENDING_BODY;
-	}
-	else {
-		std::cout << "DONE" << std::endl;
+	else
 		_processStatus = DONE;
-	}
 }
 
 // From status SENDING_BODY to DONE
@@ -433,20 +404,12 @@ void ProcessRequest::postHandler()
 		&& _request->getHeaderValue("content-type").find("multipart/form-data") == 0
 		&& _request->getHeaderValue("content-type").find("boundary") != std::string::npos) {
 		path = createUploadPath();
-
-		// debug
-		std::cout << "PATH IS " << path << std::endl;
-
 		checkPostValidity(path);
 		std::string filepath = createUploadFilename(*_request, path);
 		_file = new File(filepath, true);
 	}
 	else {
 		path = createPath();
-
-		// debug
-		std::cout << "PATH IS " << path << std::endl;
-
 		checkPostValidity(path);
 	}
 
@@ -646,6 +609,13 @@ void ProcessRequest::selectServer()
 {
 	if (!_request)
 		throw HttpErrorException(500);
+
+	// debug
+	std::cout << "SERVER VECTOR : " << std::endl;
+	std::vector<ServerConfig>::const_iterator cit = _serversVector.begin();
+	for (; cit != _serversVector.end(); ++cit) {
+		std::cout << "server listening : " << cit->getListen().first << ":" << cit->getListen().second << std::endl;
+	}
 	
 	const std::map<std::string, std::string> & headers = _request->getHeaders();
 	std::map<std::string, std::string>::const_iterator headersCit = headers.find("host"); 

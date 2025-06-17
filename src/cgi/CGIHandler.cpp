@@ -31,7 +31,6 @@ CGIHandler::CGIHandler(const HttpRequest & request, const std::string & path) :
 	else
 		_queryString = path.substr(pos + 1);
 	_scriptPath = _scriptPath.substr(0, pos);
-	std::cout << "IN CGIHANDLER CONOSTRUCTOR : \n" << "Path = " << path << "\nscriptPath = " << _scriptPath << "\nqueryString = " << _queryString << std::endl;
 	buildResponse();
 }
 
@@ -65,13 +64,10 @@ void CGIHandler::buildResponse()
 {
 	std::string rawResponse = execute();
 
-	std::cout << "IN CGI RAW RESPONSE : " << rawResponse << std::endl;
 
 	size_t pos = rawResponse.find("\r\n\r\n");
-	if (pos == std::string::npos) {
-		std::cout << "HERE DID NOT FOUND \\r\\n\\r\\n" << std::endl;
+	if (pos == std::string::npos)
 		throw HttpErrorException(500);
-	}
 	
 	std::string headersPart = rawResponse.substr(0, pos);
 	std::string body = rawResponse.substr(pos + 4);
@@ -123,16 +119,12 @@ std::string CGIHandler::execute()
 {
 	int inputPipe[2];
 	int outputPipe[2];
-	if (pipe(inputPipe) == -1 || pipe(outputPipe) == -1) {
-		std::cout << "CGI PIPE ERROR" << std::endl;
+	if (pipe(inputPipe) == -1 || pipe(outputPipe) == -1)
 		throw HttpErrorException(500);
-	}
 
 	pid_t pid = fork();
-	if (pid < 0) {
-		std::cout << "CGI FORK ERROR" << std::endl;
+	if (pid < 0)
 		throw HttpErrorException(500);
-	}
 
 	if (pid == 0) {
 		dup2(inputPipe[0], STDIN_FILENO);
@@ -172,13 +164,13 @@ std::string CGIHandler::execute()
 
 		int status;
 		waitpid(pid, &status, 0);
-		// if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-		// 	std::cerr << "CGI script exited abnormally." << std::endl;
-		// 	std::cerr << "WIFEXITED = " << WIFEXITED(status) << std::endl;
-		// 	std::cerr << "Exit code = " << WEXITSTATUS(status) << std::endl;
-		// 	std::cerr << "Script output:\n" << result << std::endl;
-		// 	throw HttpErrorException(500);
-		// }
+		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+			std::cerr << "CGI script exited abnormally." << std::endl;
+			std::cerr << "WIFEXITED = " << WIFEXITED(status) << std::endl;
+			std::cerr << "Exit code = " << WEXITSTATUS(status) << std::endl;
+			std::cerr << "Script output:\n" << result << std::endl;
+			throw HttpErrorException(500);
+		}
 		return result;
 	}
 }
