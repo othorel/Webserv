@@ -55,7 +55,8 @@ class ProcessRequest
 		void deleteHandler();
 		void getHandler();
 		void postHandler();
-		void cgiHandler();
+		void cgiGetHandler();
+		void cgiPostHandler();
 
 		void buildResponse(int statusCode, const std::map<std::string, std::string> & headers, const std::string & body);
 		void addFinalHeaders();
@@ -64,7 +65,8 @@ class ProcessRequest
 
 		void checkMethodValidity();
 		std::string createPath();
-		std::string createPostPath();
+		std::string createUploadPath();
+		void checkPostValidity(const std::string & path);
 		
 	public :
 		

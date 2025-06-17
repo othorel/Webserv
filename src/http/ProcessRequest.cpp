@@ -19,10 +19,7 @@ static void checkDeleteValidity(const std::string & path);
 static std::string createIndexPath(std::string path, const Location & location);
 static std::string generateAutoIndex(const std::string & dirPath, const std::string & uriPath);
 static std::string sanitizeFilenamePart(const std::string & input);
-static void checkPostValidity(
-	const HttpRequest & request, const Location & location ,
-	const ServerConfig & server, const std::string & path);
-static std::string createPostFileName(
+static std::string createUploadFilename(
 	const HttpRequest & request, const std::string & path);
 static bool isCgi(const std::string & path);
 
@@ -189,7 +186,10 @@ void ProcessRequest::waitHeaders()
 		_request = parser.release();
 		if (_request->getContentLength() > _server.getClientMaxBodySize())
 			throw HttpErrorException(413);
+
+		// debug
 		_request->debug();
+		
 		_inputData = bodyPart;
 		selectServer();
 		_serverTimeout = _server.getSessionTimeout();
@@ -206,9 +206,6 @@ void ProcessRequest::handleMethod()
 {
 	if (_processStatus != HANDLING_METHOD)
 		return ;
-		
-	if (isCgi(_request->getTarget()))
-		cgiHandler();
 
 	selectHandler();
 	if (!_handler)
@@ -219,6 +216,9 @@ void ProcessRequest::handleMethod()
 // From status WAITING_BODY to SENDING_HEADERS
 void ProcessRequest::waitBody()
 {
+	// debug
+	std::cout << "WAITBODY" << std::endl;
+
 	if (_processStatus  != WAITING_BODY)
 		return ;
 
@@ -260,15 +260,43 @@ void ProcessRequest::waitBody()
 	}
 	// if body is not a file to upload
 	else {
+		// debug
+		std::cout << "IN WAIT BODY :" <<std::endl;
+		std::cout << "input data : " << _inputData << std::endl;
+		std::cout << "body before append : " << _request->getBody() << std::endl;
+
 		size_t remainingBytes = _request->getContentLength() - _request->getBody().size();
-		std::string bytesToAdd;
+
+		// debug
+		std::cout << "remainning bytes : " << remainingBytes << std::endl;
+
+		std::string dataToAppend;
 		if (_inputData.size() <= remainingBytes)
-			bytesToAdd = _inputData;
+			dataToAppend = _inputData;
 		else
-			bytesToAdd = _inputData.substr(0, remainingBytes);
-		_request->AppendBody(bytesToAdd);
+			dataToAppend = _inputData.substr(0, remainingBytes);
+
+		// debug
+		std::cout << "bytes to add : " << dataToAppend << std::endl;
+
+		_request->AppendBody(dataToAppend);
+
+		// debug
+		std::cout << "body after append : " << _request->getBody() << std::endl;
+		_request->debug();
+
 		_inputData.clear();
+		
 		if (_request->getBody().size() >= _request->getContentLength()) {
+			if (isCgi(createPath())) {
+					std::string path = createPath();
+					CGIHandler cgi(*_request, path);
+					_httpResponse = cgi.getHttpResponse();
+					addFinalHeaders();
+					_processStatus = SENDING_HEADERS;
+					sendHeaders();
+					return ;
+			}
 			_processStatus = SENDING_HEADERS;
 			sendHeaders();
 		}
@@ -398,22 +426,35 @@ void ProcessRequest::postHandler()
 	if (_processStatus != HANDLING_METHOD)
 		return ;
 
-	std::string path = createPostPath();
-
-	checkPostValidity(*_request, _location, _server, path);
-
-	std::string filepath = createPostFileName(*_request, path);
-
 	if (_file)
 		throw HttpErrorException(500);
-	if (_request->hasHeader("content-type") && _request->getHeaderValue("content-type").find("multipart/form-data") == 0 && _request->getHeaderValue("content-type").find("boundary") != std::string::npos)
+	std::string path;
+	if (_request->hasHeader("content-type")
+		&& _request->getHeaderValue("content-type").find("multipart/form-data") == 0
+		&& _request->getHeaderValue("content-type").find("boundary") != std::string::npos) {
+		path = createUploadPath();
+
+		// debug
+		std::cout << "PATH IS " << path << std::endl;
+
+		checkPostValidity(path);
+		std::string filepath = createUploadFilename(*_request, path);
 		_file = new File(filepath, true);
+	}
+	else {
+		path = createPath();
+
+		// debug
+		std::cout << "PATH IS " << path << std::endl;
+
+		checkPostValidity(path);
+	}
 
 	_processStatus = WAITING_BODY;
 	waitBody();
 }
 
-void ProcessRequest::cgiHandler()
+void ProcessRequest::cgiGetHandler()
 {
 	std::string path = createPath();
 
@@ -423,6 +464,11 @@ void ProcessRequest::cgiHandler()
 
 	_processStatus = SENDING_HEADERS;
 	sendHeaders();
+}
+
+void ProcessRequest::cgiPostHandler()
+{
+
 }
 
 /* ************************************************************************** */
@@ -466,7 +512,9 @@ void ProcessRequest::selectHandler()
 		throw HttpErrorException(500);
 
 	const std::string & method = _request->getMethod();
-	if (method == "DELETE")
+	if (isCgi(_request->getTarget()) && method == "GET")
+		_handler = &ProcessRequest::cgiGetHandler;
+	else if (method == "DELETE")
 		_handler = &ProcessRequest::deleteHandler;
 	else if (method == "POST")
 		_handler = &ProcessRequest::postHandler;
@@ -650,7 +698,7 @@ std::string ProcessRequest::createPath()
 	return (root + '/' + relativePath);
 }
 
-std::string ProcessRequest::createPostPath()
+std::string ProcessRequest::createUploadPath()
 {
 	if (!_request)
 		throw HttpErrorException(500);
@@ -661,6 +709,24 @@ std::string ProcessRequest::createPostPath()
 	HttpUtils::trimSlashes(locationPath);
 
 	return (root + '/' + locationPath);
+}
+
+void ProcessRequest::checkPostValidity(const std::string & path)
+{
+	if (_file) {
+		if (_location.getUploadPath().empty())
+			throw HttpErrorException(500);
+		if (!HttpUtils::isDirectory(path))
+			throw HttpErrorException(500);
+		if (!HttpUtils::hasWritePermission(path))
+			throw HttpErrorException(403);
+	}
+	else {
+		if (!HttpUtils::fileExists(path))
+			throw HttpErrorException(404);
+	}
+	if (_request->getContentLength() > (_server.getClientMaxBodySize())) {
+		throw HttpErrorException(413); }
 }
 
 /* ************************************************************************** */
@@ -708,22 +774,6 @@ static std::string generateAutoIndex(const std::string & dirPath, const std::str
 	return (html.str());
 }
 
-static void checkPostValidity(
-	const HttpRequest & request, const Location & location ,
-	const ServerConfig & server, const std::string & path)
-{
-	if (location.getUploadPath().empty()) {
-		throw HttpErrorException(403); }
-	if (request.getContentLength() > (server.getClientMaxBodySize())) {
-		throw HttpErrorException(413); }
-	if (!HttpUtils::fileExists(path)) {
-		throw HttpErrorException(404); }
-	if (!HttpUtils::isDirectory(path)) {
-		throw HttpErrorException(403); }
-	if (!HttpUtils::hasWritePermission(path)) {
-		throw HttpErrorException(403); }
-}
-
 static std::string sanitizeFilenamePart(const std::string & input)
 {
 	std::string result;
@@ -738,7 +788,7 @@ static std::string sanitizeFilenamePart(const std::string & input)
 	return (result);
 }
 
-static std::string createPostFileName(
+static std::string createUploadFilename(
 	const HttpRequest & request, const std::string & path)
 {
 	std::string extension;
