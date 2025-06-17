@@ -222,38 +222,56 @@ void ProcessRequest::waitBody()
 	if (_processStatus  != WAITING_BODY)
 		return ;
 
-	if (!_request || !_file)
+	if (!_request)
 		throw HttpErrorException(500);
 
-	size_t remainingBytes = _request->getContentLength() - _file->getOffset();
-	size_t bytesToWrite = (_inputData.size() > remainingBytes) ? remainingBytes : _inputData.size();
-	if (bytesToWrite) {
-		if (_file->WriteChunk(_inputData.c_str(), bytesToWrite) != bytesToWrite)
-			throw HttpErrorException(500);
-	}
-	_inputData.clear();
-
-	if (_file->getOffset() >= _request->getContentLength()) {
-		std::map<std::string, std::string> headers;
-		std::string relativePath = _location.getUploadPath();
-		if (!relativePath.empty() && relativePath[relativePath.size() - 1] != '/') {
-			relativePath += "/"; }
-		relativePath += _file->getPath().substr(_file->getPath().find_last_of("/") + 1);
-		headers["location"] = relativePath;
-		headers["content-type"] = "text/html";
-		std::string body =
-			"<html><body><h1>201 Created</h1>\n"
-			"<p>The resource has been successfully created.</p>\n"
-			"<a href=\"" + relativePath  + "\">See file</a>\n"
-			"</body></html>";
-		headers["content-length"] = HttpUtils::numberToString(body.length());
-		buildResponse(201, headers, body);
-		if (_file) {
-			delete _file;
-			_file = NULL;
+	// if body is a file to upload
+	if (_file) {
+		size_t remainingBytes = _request->getContentLength() - _file->getOffset();
+		size_t bytesToWrite = (_inputData.size() > remainingBytes) ? remainingBytes : _inputData.size();
+		if (bytesToWrite) {
+			if (_file->WriteChunk(_inputData.c_str(), bytesToWrite) != bytesToWrite)
+				throw HttpErrorException(500);
 		}
-		_processStatus = SENDING_HEADERS;
-		sendHeaders();
+		_inputData.clear();
+
+		if (_file->getOffset() >= _request->getContentLength()) {
+			std::map<std::string, std::string> headers;
+			std::string relativePath = _location.getUploadPath();
+			if (!relativePath.empty() && relativePath[relativePath.size() - 1] != '/') {
+				relativePath += "/"; }
+			relativePath += _file->getPath().substr(_file->getPath().find_last_of("/") + 1);
+			headers["location"] = relativePath;
+			headers["content-type"] = "text/html";
+			std::string body =
+				"<html><body><h1>201 Created</h1>\n"
+				"<p>The resource has been successfully created.</p>\n"
+				"<a href=\"" + relativePath  + "\">See file</a>\n"
+				"</body></html>";
+			headers["content-length"] = HttpUtils::numberToString(body.length());
+			buildResponse(201, headers, body);
+			if (_file) {
+				delete _file;
+				_file = NULL;
+			}
+			_processStatus = SENDING_HEADERS;
+			sendHeaders();
+		}
+	}
+	// if body is not a file to upload
+	else {
+		size_t remainingBytes = _request->getContentLength() - _request->getBody().size();
+		std::string bytesToAdd;
+		if (_inputData.size() <= remainingBytes)
+			bytesToAdd = _inputData;
+		else
+			bytesToAdd = _inputData.substr(0, remainingBytes);
+		_request->AppendBody(bytesToAdd);
+		_inputData.clear();
+		if (_request->getBody().size() >= _request->getContentLength()) {
+			_processStatus = SENDING_HEADERS;
+			sendHeaders();
+		}
 	}
 }
 
@@ -266,12 +284,12 @@ void ProcessRequest::sendHeaders()
 	_outputData = _httpResponse.toRawString();
 
 	// debug
-	std::cout << "OUTPUT HEADERS IN SEND HEADERS :\n" << _outputData << std::endl;
-	std::map<std::string, std::string> headers = _httpResponse.getHeaders();
-	std::map<std::string, std::string>::const_iterator cit = headers.begin();
-	for (; cit != headers.end(); ++cit) {
-		std::cout << cit->first << ": " << cit->second << std::endl;
-	}
+	// std::cout << "OUTPUT HEADERS IN SEND HEADERS :\n" << _outputData << std::endl;
+	// std::map<std::string, std::string> headers = _httpResponse.getHeaders();
+	// std::map<std::string, std::string>::const_iterator cit = headers.begin();
+	// for (; cit != headers.end(); ++cit) {
+	// 	std::cout << cit->first << ": " << cit->second << std::endl;
+	// }
 
 	if (_file != NULL)
 	{
@@ -388,7 +406,8 @@ void ProcessRequest::postHandler()
 
 	if (_file)
 		throw HttpErrorException(500);
-	_file = new File(filepath, true);
+	if (_request->hasHeader("content-type") && _request->getHeaderValue("content-type").find("multipart/form-data") == 0 && _request->getHeaderValue("content-type").find("boundary") != std::string::npos)
+		_file = new File(filepath, true);
 
 	_processStatus = WAITING_BODY;
 	waitBody();
@@ -397,15 +416,10 @@ void ProcessRequest::postHandler()
 void ProcessRequest::cgiHandler()
 {
 	std::string path = createPath();
-	std::cout << "\n\n\n\nIN CGI HANDLER PATH IS : " << path << "\n\n\n\n" << std::endl;
 
 	CGIHandler cgi(*_request, path);
 	_httpResponse = cgi.getHttpResponse();
 	addFinalHeaders();
-
-	// debug bloc
-	std::cout << "======AFTER CGI HANDLER :=======" << std::endl;
-	std::cout << _httpResponse.toRawString() << "\n" << std::endl;
 
 	_processStatus = SENDING_HEADERS;
 	sendHeaders();
