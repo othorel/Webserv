@@ -45,7 +45,7 @@ class Server
 		
 		// Setters
 		void										setServerConfig(const std::vector<ServerConfig> *servConfigVect);
-		std::vector<ServerConfig>					ActiveServConfigVect(int fd);
+		std::vector<ServerConfig>					ActiveServConfigVect(int port, std::string IP);
 		
 	private:
 		// Attributes

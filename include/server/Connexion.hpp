@@ -25,7 +25,7 @@ class Connexion
 {
 	public:
 		Connexion();
-		Connexion(int fd, sockaddr_in addr, const std::vector<ServerConfig> *_serverConfigVect);
+		Connexion(int fd, sockaddr_in addr, const std::vector<ServerConfig> _serverConfigVect);
 		Connexion(const Connexion & toCopy);
 		Connexion &operator=(const Connexion & other);
 		~Connexion();

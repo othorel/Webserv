@@ -13,15 +13,15 @@
 
 Connexion::Connexion(){}
 
-Connexion::Connexion(int fd, sockaddr_in addr, const std::vector<ServerConfig> *_serverConfigVect) :
+Connexion::Connexion(int fd, sockaddr_in addr, const std::vector<ServerConfig> _serverConfigVect) :
+keepAliveTimeOut(0),
+keepAliveMaxRequests(0),
 _fd(fd),
 _addr(addr),
 _servConfig(NULL),
+_processRequest(_serverConfigVect),
 _endPreviousRequest(0),
-_nbRequests(0),
-keepAliveMaxRequests(0),
-keepAliveTimeOut(0),
-_processRequest(*_serverConfigVect)
+_nbRequests(0)
 {
 	_startTime = std::time(NULL);
 	_bytesIn = 0;

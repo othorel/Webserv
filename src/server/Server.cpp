@@ -9,6 +9,7 @@
 #include "../../include/http/HttpErrorException.hpp"
 
 static void	strToLower(char *str);
+static int getLocalPort(int fd);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///                               CANONIC +                                  ///
@@ -154,7 +155,8 @@ void	Server::acceptNewConnexion(int fd)
 	if (clientFd < 0)
 		return;
 	_pollManager->addSocket(clientFd, POLLIN);
-	std::vector<ServerConfig> ActiveVect = ActiveServConfigVect(clientFd);
+	std::vector<ServerConfig> ActiveVect = ActiveServConfigVect(getLocalPort(fd), inet_ntoa(clientAddr.sin_addr));
+	std::cout << "activeServConfigvect size = " << ActiveVect.size() << std::endl;
 	_clientsMap[clientFd] = Connexion(clientFd, clientAddr, ActiveVect);
 	logTime();
 	
@@ -217,6 +219,7 @@ void	Server::handleEvent(int fdClient, size_t & i)
 	}
 	catch (const HttpErrorException& e)
 	{
+		std::cerr << e.what() << " " << e.getStatusCode() << std::endl;
 		handleError(e.getStatusCode(), fdClient, i);
 		return;
 	}
@@ -224,7 +227,10 @@ void	Server::handleEvent(int fdClient, size_t & i)
 
 void	Server::handleError(int errorCode, int fdClient, size_t & i)
 {
-	//std::cerr << e.what() << " " << e.getStatusCode() << std::endl;
+	(void) errorCode;
+	(void) fdClient;
+	(void) i;
+	
 	//ProcessRequest	RequestError(errorCode, *_clientsMap[fdClient].getServConfig(), _clientsMap[fdClient].getProcessRequest().selectLocation());
 
 	// std::string	processedError = RequestError.processError();
@@ -270,10 +276,8 @@ void	Server::readSocket(int fd, std::string & rawLine, size_t & i)
 	}
 }
 
-std::vector<ServerConfig> Server::ActiveServConfigVect(int fd)
+std::vector<ServerConfig> Server::ActiveServConfigVect(int Port, std::string IP)
 {
-	const std::string& 			IP = _clientsMap[fd].getIP();
-	int 						Port = _clientsMap[fd].getLocalPort();
 	std::vector<ServerConfig>	vect;
 
 	for (std::vector<ServerConfig>::const_iterator it = _serverConfigVect->begin(); it != _serverConfigVect->end(); ++it)
@@ -346,8 +350,8 @@ void	Server::supressClient(int fdClient, size_t & i)
 void	Server::initServerConfig(int fd, int & keepAliveTimeOut, int & keepAliveMaxRequests)
 {
 	_clientsMap[fd].setServConfig(&_clientsMap[fd].getProcessRequest().getServer());
-	_clientsMap[fd].keepAliveTimeOut = _clientsMap[fd].getProcessRequest().getServer().getKeepAliveTimeout();
-	_clientsMap[fd].keepAliveMaxRequests = _clientsMap[fd].getProcessRequest().getServer().getKeepAliveMaxRequests();
+	keepAliveTimeOut = _clientsMap[fd].getProcessRequest().getServer().getKeepAliveTimeout();
+	keepAliveMaxRequests = _clientsMap[fd].getProcessRequest().getServer().getKeepAliveMaxRequests();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -398,6 +402,21 @@ void strToLower(char *str)
 		str++;
 	}
 }
+
+int getLocalPort(int fd)
+{
+	struct sockaddr_in addr;
+	socklen_t len = sizeof(addr);
+
+	if (getsockname(fd, (struct sockaddr*)&addr, &len) == -1)
+	{
+		perror("getsockname");
+		return -1;
+	}
+
+	return ntohs(addr.sin_port); // C'est bien le port local, donc 8080
+}
+
 
 
 
