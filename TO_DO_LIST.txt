@@ -7,4 +7,3 @@
 
 - erreurs http a catch pour lancer une reponse d erreur
 
-- parse config : erreur si pas de location et serveur
