@@ -3,9 +3,11 @@ INCDIR  := include
 SRCDIR  := src
 OBJDIR  := obj
 
-SRC     := $(SRCDIR)/config/ConfigParser.cpp     \
-		   $(SRCDIR)/config/Location.cpp         \
-		   $(SRCDIR)/config/ServerConfig.cpp     \
+SRC     := $(SRCDIR)/config/ConfigParser.cpp          \
+		   $(SRCDIR)/config/ConfigParserUtils.cpp     \
+		   $(SRCDIR)/config/ConfigValidator.cpp       \
+		   $(SRCDIR)/config/Location.cpp              \
+		   $(SRCDIR)/config/ServerConfig.cpp          \
 		   $(SRCDIR)/http/File.cpp        \
 		   $(SRCDIR)/http/HttpRequest.cpp        \
 		   $(SRCDIR)/http/HttpResponse.cpp        \

@@ -1,6 +1,10 @@
 #include "../../include/config/ConfigParser.hpp"
 #include "../../include/config/Location.hpp"
 #include "../../include/config/ServerConfig.hpp"
+#include "../../include/config/ConfigParserUtils.hpp"
+#include "../../include/config/ParseException.hpp"
+#include "../../include/config/ValidationException.hpp"
+#include "../../include/config/ConfigValidator.hpp"
 
 ConfigParser::ConfigParser() {}
 
@@ -21,140 +25,7 @@ ConfigParser& ConfigParser::operator=(const ConfigParser& other) {
 const std::vector<ServerConfig>& ConfigParser::getServerConfigVector() const {
 	return (_serverConfigVector);
 }
-//Utils
-int toInt(std::string value) {
-	int result;
-	char c;
-	std::istringstream iss(value);
-	
-	if (!(iss >> result))		
-		return (-1);
-	if (iss >> c)
-		return (-1);
-	return (result);
-}
 
-std::string toString(int n) {
-	std::ostringstream oss;
-	oss << n;
-	return (oss.str());
-}
-
-std::string trim(const std::string& s) {
-	size_t start = s.find_first_not_of(" \t\r\n");
-	size_t end = s.find_last_not_of(" \t\r\n");
-	if (start == std::string::npos)
-		return ("");
-	return (s.substr(start, end - start + 1));
-}
-//Validation
-void ConfigParser::validateListen(const std::string& ip, const std::string& port) {
-	size_t dot = 0;
-	size_t start = 0;
-	int count = 0;
-	int x = toInt(port);
-
-	if (x < 1 || x > 65535)
-		throw ValidationException("Invalid port: " + port);
-	while ((dot = ip.find('.', start)) != std::string::npos) {
-		std::string part = ip.substr(start, dot - start);
-		int n = toInt(part);
-		if (n < 0 || n > 255)
-			throw ValidationException("Invalid IP segment: " + part);
-		start = dot + 1;
-		count++;
-	}
-	std::string lastPart = ip.substr(start);
-	int n = toInt(lastPart);
-	if (n < 0 || n > 255)
-		throw ValidationException("Invalid IP segment: " + lastPart);
-	count++;
-	if (count != 4)
-		throw ValidationException("Invalid IP address: " + ip);
-}
-
-void ConfigParser::validateServerNames(const std::vector<std::string>& names) {
-	if (names.empty())
-		std::cout << "No server_name defined (this server will act as the default)." << std::endl;
-}
-
-void ConfigParser::validateRoot(const std::string& root) {
-	if (access(root.c_str(), F_OK) != 0)
-		throw ValidationException("Root path not accessible: " + root);
-}
-
-void ConfigParser::validateErrorPage(const std::string& code, const std::string& path, const std::string& root) {
-	int x = toInt(code);
-
-	if (x < 100 || x > 599)
-		throw ValidationException("Invalid HTTP error code: " + code);
-	std::string fullPath = root;
-	if (!fullPath.empty() && fullPath[fullPath.size() - 1] != '/' && !path.empty() && path[0] != '/')
-		fullPath += '/';
-	fullPath += path;
-	if (access(fullPath.c_str(), F_OK) != 0)
-		throw ValidationException("Error page not found: " + fullPath);
-}
-
-void ConfigParser::validateMethods(const std::vector<std::string>& methods) {
-	const std::string validMethods[] = {"GET", "POST", "DELETE"};
-	for (size_t i = 0; i < methods.size(); i++) {
-		bool valid = false;
-		for (int j = 0; j < 3; j++) {
-			if (methods[i] == validMethods[j]) {
-				valid = true;
-				break;
-			}
-		}
-		if (!valid)
-			throw ValidationException("Invalid method: " + methods[i]);
-	}
-}
-
-void ConfigParser::validateAutoIndex(const std::string& value) {
-	if (value != "on" && value != "off")
-		throw ValidationException("Autoindex must be 'on' or 'off'");
-}
-
-void ConfigParser::validateCgiPass(const std::string& cgi_pass) {
-	if (access(cgi_pass.c_str(), X_OK) != 0)
-		throw ValidationException("CGI script not executable: " + cgi_pass);
-}
-
-size_t parseSizeWithUnit(const std::string& value) {
-	if (value.empty())
-		throw std::runtime_error("Client max body size value is empty");
-	char unit = value[value.size() - 1];
-	size_t mul = 1;
-	std::string numberPart = value;
-
-	if (!isdigit(unit)) {
-		numberPart = value.substr(0, value.size() - 1);
-		if (unit == 'k' || unit == 'K')
-			mul = 1024;
-		else if (unit == 'm' || unit == 'M')
-			mul = 1024 * 1024;
-		else
-			throw std::runtime_error("Invalid size unit for client max body size: " + value);
-	}
-	int number;
-	std::istringstream iss(numberPart);
-	iss >> number;
-	if (iss.fail())
-		throw std::runtime_error("Invalid number for clien max body size" + value);
-	if (number <= 0)
-		throw std::runtime_error("Client max body size must be greater than zero");
-	return (static_cast<size_t>(number) * mul);
-}
-
-void	ConfigParser::debug() const
-{
-		std::cout << "Nombre de serveurs parsés : " << _serverConfigVector.size() << std::endl;
-		for (size_t i = 0; i < _serverConfigVector.size(); ++i)
-			_serverConfigVector[i].printServerConfig(i);
-		std::cout << "\nValidation réussie : la configuration est correcte." << std::endl;
-}
-//Parser
 void ConfigParser::parsefile(const std::string& filepath) {
 	std::ifstream file(filepath.c_str());
 	if (!file)
@@ -403,4 +274,12 @@ void ConfigParser::parsefile(const std::string& filepath) {
 		throw ParseException("Unexpected end of file: missing closing '}' for server block");
 	if (_serverConfigVector.empty())
 		throw ParseException("No server block defined in config file");
+}
+
+void	ConfigParser::debug() const
+{
+		std::cout << "Nombre de serveurs parsés : " << _serverConfigVector.size() << std::endl;
+		for (size_t i = 0; i < _serverConfigVector.size(); ++i)
+			_serverConfigVector[i].printServerConfig(i);
+		std::cout << "\nValidation réussie : la configuration est correcte." << std::endl;
 }

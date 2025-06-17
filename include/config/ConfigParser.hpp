@@ -18,14 +18,6 @@ class ConfigParser {
 
 		std::vector<ServerConfig> _serverConfigVector;
 
-		static void validateListen(const std::string& ip, const std::string& port);
-		static void validateServerNames(const std::vector<std::string>& names);
-		static void validateRoot(const std::string& root);
-		static void validateErrorPage(const std::string& code, const std::string& path, const std::string& root);
-		static void validateMethods(const std::vector<std::string>& methods);
-		static void validateAutoIndex(const std::string& value);
-		static void validateCgiPass(const std::string& cgi_pass);
-
 	public:
 	
 		ConfigParser();
@@ -38,32 +30,6 @@ class ConfigParser {
 		const std::vector<ServerConfig>& getServerConfigVector() const;
 
 		void	debug() const;
-
-	class ParseException : public std::exception {
-
-		private:
-
-			std::string _msg;
-
-		public:
-
-			ParseException(const std::string& msg) : _msg(msg) {}
-			virtual ~ParseException() throw() {}
-			virtual const char* what() const throw() {return _msg.c_str(); }
-	};
-
-	class ValidationException : public std::exception {
-
-		private:
-
-			std::string _msg;
-
-		public:
-
-			ValidationException(const std::string& msg) : _msg(msg) {}
-			virtual ~ValidationException() throw() {}
-			virtual const char* what() const throw() {return _msg.c_str(); }
-	};
 };
 
 #endif

@@ -11,6 +11,7 @@
 #include "../include/server/PollManager.hpp"
 #include "../include/server/Connexion.hpp"
 #include "../include/http/HttpErrorException.hpp"
+#include "../include/config/ParseException.hpp"
 
 volatile sig_atomic_t g_stop = 0;
 
@@ -43,7 +44,7 @@ int	main(int argc, char **argv) {
 		std::cerr << "[HttpError] " <<  e.what() << " (status " << e.getStatusCode()  << ")" << std::endl;
 		return (1);
 	}
-	catch (const ConfigParser::ParseException& e)
+	catch (const ParseException& e)
 	{
 		std::cerr << "[ConfigError] " << e.what() << std::endl;
 		return (1);
