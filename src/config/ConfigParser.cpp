@@ -381,4 +381,10 @@ void ConfigParser::parsefile(const std::string& filepath) {
 			}
 		}
 	}
+	if (inLocation)
+		throw ParseException("Unexpected end of file: missing closing '}' for location block");
+	if (inServer)
+		throw ParseException("Unexpected end of file: missing closing '}' for server block");
+	if (_serverConfigVector.empty())
+		throw ParseException("No server block defined in config file");
 }
