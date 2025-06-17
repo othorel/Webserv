@@ -179,6 +179,8 @@ void ProcessRequest::waitHeaders()
 	if (_processStatus != WAITING_HEADERS)
 		return ;
 
+	if (_inputData.size() > MAX_HEADERS_SIZE)
+		throw HttpErrorException(431);
 	size_t pos = _inputData.find("\r\n\r\n");
 	if (pos != std::string::npos) {
 		std::string headersPart = _inputData.substr(0, pos + 4);
@@ -490,6 +492,15 @@ int ProcessRequest::getServerTimeout() const
 	return (_serverTimeout);
 }
 
+bool ProcessRequest::closeConection()
+{
+	if (!_request || !_request->hasHeader("connection"))
+		return (false);
+	if (_request->getHeaderValue("connection") == "close")
+		return (true);
+	return (false);
+}
+
 /* ************************************************************************** */
 /*                              response builder                              */
 /* ************************************************************************** */
@@ -504,8 +515,12 @@ void ProcessRequest::addFinalHeaders()
 {
 	if (_httpResponse.getHeaders().find("date") == _httpResponse.getHeaders().end())
 		_httpResponse.addHeader("date", HttpUtils::getCurrentDate());
-	if (_httpResponse.getHeaders().find("connection") == _httpResponse.getHeaders().end())
-		_httpResponse.addHeader("connection", "close");
+	if (_httpResponse.getHeaders().find("connection") == _httpResponse.getHeaders().end()) {
+		if (_request && _request->hasHeader("connection") && _request->getHeaderValue("connection") == "close")
+			_httpResponse.addHeader("connection", "close");
+		else
+			_httpResponse.addHeader("connection", "keep-alive");
+	}
 	if (_httpResponse.getHeaders().find("server") == _httpResponse.getHeaders().end()) {
 		std::ostringstream oss;
 		std::vector<std::string>::const_iterator cit = _server.getServerNames().begin();

@@ -11,6 +11,7 @@
 # include "../../include/http/File.hpp"
 
 # define BUFFER_SIZE 4096
+# define MAX_HEADERS_SIZE 8192
 
 enum ProcessStatus {
 	WAITING_HEADERS,
@@ -76,6 +77,7 @@ class ProcessRequest
 		ProcessStatus getProcessStatus() const;
 		const ServerConfig & getServer() const;
 		int getServerTimeout() const;
+		bool closeConection();
 		std::string process(std::string data);
 		void reset();
 
