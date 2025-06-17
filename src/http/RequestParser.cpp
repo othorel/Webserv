@@ -46,8 +46,8 @@ RequestParser::~RequestParser()
 
 const HttpRequest & RequestParser::getHttpRequest() const
 {
-	if (!_httpRequest) {
-		throw std::runtime_error("HttpRequest has been released or not initialized."); }
+	if (!_httpRequest)
+		throw HttpErrorException(500);
 	return (*_httpRequest);
 }
 

@@ -25,22 +25,25 @@ int	main(int argc, char **argv)
 	try
 	{
 		ConfigParser parser(configFile);
-
 		parser.debug();
 		Server server(parser);
-
 		server.announce();
 		server.StartEventLoop();
 	}
-	// catch (const HttpErrorException& e)
-	// {
-	// 	std::cerr << e.what() << " " << e.getStatusCode() << std::endl;
-	// 	return (1);
-	// }
-	catch (const std::runtime_error& e)
+	catch (const HttpErrorException& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << "[HttpError] " <<  e.what() << " (status " << e.getStatusCode()  << ")" << std::endl;
 		return (1);
-	}	
+	}
+	catch (const ConfigParser::ParseException& e)
+	{
+		std::cerr << "[ConfigError] " << e.what() << std::endl;
+		return (1);
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "[Fatal] " << e.what() << std::endl;
+		return (1);
+	}
 }
 
