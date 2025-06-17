@@ -45,6 +45,7 @@ class Server
 		
 		// Setters
 		void										setServerConfig(const std::vector<ServerConfig> *servConfigVect);
+		std::vector<ServerConfig>					ActiveServConfigVect(int fd);
 		
 	private:
 		// Attributes
@@ -67,7 +68,8 @@ class Server
 		void										handleError(int errorCode, int fdClient, size_t & i);
 		void										supressClient(int fdClient, size_t & i);
 		void										readSocket(int fd, std::string & rawLine, size_t & i);
-		
+		void										fillActiveServConfigVect();
+
 		//Logs
 		void										readLog(int fdClient);
 		void										keepAliveTimeoutLog() const;

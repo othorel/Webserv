@@ -61,7 +61,8 @@ class Connexion
 		void							readDataFromSocket(std::string &line);
 		void							writeDataToSocket(const std::string & response);
 		bool							endTransmission(std::string line);
-
+		
+		
 		int								keepAliveTimeOut;
 		int								keepAliveMaxRequests;
 
@@ -80,6 +81,10 @@ class Connexion
 
 		int								_endPreviousRequest;
 		int								_nbRequests;
+
+		
+
+		
 		
 };
 

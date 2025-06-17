@@ -229,3 +229,5 @@ void	Connexion::actualizeEndPreviousRequest()
 {
 	_endPreviousRequest = std::time(NULL);
 }
+
+

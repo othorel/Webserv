@@ -154,8 +154,10 @@ void	Server::acceptNewConnexion(int fd)
 	if (clientFd < 0)
 		return;
 	_pollManager->addSocket(clientFd, POLLIN);
-	_clientsMap[clientFd] = Connexion(clientFd, clientAddr, _serverConfigVect);
+	std::vector<ServerConfig> ActiveVect = ActiveServConfigVect(clientFd);
+	_clientsMap[clientFd] = Connexion(clientFd, clientAddr, ActiveVect);
 	logTime();
+	
 	std::cout << "[INFO] New client "
 			  << _clientsMap[clientFd].getClientPort()
 			  << " authorized on: "
@@ -170,8 +172,6 @@ void	Server::handleEvent(int fdClient, size_t & i)
 
 	try
 	{
-		readLog(fdClient);
-		
 		readSocket(fdClient, rawLine, i);
 
 		if (_clientsMap[fdClient].getServConfig() != NULL && (static_cast<int>(std::time(NULL)) - _clientsMap[fdClient].getEndPreviousRequest() >= _clientsMap[fdClient].keepAliveTimeOut))
@@ -181,6 +181,8 @@ void	Server::handleEvent(int fdClient, size_t & i)
 			return;
 		}
 		
+		readLog(fdClient); //debug
+
 		//PROCESS HEADERS
 		std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLine);
 		status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
@@ -201,17 +203,16 @@ void	Server::handleEvent(int fdClient, size_t & i)
 		//HANDLE END
 		if (status == 5)
 		{
-			if (_clientsMap[fdClient].getProcessRequest().closeConnexion() == true || /*max requetes atteint*/)
+			if (_clientsMap[fdClient].getProcessRequest().closeConection() == true /*|| max requetes atteint*/)
 			{
 				supressClient(fdClient, i);
 				return;
 			}
 			_clientsMap[fdClient].increaseNbRequests();
 			_clientsMap[fdClient].actualizeEndPreviousRequest();
+			_clientsMap[fdClient].getProcessRequest().reset();
 		}
 		//HANDLE END
-
-		//HANDLE KEEP ALIVE TIMEOUT
 
 	}
 	catch (const HttpErrorException& e)
@@ -224,16 +225,16 @@ void	Server::handleEvent(int fdClient, size_t & i)
 void	Server::handleError(int errorCode, int fdClient, size_t & i)
 {
 	//std::cerr << e.what() << " " << e.getStatusCode() << std::endl;
-	ProcessRequest	RequestError(errorCode, *_clientsMap[fdClient].getServConfig(), _clientsMap[fdClient].getProcessRequest().getLocation());
+	//ProcessRequest	RequestError(errorCode, *_clientsMap[fdClient].getServConfig(), _clientsMap[fdClient].getProcessRequest().selectLocation());
 
-	std::string	processedError = RequestError.processError();
+	// std::string	processedError = RequestError.processError();
 		
-	while (!processedError.empty())
-	{
-		_clientsMap[fdClient].writeDataToSocket(processedError);
-		processedError = RequestError.processError();
-	}
-	supressClient(fdClient, i);
+	// while (!processedError.empty())
+	// {
+	// 	_clientsMap[fdClient].writeDataToSocket(processedError);
+	// 	processedError = RequestError.processError();
+	// }
+	// supressClient(fdClient, i);
 }
 
 void	Server::checkTimeOut(int fdClient, size_t & i)
@@ -267,8 +268,23 @@ void	Server::readSocket(int fd, std::string & rawLine, size_t & i)
 			throw std::runtime_error("Error while reading from socket");
 		return ;
 	}
-
 }
+
+std::vector<ServerConfig> Server::ActiveServConfigVect(int fd)
+{
+	const std::string& 			IP = _clientsMap[fd].getIP();
+	int 						Port = _clientsMap[fd].getLocalPort();
+	std::vector<ServerConfig>	vect;
+
+	for (std::vector<ServerConfig>::const_iterator it = _serverConfigVect->begin(); it != _serverConfigVect->end(); ++it)
+	{
+		const std::pair<int, std::string> & listenPairs = it->getListen();
+		if (listenPairs.first == Port && listenPairs.second == IP)
+			vect.push_back(*it);
+	}
+	return vect;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 ///                           INITIALIZATION                                 ///
