@@ -25,7 +25,7 @@ class Connexion
 {
 	public:
 		Connexion();
-		Connexion(int fd, sockaddr_in addr, const std::vector<ServerConfig> *_serverConfigVect);
+		Connexion(int fd, sockaddr_in addr, const std::vector<ServerConfig> _serverConfigVect);
 		Connexion(const Connexion & toCopy);
 		Connexion &operator=(const Connexion & other);
 		~Connexion();
@@ -42,33 +42,49 @@ class Connexion
 		ssize_t							getBytesOut() const;
 		std::string						getBufferIn() const;
 		std::string						getBufferOut() const;
-		ServerConfig					*getServConfig() const;
+		const ServerConfig				*getServConfig() const;
 		std::time_t						getStartTime() const;
+		
+		int								getEndPreviousRequest() const;
+		int								getNbRequests() const;
 
 		// Setters
 		void							setBytesIn(ssize_t bytes);
 		void							setBytesOut(ssize_t bytes);
 		void							setBufferIn(std::string buffer);
 		void							setBufferOut(std::string buffer);
-		void							setServConfig(ServerConfig *serverconfig);
+		void							setServConfig(const ServerConfig *serverconfig);
+		void							increaseNbRequests();
+		void							actualizeEndPreviousRequest();
 
 		// Runtime
 		void							readDataFromSocket(std::string &line);
 		void							writeDataToSocket(const std::string & response);
 		bool							endTransmission(std::string line);
+		
+		
+		int								keepAliveTimeOut;
+		int								keepAliveMaxRequests;
 
 	private:
 
 		int								_fd;
 		sockaddr_in						_addr;
 		std::time_t						_startTime;
-		ServerConfig					*_servConfig;
+		const ServerConfig				*_servConfig;
 		ProcessRequest					_processRequest;
 
 		ssize_t							_bytesIn;
 		ssize_t							_bytesOut;
 		std::string						_bufferIn;
 		std::string						_bufferOut;
+
+		int								_endPreviousRequest;
+		int								_nbRequests;
+
+		
+
+		
 		
 };
 

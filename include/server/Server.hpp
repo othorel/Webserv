@@ -31,6 +31,8 @@ class Server
 
 		// Runtime
 		void										StartEventLoop();
+
+		// Logs
 		void										logTime() const;
 		void										announce() const;
 
@@ -43,6 +45,7 @@ class Server
 		
 		// Setters
 		void										setServerConfig(const std::vector<ServerConfig> *servConfigVect);
+		std::vector<ServerConfig>					ActiveServConfigVect(int port, std::string IP);
 		
 	private:
 		// Attributes
@@ -55,13 +58,21 @@ class Server
 		// Initialization
 		void										Setup();
 		void										addPair(std::pair<int, std::string> listen);
+		void										initServerConfig(int fd, int & keepAliveTimeOut, int & keepAliveMaxRequests);
 
 		// Runtime
 		void										checkTimeOut(int fdClient, size_t & i);
 		void										dealClient(int fd, size_t & i);
 		void										acceptNewConnexion(int fd);
-		void										handleEvent(int fdClient, size_t & i);	
+		void										handleEvent(int fdClient, size_t & i);
+		void										handleError(int errorCode, int fdClient, size_t & i);
 		void										supressClient(int fdClient, size_t & i);
+		void										readSocket(int fd, std::string & rawLine, size_t & i);
+		void										fillActiveServConfigVect();
+
+		//Logs
+		void										readLog(int fdClient);
+		void										keepAliveTimeoutLog() const;
 
 };
 

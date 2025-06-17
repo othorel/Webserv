@@ -1,4 +1,4 @@
-- toLower dans Exit du serveur
+- toLower dans Exit du serveur DONE
 - timeout dans serveur
 - config par default
 
