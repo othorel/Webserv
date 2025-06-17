@@ -167,32 +167,25 @@ void	Server::handleEvent(int fdClient, size_t & i)
 {
 	try
 	{
+		size_t	nbRequests = 0;
 		int		status = 0;
+
+		//READ LOG
 		logTime();
 		std::cout << "[INFO] Reading from client "
 			  << _clientsMap[fdClient].getClientPort()
 			  << " on: "
 			  << _clientsMap[fdClient].getIP() << ":"
 			  << _clientsMap[fdClient].getLocalPort() << std::endl;
+		//READ LOG
 
 		if (_clientsMap[fdClient].getServConfig() != NULL)
 		 	checkTimeOut(fdClient, i);
 
-		std::string		rawLineString;
-		_clientsMap[fdClient].readDataFromSocket(rawLineString); // quoi qu'il arrive on lit une ligne sur le socket
+		//READ FROM SOCKET
+		std::string		rawLine;
+		_clientsMap[fdClient].readDataFromSocket(rawLine); // quoi qu'il arrive on lit une ligne sur le socket
 	
-		std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
-		status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
-
-		if (_clientsMap[fdClient].getServConfig() == NULL)
-			_clientsMap[fdClient].setServConfig(&_clientsMap[fdClient].getProcessRequest().getServer());
-		
-		while (!processed.empty()) {
-			_clientsMap[fdClient].writeDataToSocket(processed);
-			processed = _clientsMap[fdClient].getProcessRequest().process(rawLineString);
-			status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
-		}
-
 		if (_clientsMap[fdClient].getBytesIn() <= 0) //si on detecte la fermeture de la connexion
 		{
 			supressClient(fdClient, i); // peut etre en plus throw une exception ?
@@ -200,18 +193,59 @@ void	Server::handleEvent(int fdClient, size_t & i)
 				throw std::runtime_error("Error while reading from socket");
 			return ;
 		}
+		//READ FROM SOCKET
+
+		//PROCESS HEADERS
+		std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLine);
+		status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
+
+		if (_clientsMap[fdClient].getServConfig() == NULL)
+			_clientsMap[fdClient].setServConfig(&_clientsMap[fdClient].getProcessRequest().getServer());
+		//PROCESS HEADERS
+
+		//CATCH AND WRITE RESPONSE
+		while (!processed.empty())
+		{
+			_clientsMap[fdClient].writeDataToSocket(processed);
+			processed = _clientsMap[fdClient].getProcessRequest().process(rawLine);
+			status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
+		}
+		//CATCH AND WRITE RESPONSE
+
+		//HANDLE END
 		if (status == 5)
 		{
-			supressClient(fdClient, i);
-			return;
+			if (_clientsMap[fdClient].getProcessRequest().closeConnexion() == true || /*max requetes atteint*/)
+			{
+				supressClient(fdClient, i);
+				return;
+			}
+			nbRequests ++;
 		}
+		//HANDLE END
+
+		//
 	}
 	catch (const HttpErrorException& e)
 	{
-	 	std::cerr << e.what() << " " << e.getStatusCode() << std::endl;
-		supressClient(fdClient, i);
+		handleError(e.getStatusCode(), fdClient, i);
 	 	return;
 	}
+}
+
+void	Server::handleError(int errorCode, int fdClient, size_t & i)
+{
+	//std::cerr << e.what() << " " << e.getStatusCode() << std::endl;
+	ProcessRequest	RequestError(errorCode, *_clientsMap[fdClient].getServConfig(), _clientsMap[fdClient].getProcessRequest().getLocation());
+
+	std::string	processedError = RequestError.processError();
+		
+	while (!processedError.empty())
+	{
+		_clientsMap[fdClient].writeDataToSocket(processedError);
+		processedError = RequestError.processError();
+	}
+	supressClient(fdClient, i);
 }
 
 void	Server::checkTimeOut(int fdClient, size_t & i)
