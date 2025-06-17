@@ -31,6 +31,8 @@ class Server
 
 		// Runtime
 		void										StartEventLoop();
+
+		// Logs
 		void										logTime() const;
 		void										announce() const;
 
@@ -55,6 +57,7 @@ class Server
 		// Initialization
 		void										Setup();
 		void										addPair(std::pair<int, std::string> listen);
+		void										initServerConfig(int fd, int & keepAliveTimeOut, int & keepAliveMaxRequests);
 
 		// Runtime
 		void										checkTimeOut(int fdClient, size_t & i);
@@ -63,6 +66,11 @@ class Server
 		void										handleEvent(int fdClient, size_t & i);
 		void										handleError(int errorCode, int fdClient, size_t & i);
 		void										supressClient(int fdClient, size_t & i);
+		void										readSocket(int fd, std::string & rawLine, size_t & i);
+		
+		//Logs
+		void										readLog(int fdClient);
+		void										keepAliveTimeoutLog() const;
 
 };
 

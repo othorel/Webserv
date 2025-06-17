@@ -165,44 +165,30 @@ void	Server::acceptNewConnexion(int fd)
 
 void	Server::handleEvent(int fdClient, size_t & i)
 {
+	int				status = 0;
+	std::string		rawLine;
+
 	try
 	{
-		size_t	nbRequests = 0;
-		int		status = 0;
+		readLog(fdClient);
+		
+		readSocket(fdClient, rawLine, i);
 
-		//READ LOG
-		logTime();
-		std::cout << "[INFO] Reading from client "
-			  << _clientsMap[fdClient].getClientPort()
-			  << " on: "
-			  << _clientsMap[fdClient].getIP() << ":"
-			  << _clientsMap[fdClient].getLocalPort() << std::endl;
-		//READ LOG
-
-		if (_clientsMap[fdClient].getServConfig() != NULL)
-		 	checkTimeOut(fdClient, i);
-
-		//READ FROM SOCKET
-		std::string		rawLine;
-		_clientsMap[fdClient].readDataFromSocket(rawLine); // quoi qu'il arrive on lit une ligne sur le socket
-	
-		if (_clientsMap[fdClient].getBytesIn() <= 0) //si on detecte la fermeture de la connexion
+		if (_clientsMap[fdClient].getServConfig() != NULL && (static_cast<int>(std::time(NULL)) - _clientsMap[fdClient].getEndPreviousRequest() >= _clientsMap[fdClient].keepAliveTimeOut))
 		{
-			supressClient(fdClient, i); // peut etre en plus throw une exception ?
-			if (_clientsMap[fdClient].getBytesIn() < 0)
-				throw std::runtime_error("Error while reading from socket");
-			return ;
+			keepAliveTimeoutLog();
+			supressClient(fdClient, i);
+			return;
 		}
-		//READ FROM SOCKET
-
+		
 		//PROCESS HEADERS
 		std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLine);
 		status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
-
+		
 		if (_clientsMap[fdClient].getServConfig() == NULL)
-			_clientsMap[fdClient].setServConfig(&_clientsMap[fdClient].getProcessRequest().getServer());
+			initServerConfig(fdClient, _clientsMap[fdClient].keepAliveTimeOut, _clientsMap[fdClient].keepAliveMaxRequests);
 		//PROCESS HEADERS
-
+		
 		//CATCH AND WRITE RESPONSE
 		while (!processed.empty())
 		{
@@ -220,16 +206,18 @@ void	Server::handleEvent(int fdClient, size_t & i)
 				supressClient(fdClient, i);
 				return;
 			}
-			nbRequests ++;
+			_clientsMap[fdClient].increaseNbRequests();
+			_clientsMap[fdClient].actualizeEndPreviousRequest();
 		}
 		//HANDLE END
 
-		//
+		//HANDLE KEEP ALIVE TIMEOUT
+
 	}
 	catch (const HttpErrorException& e)
 	{
 		handleError(e.getStatusCode(), fdClient, i);
-	 	return;
+		return;
 	}
 }
 
@@ -266,6 +254,20 @@ void	Server::checkTimeOut(int fdClient, size_t & i)
 		supressClient(fdClient, i);
 		throw HttpErrorException(408);
 	}
+}
+
+void	Server::readSocket(int fd, std::string & rawLine, size_t & i)
+{
+	_clientsMap[fd].readDataFromSocket(rawLine); // quoi qu'il arrive on lit une ligne sur le socket
+
+	if (_clientsMap[fd].getBytesIn() <= 0) // si on detecte la fermeture de la connexion
+	{
+		supressClient(fd, i); // peut etre en plus throw une exception ?
+		if (_clientsMap[fd].getBytesIn() < 0)
+			throw std::runtime_error("Error while reading from socket");
+		return ;
+	}
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -325,13 +327,31 @@ void	Server::supressClient(int fdClient, size_t & i)
 	i--;
 }
 
-void	Server::logTime() const
+void	Server::initServerConfig(int fd, int & keepAliveTimeOut, int & keepAliveMaxRequests)
 {
-	std::time_t	now = std::time(NULL);
-	char		timeStamp[20];
-	std::strftime(timeStamp, sizeof(timeStamp), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
+	_clientsMap[fd].setServConfig(&_clientsMap[fd].getProcessRequest().getServer());
+	_clientsMap[fd].keepAliveTimeOut = _clientsMap[fd].getProcessRequest().getServer().getKeepAliveTimeout();
+	_clientsMap[fd].keepAliveMaxRequests = _clientsMap[fd].getProcessRequest().getServer().getKeepAliveMaxRequests();
+}
 
-	std::cout << "[" << timeStamp << "] ";
+////////////////////////////////////////////////////////////////////////////////
+///                                 LOGS                                     ///
+////////////////////////////////////////////////////////////////////////////////
+
+void	Server::keepAliveTimeoutLog() const
+{
+	logTime();
+	std::cout << "[INFO] TIMEOUT, connexion closed." << std::endl;
+}
+
+void	Server::readLog(int fdClient)
+{
+	logTime();
+	std::cout << "[INFO] Reading from client "
+		  << _clientsMap[fdClient].getClientPort()
+		  << " on: "
+		  << _clientsMap[fdClient].getIP() << ":"
+		  << _clientsMap[fdClient].getLocalPort() << std::endl;
 }
 
 void	Server::announce() const
@@ -341,6 +361,19 @@ void	Server::announce() const
 	std::cout << "[INFO] Server successfully launched\n\n" << std::endl;
 }
 
+void	Server::logTime() const
+{
+	std::time_t	now = std::time(NULL);
+	char		timeStamp[20];
+	std::strftime(timeStamp, sizeof(timeStamp), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
+
+	std::cout << "[" << timeStamp << "] ";
+}
+
+////////////////////////////////////////////////////////////////////////////////
+///                              NON MEMBER                                  ///
+////////////////////////////////////////////////////////////////////////////////
+
 void strToLower(char *str)
 {
 	while (*str)
@@ -349,4 +382,6 @@ void strToLower(char *str)
 		str++;
 	}
 }
+
+
 

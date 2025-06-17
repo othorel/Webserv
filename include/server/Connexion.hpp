@@ -44,6 +44,9 @@ class Connexion
 		std::string						getBufferOut() const;
 		const ServerConfig				*getServConfig() const;
 		std::time_t						getStartTime() const;
+		
+		int								getEndPreviousRequest() const;
+		int								getNbRequests() const;
 
 		// Setters
 		void							setBytesIn(ssize_t bytes);
@@ -51,11 +54,16 @@ class Connexion
 		void							setBufferIn(std::string buffer);
 		void							setBufferOut(std::string buffer);
 		void							setServConfig(const ServerConfig *serverconfig);
+		void							increaseNbRequests();
+		void							actualizeEndPreviousRequest();
 
 		// Runtime
 		void							readDataFromSocket(std::string &line);
 		void							writeDataToSocket(const std::string & response);
 		bool							endTransmission(std::string line);
+
+		int								keepAliveTimeOut;
+		int								keepAliveMaxRequests;
 
 	private:
 
@@ -69,6 +77,9 @@ class Connexion
 		ssize_t							_bytesOut;
 		std::string						_bufferIn;
 		std::string						_bufferOut;
+
+		int								_endPreviousRequest;
+		int								_nbRequests;
 		
 };
 

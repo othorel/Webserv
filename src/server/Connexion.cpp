@@ -17,6 +17,10 @@ Connexion::Connexion(int fd, sockaddr_in addr, const std::vector<ServerConfig> *
 _fd(fd),
 _addr(addr),
 _servConfig(NULL),
+_endPreviousRequest(0),
+_nbRequests(0),
+keepAliveMaxRequests(0),
+keepAliveTimeOut(0),
 _processRequest(*_serverConfigVect)
 {
 	_startTime = std::time(NULL);
@@ -47,6 +51,8 @@ Connexion &Connexion::operator=(const Connexion & other)
 		this->_bufferOut = other._bufferOut;
 		this->_processRequest = other._processRequest;
 		this->_servConfig = other._servConfig;
+		this->_endPreviousRequest = other._endPreviousRequest;
+		this->_nbRequests = other._nbRequests;
 	}
 	return (*this);
 }
@@ -175,6 +181,16 @@ const ProcessRequest	&Connexion::getProcessRequest() const
 	return (_processRequest);
 }
 
+int	Connexion::getEndPreviousRequest() const
+{
+	return (_endPreviousRequest);
+}
+
+int	Connexion::getNbRequests() const
+{
+	return (_nbRequests);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 ///                                 SETTERS                                  ///
 ////////////////////////////////////////////////////////////////////////////////
@@ -202,4 +218,14 @@ void	Connexion::setBufferOut(std::string buffer)
 void	Connexion::setServConfig(const ServerConfig *serverconfig)
 {
 	_servConfig = serverconfig;
+}
+
+void	Connexion::increaseNbRequests()
+{
+	_nbRequests++;
+}
+
+void	Connexion::actualizeEndPreviousRequest()
+{
+	_endPreviousRequest = std::time(NULL);
 }
