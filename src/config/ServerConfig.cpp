@@ -7,6 +7,9 @@ ServerConfig::ServerConfig() :
 	_error_pages(),
 	_locations(),
 	_client_max_body_size(),
+	_keepAlive(),
+	_keepAliveTimeout(),
+	_keepAliveMaxRequests(),
 	_sessionName(),
 	_sessionTimeout(),
 	_sessionEnable()
@@ -19,6 +22,9 @@ ServerConfig::ServerConfig(
 	std::map<int, std::string> error_pages,
 	std::map<std::string, Location> locations,
 	size_t client_max_body_size,
+	bool keepAlive,
+	int keepAliveTimeout,
+	int keepAliveMaxRequests,
 	std::string sessionName,
 	int sessionTimeout,
 	bool sessionEnable
@@ -28,6 +34,9 @@ ServerConfig::ServerConfig(
 	_error_pages(error_pages),
 	_locations(locations),
 	_client_max_body_size(client_max_body_size),
+	_keepAlive(keepAlive),
+	_keepAliveTimeout(keepAliveTimeout),
+	_keepAliveMaxRequests(keepAliveMaxRequests),
 	_sessionName(sessionName),
 	_sessionTimeout(sessionTimeout),
 	_sessionEnable(sessionEnable)
@@ -42,6 +51,9 @@ ServerConfig::ServerConfig(const ServerConfig& other) :
 	_error_pages(other._error_pages),
 	_locations(other._locations),
 	_client_max_body_size(other._client_max_body_size),
+	_keepAlive(other._keepAlive),
+	_keepAliveTimeout(other._keepAliveTimeout),
+	_keepAliveMaxRequests(other._keepAliveMaxRequests),
 	_sessionName(other._sessionName),
 	_sessionTimeout(other._sessionTimeout),
 	_sessionEnable(other._sessionEnable)
@@ -55,6 +67,9 @@ ServerConfig& ServerConfig::operator=(const ServerConfig& other) {
 		_error_pages = other._error_pages;
 		_locations = other._locations;
 		_client_max_body_size = other._client_max_body_size;
+		_keepAlive = other._keepAlive,
+		_keepAliveTimeout = other._keepAliveTimeout;
+		_keepAliveMaxRequests = other._keepAliveMaxRequests;
 		_sessionName = other._sessionName;
 		_sessionTimeout = other._sessionTimeout;
 		_sessionEnable = other._sessionEnable;
@@ -84,6 +99,18 @@ const std::map<std::string, Location>& ServerConfig::getLocations() const {
 
 size_t ServerConfig::getClientMaxBodySize() const {
 	return (_client_max_body_size);
+}
+
+bool ServerConfig::getKeepAlive() const {
+	return (_keepAlive);
+}
+
+int ServerConfig::getKeepAliveTimeout() const {
+	return (_keepAliveTimeout);
+}
+
+int ServerConfig::getKeepAliveMaxRequests() const {
+	return (_keepAliveMaxRequests);
 }
 
 const std::string& ServerConfig::getSessionName() const {

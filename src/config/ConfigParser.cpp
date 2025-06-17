@@ -150,15 +150,10 @@ size_t parseSizeWithUnit(const std::string& value) {
 void	ConfigParser::debug() const
 {
 		std::cout << "Nombre de serveurs parsés : " << _serverConfigVector.size() << std::endl;
-
 		for (size_t i = 0; i < _serverConfigVector.size(); ++i)
-		{
 			_serverConfigVector[i].printServerConfig(i);
-		}
-
 		std::cout << "\nValidation réussie : la configuration est correcte." << std::endl;
 }
-
 //Parser
 void ConfigParser::parsefile(const std::string& filepath) {
 	std::ifstream file(filepath.c_str());
@@ -175,6 +170,9 @@ void ConfigParser::parsefile(const std::string& filepath) {
 	std::map<int, std::string> error_pages;
 	std::map<std::string, Location> locations;
 	size_t client_max_body_size = 1024 * 1024;
+	bool keep_alive = true;
+	int keep_alive_timeout = 10;
+	int keep_alive_max_requests = 100;
 	//bonus server
 	std::string session_name;
 	int session_timeout = 0;
@@ -221,6 +219,9 @@ void ConfigParser::parsefile(const std::string& filepath) {
 			error_pages.clear();
 			locations.clear();
 			client_max_body_size = 1024 * 1024;
+			keep_alive = true;
+			keep_alive_timeout = 10;
+			keep_alive_max_requests = 100;
 			session_name.clear();
 			session_timeout = 0;
 			session_enable = false;
@@ -235,7 +236,7 @@ void ConfigParser::parsefile(const std::string& filepath) {
 				inLocation = false;
 			}
 			else if (inServer) {
-				ServerConfig server(listen, server_names, root, error_pages, locations, client_max_body_size, session_name, session_timeout, session_enable);
+				ServerConfig server(listen, server_names, root, error_pages, locations, client_max_body_size, keep_alive, keep_alive_timeout, keep_alive_max_requests, session_name, session_timeout, session_enable);
 				validateServerNames(server.getServerNames());
 				validateRoot(server.getRoot());
 				std::map<int, std::string> eps = server.getErrorPages();
@@ -367,6 +368,21 @@ void ConfigParser::parsefile(const std::string& filepath) {
 			}
 			else if (key == "client_max_body_size")
 				client_max_body_size = parseSizeWithUnit(value);
+			else if (key == "keep_alive") {
+				if (value != "on" && value != "off")
+					throw ValidationException("Keep_alive must be 'on' or off'");
+				keep_alive = (value == "on");
+			}
+			else if (key == "keep_alive_timeout") {
+				keep_alive_timeout = toInt(value);
+				if (keep_alive_timeout < 0)
+					throw ValidationException("Keep_alive_timeout must be >= 0");
+			}
+			else if (key == "keep_alive_max_requests") {
+				keep_alive_max_requests = toInt(value);
+				if (keep_alive_max_requests < 1)
+					throw ValidationException("Keep_alive_max_requests must be >= 1");
+			}
 			else if (key == "session_name")
 				session_name = value;
 			else if (key == "session_timeout") {
