@@ -31,7 +31,7 @@ class CGIHandler
 	public:
 
 		CGIHandler();
-		CGIHandler(const HttpRequest & request, const std::string & scriptPath);
+		CGIHandler(const HttpRequest & request, const std::string & path);
 		CGIHandler(const CGIHandler & other);
 		CGIHandler & operator=(const CGIHandler & other);
 

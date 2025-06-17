@@ -19,12 +19,19 @@ CGIHandler::CGIHandler() :
 	_response()
 {}
 
-CGIHandler::CGIHandler(const HttpRequest & request, const std::string & scriptPath) :
+CGIHandler::CGIHandler(const HttpRequest & request, const std::string & path) :
 	_request(request),
-	_scriptPath(scriptPath),
+	_scriptPath(path),
 	_queryString(""),
 	_response()
 {
+	size_t pos = path.find('?');
+	if (pos == std::string::npos)
+		_queryString = "";
+	else
+		_queryString = path.substr(pos + 1);
+	_scriptPath = _scriptPath.substr(0, pos);
+	std::cout << "IN CGIHANDLER CONOSTRUCTOR : \n" << "Path = " << path << "\nscriptPath = " << _scriptPath << "\nqueryString = " << _queryString << std::endl;
 	buildResponse();
 }
 
@@ -103,10 +110,10 @@ std::vector<std::string> CGIHandler::buildEnv()
 	env.push_back("SERVER_SOFTWARE=MiniWebServ/1.0");
 
 	std::map<std::string, std::string>::const_iterator it;
-	it =_request.getHeaders().find("Content-Type");
+	it =_request.getHeaders().find("content-type");
 	if (it != _request.getHeaders().end())
 		env.push_back("CONTENT_TYPE=" + it->second);
-	it =_request.getHeaders().find("Content-Length");
+	it =_request.getHeaders().find("content-length");
 	if (it != _request.getHeaders().end())
 		env.push_back("CONTENT_LENGTH=" + it->second);
 	return (env);
@@ -114,12 +121,6 @@ std::vector<std::string> CGIHandler::buildEnv()
 
 std::string CGIHandler::execute()
 {
-	size_t pos = _request.getTarget().find('?');
-	if (pos == std::string::npos)
-		_queryString = "";
-	else
-		_queryString = _request.getTarget().substr(pos + 1);
-
 	int inputPipe[2];
 	int outputPipe[2];
 	if (pipe(inputPipe) == -1 || pipe(outputPipe) == -1) {
@@ -146,9 +147,9 @@ std::string CGIHandler::execute()
 		envp.push_back(NULL);
 
 		// debug bloc
-		// std::cout << "IN CGI SCRIPT :" << std::endl;
-		// std::cout << "QUERY STRING : " << _queryString << std::endl;
-		// std::cout << "PATH : " << _scriptPath << std::endl;
+		std::cout << "IN CGI SCRIPT :" << std::endl;
+		std::cout << "QUERY STRING : " << _queryString << std::endl;
+		std::cout << "PATH : " << _scriptPath << std::endl;
 	
 		char* av[] = {const_cast<char*>(_scriptPath.c_str()), NULL};
 		execve(_scriptPath.c_str(), av, &envp[0]);

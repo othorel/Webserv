@@ -26,8 +26,6 @@ static std::string createPostFileName(
 	const HttpRequest & request, const std::string & path);
 static bool isCgi(const std::string & path);
 
-// static std::string createPath(const std::string & root, const std::string & subpath);
-
 /* ************************************************************************** */
 /*                                  constructors                              */
 /* ************************************************************************** */
@@ -49,8 +47,6 @@ ProcessRequest::ProcessRequest() :
 ProcessRequest::ProcessRequest(const std::vector<ServerConfig> & serversVector) :
 	_serversVector(serversVector),
 	_processStatus(WAITING_HEADERS),
-	_server(),
-	_serverTimeout(0),
 	_location(),
 	_inputData(""),
 	_outputData(""),
@@ -58,7 +54,12 @@ ProcessRequest::ProcessRequest(const std::vector<ServerConfig> & serversVector) 
 	_handler(NULL),
 	_request(NULL),
 	_file(NULL)
-{}
+{
+	if (serversVector.empty())
+		throw HttpErrorException(500);
+	_server = serversVector[0];
+	_serverTimeout = _server.getSessionTimeout();
+}
 
 ProcessRequest::ProcessRequest(const ProcessRequest & other) :
 	_serversVector(other._serversVector),
@@ -184,6 +185,8 @@ void ProcessRequest::waitHeaders()
 		std::string bodyPart = _inputData.substr(pos + 4);
 		RequestParser parser(headersPart);
 		_request = parser.release();
+		if (_request->getContentLength() > _server.getClientMaxBodySize())
+			throw HttpErrorException(413);
 		_request->debug();
 		_inputData = bodyPart;
 		selectServer();
@@ -389,14 +392,10 @@ void ProcessRequest::postHandler()
 	waitBody();
 }
 
-/* ************************************************************************** */
-/*                                 Cgi handlers                               */
-/* ************************************************************************** */
-
 void ProcessRequest::cgiHandler()
 {
 	std::string path = createPath();
-	std::cout << "IF CGI HANDLER PATH IS : " << path << std::endl;
+	std::cout << "\n\n\n\nIN CGI HANDLER PATH IS : " << path << "\n\n\n\n" << std::endl;
 
 	CGIHandler cgi(*_request, path);
 	_httpResponse = cgi.getHttpResponse();
@@ -731,9 +730,10 @@ static std::string createPostFileName(
 
 static bool isCgi(const std::string & path)
 {
-	size_t pos = path.find_last_of('.');
-	if (pos == std::string::npos)
+	size_t start = path.find_last_of('.');
+	if (start == std::string::npos)
 		return (false);
-	std::string ext = path.substr(pos);
+	size_t end = path.find('?', start);
+	std::string ext = path.substr(start, end - start);
 	return (ext == ".py" || ext == ".php" || ext == ".pl");
 }
