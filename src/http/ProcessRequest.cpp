@@ -184,12 +184,12 @@ void ProcessRequest::waitHeaders()
 		std::string bodyPart = _inputData.substr(pos + 4);
 		RequestParser parser(headersPart);
 		_request = parser.release();
+		_inputData = bodyPart;
+		selectServer();
 
 		if (_request->getContentLength() > _server.getClientMaxBodySize())
 			throw HttpErrorException(413);
 		
-		_inputData = bodyPart;
-		selectServer();
 		_serverTimeout = _server.getSessionTimeout();
 		selectLocation();
 		checkMethodValidity();
@@ -443,20 +443,13 @@ void ProcessRequest::selectServer()
 	if (!_request)
 		throw HttpErrorException(500);
 
-	// debug
-	std::cout << "SERVER VECTOR : " << std::endl;
-	std::vector<ServerConfig>::const_iterator cit = _serversVector.begin();
-	for (; cit != _serversVector.end(); ++cit) {
-		std::cout << "server listening : " << cit->getListen().first << ":" << cit->getListen().second << std::endl;
-	}
-	
 	const std::map<std::string, std::string> & headers = _request->getHeaders();
 	std::map<std::string, std::string>::const_iterator headersCit = headers.find("host"); 
 	if (headersCit != headers.end()) {
 		std::vector<ServerConfig>::const_iterator serverCit = _serversVector.begin();
 		for (; serverCit != _serversVector.end(); ++serverCit) {
 			if (serverCit->hasServerName(headersCit->second)) {
-				_server =  *serverCit;
+				_server = *serverCit;
 				return ;
 			}
 		}
@@ -729,8 +722,8 @@ void ProcessRequest::checkPostValidity(const std::string & path)
 		if (!HttpUtils::fileExists(path))
 			throw HttpErrorException(404);
 	}
-	if (_request->getContentLength() > (_server.getClientMaxBodySize())) {
-		throw HttpErrorException(413); }
+	if (_request->getContentLength() > (_server.getClientMaxBodySize()))
+		throw HttpErrorException(413);
 }
 
 /* ************************************************************************** */
