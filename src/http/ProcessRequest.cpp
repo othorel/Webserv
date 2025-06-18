@@ -438,6 +438,35 @@ void ProcessRequest::cgiPostHandler()
 /*                                   selectors                                */
 /* ************************************************************************** */
 
+void ProcessRequest::selectServer()
+{
+	if (!_request)
+		throw HttpErrorException(500);
+
+	// debug
+	std::cout << "SERVER VECTOR : " << std::endl;
+	std::vector<ServerConfig>::const_iterator cit = _serversVector.begin();
+	for (; cit != _serversVector.end(); ++cit) {
+		std::cout << "server listening : " << cit->getListen().first << ":" << cit->getListen().second << std::endl;
+	}
+	
+	const std::map<std::string, std::string> & headers = _request->getHeaders();
+	std::map<std::string, std::string>::const_iterator headersCit = headers.find("host"); 
+	if (headersCit != headers.end()) {
+		std::vector<ServerConfig>::const_iterator serverCit = _serversVector.begin();
+		for (; serverCit != _serversVector.end(); ++serverCit) {
+			if (serverCit->hasServerName(headersCit->second)) {
+				_server =  *serverCit;
+				return ;
+			}
+		}
+	}
+	if (_serversVector.empty()) {
+		throw HttpErrorException(500);
+	}
+	_server = _serversVector[0];
+}
+
 void ProcessRequest::selectLocation()
 {
 	if (!_request)
@@ -583,56 +612,59 @@ void ProcessRequest::buildRedirect()
 	_processStatus = SENDING_HEADERS;
 }
 
-// void ProcessRequest::buildError(int statusCode, const ServerConfig & server, const Location * location)
+// void ProcessRequest::errorBuilder(int statusCode, bool secondTime)
 // {
-// 	std::string filePath = selectErrorPage(statusCode, server, location);
-// 	std::string body;
-// 	std::string mimeType;
+// 	std::string errorPage = selectErrorPage(statusCode);
+
+// 	// if there is a file to read
+// 	if (!errorPage.empty() && !secondTime) {
+// 		std::string errorFilePath = createErrorFilePath(errorPage);
+// 		if (_file)
+// 			delete _file;
+// 			_file = new File(errorFilePath);
+// 		std::map<std::string, std::string> headers;
+// 		headers["content-type"] = _file->getMimeType();
+// 		headers["content-length"] = HttpUtils::numberToString(_file->getSize());
+// 		buildResponse(200, headers, "");
+
+// 		_processStatus = SENDING_HEADERS;
+// 		sendHeaders();
+// 	}
+
+
+// 	std::string body = "";
+// 	std::string mimeType = "text/html";
 // 	try {
 // 		body = HttpUtils::readFile(filePath);
 // 		mimeType = HttpUtils::getMimeType(filePath); }
-// 	catch (const std::exception &e) {
-// 		body = "<html><body><h1>" + HttpUtils::numberToString(statusCode) + " " +
-// 			HttpUtils::httpStatusMessage(statusCode) + "</h1></body></html>";
-// 		mimeType = "text/html"; }
+
+// 	// body = "<html><body><h1>" + HttpUtils::numberToString(statusCode) + " " +
+// 	// 	HttpUtils::httpStatusMessage(statusCode) + "</h1></body></html>";
+// 	// mimeType = "text/html";
 // 	std::map<std::string, std::string> headers;
 // 	headers["Content-Type"] = mimeType;
 
-// 	if (statusCode == 405) {
-// 		headers["allow"] = createAllowedMethodsList(*location); }
+// 	// if (statusCode == 405) {
+// 	// 	headers["allow"] = createAllowedMethodsList(*location); }
 
 // 	_httpResponse = HttpResponse("HTTP/1.1", statusCode, headers, body);
 // 	addMandatoryHeaders();
 // }
 
-void ProcessRequest::selectServer()
+std::string ProcessRequest::createErrorFilePath(const std::string & errorPage)
 {
 	if (!_request)
 		throw HttpErrorException(500);
 
-	// debug
-	std::cout << "SERVER VECTOR : " << std::endl;
-	std::vector<ServerConfig>::const_iterator cit = _serversVector.begin();
-	for (; cit != _serversVector.end(); ++cit) {
-		std::cout << "server listening : " << cit->getListen().first << ":" << cit->getListen().second << std::endl;
-	}
-	
-	const std::map<std::string, std::string> & headers = _request->getHeaders();
-	std::map<std::string, std::string>::const_iterator headersCit = headers.find("host"); 
-	if (headersCit != headers.end()) {
-		std::vector<ServerConfig>::const_iterator serverCit = _serversVector.begin();
-		for (; serverCit != _serversVector.end(); ++serverCit) {
-			if (serverCit->hasServerName(headersCit->second)) {
-				_server =  *serverCit;
-				return ;
-			}
-		}
-	}
-	if (_serversVector.empty()) {
-		throw HttpErrorException(500);
-	}
-	_server = _serversVector[0];
+	std::string root = selectRoot();
+
+	std::string filePath = errorPage;
+	HttpUtils::trimFinalSlash(root);
+	HttpUtils::trimSlashes(filePath);
+
+	return (root + '/' + filePath);
 }
+
 
 /* ************************************************************************** */
 /*                            private utils methods                           */
