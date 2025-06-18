@@ -14,7 +14,8 @@ Location::Location(
 	bool hasRedirect,
 	bool autoindex,
 	std::vector<std::string> cgiExtensions,
-	bool cookiesEnabled
+	bool cookiesEnabled,
+	size_t _client_max_body_size
 ) : _path(path),
 	_methods(methods),
 	_error_pages(error_pages),
@@ -26,7 +27,8 @@ Location::Location(
 	_hasRedirect(hasRedirect),
 	_autoindex(autoindex),
 	_cgiExtensions(cgiExtensions),
-	_cookiesEnabled(cookiesEnabled)
+	_cookiesEnabled(cookiesEnabled),
+	_client_max_body_size(_client_max_body_size)
 {}
 
 Location::~Location() {}
@@ -43,7 +45,8 @@ Location::Location(const Location& other) :
 	_hasRedirect(other._hasRedirect),
 	_autoindex(other._autoindex),
 	_cgiExtensions(other._cgiExtensions),
-	_cookiesEnabled(other._cookiesEnabled)
+	_cookiesEnabled(other._cookiesEnabled),
+	_client_max_body_size(other._client_max_body_size)
 {}
 
 Location& Location::operator=(const Location& other) {
@@ -60,6 +63,7 @@ Location& Location::operator=(const Location& other) {
 		_autoindex = other._autoindex;
 		_cgiExtensions = other._cgiExtensions;
 		_cookiesEnabled = other._cookiesEnabled;
+		_client_max_body_size = other._client_max_body_size;
 	}
 	return (*this);
 }
@@ -129,4 +133,8 @@ const std::string& Location::getErrorPage(int code) const {
 	if (it == _error_pages.end())
 		throw std::out_of_range("No error page defined for this code");
 	return (it->second);
+}
+
+size_t Location::getClientMaxBodySize() const {
+	return (_client_max_body_size);
 }

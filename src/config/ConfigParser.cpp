@@ -44,7 +44,6 @@ void ConfigParser::parsefile(const std::string& filepath) {
 	bool keep_alive = true;
 	int keep_alive_timeout = 10;
 	int keep_alive_max_requests = 100;
-	//bonus server
 	std::string session_name;
 	int session_timeout = 0;
 	bool session_enable = false;
@@ -59,9 +58,9 @@ void ConfigParser::parsefile(const std::string& filepath) {
 	int loc_redirect_code = 0;
 	bool loc_has_redirect = false;
 	bool loc_autoindex = false;
-	//bonus location
 	std::vector<std::string> loc_cgi_extension;
 	bool loc_cookies_enabled = false;
+	size_t loc_client_max_body_size = 0;
 
 	while (std::getline(file, line)) {
 		line = trim(line);
@@ -102,7 +101,7 @@ void ConfigParser::parsefile(const std::string& filepath) {
 			if (inLocation) {
 				if (loc_root.empty())
 					loc_root = root;
-				Location loc(loc_path, loc_methods, loc_error_pages, loc_upload_path, loc_root, loc_index, loc_redirect_path, loc_redirect_code, loc_has_redirect, loc_autoindex, loc_cgi_extension, loc_cookies_enabled);
+				Location loc(loc_path, loc_methods, loc_error_pages, loc_upload_path, loc_root, loc_index, loc_redirect_path, loc_redirect_code, loc_has_redirect, loc_autoindex, loc_cgi_extension, loc_cookies_enabled, loc_client_max_body_size);
 				locations[loc_path] = loc;
 				inLocation = false;
 			}
@@ -143,6 +142,7 @@ void ConfigParser::parsefile(const std::string& filepath) {
 			loc_has_redirect = false;
 			loc_autoindex = false;
 			loc_cookies_enabled = false;
+			loc_client_max_body_size = 0;
 			continue;
 		}
 		std::istringstream iss(line);
@@ -200,6 +200,8 @@ void ConfigParser::parsefile(const std::string& filepath) {
 					throw ParseException("Missing path in error_page directive for code: " + toString(code));
 				error_pages[code] = path;
 			}
+			else if (key == "client_max_body_size")
+				loc_client_max_body_size = parseSizeWithUnit(value);
 		}
 		else if (inServer) {
 			if (key == "listen") {

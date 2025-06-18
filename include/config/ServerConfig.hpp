@@ -22,7 +22,6 @@ class ServerConfig {
 		bool _keepAlive;
 		int _keepAliveTimeout;
 		int _keepAliveMaxRequests;
-		//bonus
 		std::string _sessionName;
 		int _sessionTimeout;
 		bool _sessionEnable;
@@ -53,15 +52,14 @@ class ServerConfig {
 		const std::string& getRoot() const;
 		const std::map<int, std::string>& getErrorPages() const;
 		const std::map<std::string, Location>& getLocations() const;
-		size_t getClientMaxBodySize() const;
-		bool hasErrorPage(int code) const;
+		const std::string& getSessionName() const;
 		const std::string& getErrorPage(int code) const;
-		bool getKeepAlive() const;
 		int getKeepAliveTimeout() const;
 		int getKeepAliveMaxRequests() const;
-		//bonus
-		const std::string& getSessionName() const;
 		int getSessionTimeout() const;
+		size_t getClientMaxBodySize() const;
+		bool hasErrorPage(int code) const;
+		bool getKeepAlive() const;
 		bool isSessionEnable() const;
 		bool hasServerName(const std::string & nameToFind) const;
 		void printServerConfig(int index) const;
