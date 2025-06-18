@@ -39,6 +39,36 @@
 			margin-top: 1rem;
 		}
 
+		form {
+			margin-top: 2rem;
+			background: rgba(255, 255, 255, 0.1);
+			padding: 1.5rem;
+			border-radius: 15px;
+			box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+		}
+
+		input[type="file"] {
+			margin-bottom: 1rem;
+			color: #fff;
+		}
+
+		input[type="submit"] {
+			padding: 0.5rem 1.2rem;
+			background-color: #00ffe7;
+			border: none;
+			border-radius: 10px;
+			font-weight: bold;
+			cursor: pointer;
+			transition: background-color 0.3s, transform 0.2s;
+			color: #1e3c72;
+			box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+		}
+
+		input[type="submit"]:hover {
+			background-color: #00ccb5;
+			transform: scale(1.05);
+		}
+
 		@keyframes pulse {
 			0% {
 				text-shadow: 0 0 5px #00ffe7;
@@ -58,6 +88,12 @@
 <body>
 	<h1>ZBcloud</h1>
 	<p>Welcome to your ZBcloud</p>
+
+	<form action="/upload" method="POST" enctype="multipart/form-data">
+		<input type="file" name="file" required>
+		<br>
+		<input type="submit" value="Upload">
+	</form>
 </body>
 
 </html>
