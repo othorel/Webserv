@@ -156,7 +156,6 @@ void	Server::acceptNewConnexion(int fd)
 		return;
 	_pollManager->addSocket(clientFd, POLLIN);
 	std::vector<ServerConfig> ActiveVect = ActiveServConfigVect(getLocalPort(fd), inet_ntoa(clientAddr.sin_addr));
-	std::cout << "activeServConfigvect size = " << ActiveVect.size() << std::endl;
 	_clientsMap[clientFd] = Connexion(clientFd, clientAddr, ActiveVect);
 	logTime();
 	
@@ -248,11 +247,11 @@ void	Server::handleError(int errorCode, int fdClient, size_t & i)
 
 void	Server::readSocket(int fd, std::string & rawLine, size_t & i)
 {
-	_clientsMap[fd].readDataFromSocket(rawLine); // quoi qu'il arrive on lit une ligne sur le socket
+	_clientsMap[fd].readDataFromSocket(rawLine); 
 
-	if (_clientsMap[fd].getBytesIn() <= 0) // si on detecte la fermeture de la connexion
+	if (_clientsMap[fd].getBytesIn() <= 0)
 	{
-		supressClient(fd, i); // peut etre en plus throw une exception ?
+		supressClient(fd, i);
 		if (_clientsMap[fd].getBytesIn() < 0)
 			throw std::runtime_error("Error while reading from socket");
 		return ;
@@ -274,7 +273,7 @@ std::vector<ServerConfig> Server::ActiveServConfigVect(int Port, std::string IP)
 
 void	Server::handleEnd(int fd, size_t & i)
 {
-	if (_clientsMap[fd].getProcessRequest().closeConection() == true /*|| max requetes atteint*/)
+	if (_clientsMap[fd].getProcessRequest().closeConection() == true)
 	{
 		supressClient(fd, i);
 		return;
@@ -431,12 +430,9 @@ int getLocalPort(int fd)
 	socklen_t len = sizeof(addr);
 
 	if (getsockname(fd, (struct sockaddr*)&addr, &len) == -1)
-	{
-		perror("getsockname");
-		return -1;
-	}
+		return (-1);
 
-	return ntohs(addr.sin_port); // C'est bien le port local, donc 8080
+	return ntohs(addr.sin_port);
 }
 
 
