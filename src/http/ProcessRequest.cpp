@@ -55,10 +55,6 @@ ProcessRequest::ProcessRequest(const std::vector<ServerConfig> & serversVector) 
 	if (serversVector.empty())
 		throw HttpErrorException(500);
 	_server = serversVector[0];
-
-	// debug
-	std::cout << "SERVER : " << _server.getServerNames()[0] << "" << << ""td::endl;
-
 	_serverTimeout = _server.getSessionTimeout();
 }
 
