@@ -612,44 +612,47 @@ void ProcessRequest::buildRedirect()
 	_processStatus = SENDING_HEADERS;
 }
 
-// void ProcessRequest::errorBuilder(int statusCode, bool secondTime)
-// {
-// 	std::string errorPage = selectErrorPage(statusCode);
+void ProcessRequest::errorBuilder(int statusCode, bool secondTime)
+{
+	if (_file) {
+		delete _file;
+		_file = NULL;
+	}
+	std::string errorPage = selectErrorPage(statusCode);
+	std::map<std::string, std::string> headers;
+	std::string mimeType = "text/html";
+	std::string body = "";
+	size_t bodyLen = 0;
 
-// 	// if there is a file to read
-// 	if (!errorPage.empty() && !secondTime) {
-// 		std::string errorFilePath = createErrorFilePath(errorPage);
-// 		if (_file)
-// 			delete _file;
-// 			_file = new File(errorFilePath);
-// 		std::map<std::string, std::string> headers;
-// 		headers["content-type"] = _file->getMimeType();
-// 		headers["content-length"] = HttpUtils::numberToString(_file->getSize());
-// 		buildResponse(200, headers, "");
-
-// 		_processStatus = SENDING_HEADERS;
-// 		sendHeaders();
-// 	}
-
-
-// 	std::string body = "";
-// 	std::string mimeType = "text/html";
-// 	try {
-// 		body = HttpUtils::readFile(filePath);
-// 		mimeType = HttpUtils::getMimeType(filePath); }
-
-// 	// body = "<html><body><h1>" + HttpUtils::numberToString(statusCode) + " " +
-// 	// 	HttpUtils::httpStatusMessage(statusCode) + "</h1></body></html>";
-// 	// mimeType = "text/html";
-// 	std::map<std::string, std::string> headers;
-// 	headers["Content-Type"] = mimeType;
-
-// 	// if (statusCode == 405) {
-// 	// 	headers["allow"] = createAllowedMethodsList(*location); }
-
-// 	_httpResponse = HttpResponse("HTTP/1.1", statusCode, headers, body);
-// 	addMandatoryHeaders();
-// }
+	// if there is a file to read
+	if (!errorPage.empty() && !secondTime) {
+		std::string errorFilePath = createErrorFilePath(errorPage);
+		_file = new File(errorFilePath);
+		mimeType = _file->getMimeType();
+		bodyLen = _file->getSize();
+	}
+	// there is no file
+	else {
+		body = "<html><body><h1>" + HttpUtils::numberToString(statusCode) + " " +
+			HttpUtils::httpStatusMessage(statusCode) + "</h1></body></html>";
+		bodyLen = body.size();
+	}
+	headers["content-type"] = mimeType;
+	headers["content-length"] = HttpUtils::numberToString(bodyLen);
+	if (statusCode == 405) {
+		std::string allowedMethods;
+		std::vector<std::string>::const_iterator cit = _location.getMethods().begin();
+		for (; cit != _location.getMethods().end(); ++cit) {
+			if (allowedMethods.empty())
+				allowedMethods += *cit;
+			else
+				allowedMethods += " " + *cit;
+		}
+		headers["allow"] = allowedMethods;
+	}
+	buildResponse(statusCode, headers, body);
+	_processStatus = SENDING_HEADERS;
+}
 
 std::string ProcessRequest::createErrorFilePath(const std::string & errorPage)
 {
@@ -664,7 +667,6 @@ std::string ProcessRequest::createErrorFilePath(const std::string & errorPage)
 
 	return (root + '/' + filePath);
 }
-
 
 /* ************************************************************************** */
 /*                            private utils methods                           */
