@@ -229,7 +229,7 @@ void	Server::handleError(int errorCode, int fdClient, size_t & i)
 {
 	try
 	{
-		_clientsMap[fdClient].getProcessRequest().buildError(errorCode);
+		_clientsMap[fdClient].getProcessRequest().errorBuilder(errorCode);
 
 		std::string	processed = _clientsMap[fdClient].getProcessRequest().process("");
 		int status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
@@ -243,7 +243,7 @@ void	Server::handleError(int errorCode, int fdClient, size_t & i)
 	}
 	catch(const HttpErrorException& e)
 	{
-		_clientsMap[fdClient].getProcessRequest().buildError(errorCode, true);
+		_clientsMap[fdClient].getProcessRequest().errorBuilder(errorCode, true);
 
 		std::string	processed = _clientsMap[fdClient].getProcessRequest().process("");
 		int status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
