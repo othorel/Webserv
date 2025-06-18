@@ -61,11 +61,11 @@ class ProcessRequest
 		void buildResponse(int statusCode, const std::map<std::string, std::string> & headers, const std::string & body);
 		void addFinalHeaders();
 		void buildRedirect();
-		// void buildError(int statusCode, const ServerConfig & server, const Location * location);
 
 		void checkMethodValidity();
 		std::string createPath();
 		std::string createUploadPath();
+		std::string createErrorFilePath(const std::string & errorPage);
 		void checkPostValidity(const std::string & path);
 		
 	public :
@@ -81,6 +81,7 @@ class ProcessRequest
 		int getServerTimeout() const;
 		bool closeConection();
 		std::string process(std::string data);
+		void errorBuilder(int statusCode, bool secondTime = false);
 		void reset();
 
 };
