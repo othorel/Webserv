@@ -64,15 +64,15 @@ Connexion &Connexion::operator=(const Connexion & other)
 void	Connexion::readDataFromSocket(std::string &line)
 {
 	char bufIn[BUFFER_SIZE];
-	memset(bufIn, 0, BUFFER_SIZE);
+	// memset(bufIn, 0, BUFFER_SIZE);
 	_bytesIn = recv(_fd, bufIn, sizeof(bufIn), 0);
 
 	if (_bytesIn <= 0)
 		return;
 		
 	// _bufferIn.append(bufIn, _bytesIn);
-	_bufferIn = bufIn;
-	line = bufIn;
+	_bufferIn.assign(bufIn, _bytesIn);
+	line.assign(bufIn, _bytesIn);
 	
 	// std::size_t pos = _bufferIn.find("\r\n\r\n");
 	// if (pos != std::string::npos)
