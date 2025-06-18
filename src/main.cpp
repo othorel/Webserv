@@ -23,13 +23,16 @@ void handle_sigint(int signal) {
 
 int	main(int argc, char **argv) {
 	signal(SIGINT, handle_sigint);
-	if (argc!= 2)
+	if (argc > 2)
 	{
 		std::cerr << "Usage: " << argv[0] << " <config_file>" << std::endl;
  		return (1);
 	}
-
-	std::string	configFile = argv[1];
+	std::string	configFile;
+	if (argc == 1)
+		configFile = "./config/default.conf";
+	else
+		configFile = argv[1];
 
 	try
 	{
@@ -51,7 +54,8 @@ int	main(int argc, char **argv) {
 	}
 	catch (const std::exception& e)
 	{
-		std::cerr << "[Fatal] " << e.what() << std::endl;
+		if (g_stop == 0)
+			std::cerr << "[Fatal] " << e.what() << std::endl;
 		return (1);
 	}
 }
