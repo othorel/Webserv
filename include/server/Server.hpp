@@ -61,18 +61,20 @@ class Server
 		void										initServerConfig(int fd, int & keepAliveTimeOut, int & keepAliveMaxRequests);
 
 		// Runtime
-		void										checkTimeOut(int fdClient, size_t & i);
 		void										dealClient(int fd, size_t & i);
 		void										acceptNewConnexion(int fd);
 		void										handleEvent(int fdClient, size_t & i);
 		void										handleError(int errorCode, int fdClient, size_t & i);
 		void										supressClient(int fdClient, size_t & i);
 		void										readSocket(int fd, std::string & rawLine, size_t & i);
-		void										fillActiveServConfigVect();
+		void										handleEnd(int fd, size_t & i);
+		bool										checkKeepAliveTimeout(int fdClient, size_t & i);
+		bool										checkKeepAliveNbRequests(int fdClient, size_t & i);
 
 		//Logs
 		void										readLog(int fdClient);
 		void										keepAliveTimeoutLog() const;
+		void										keepAliveNbRequestsMaxLog() const;
 
 };
 

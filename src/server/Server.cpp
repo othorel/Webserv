@@ -174,14 +174,13 @@ void	Server::handleEvent(int fdClient, size_t & i)
 
 	try
 	{
+		if (!checkKeepAliveNbRequests(fdClient, i))
+			return;
+			
 		readSocket(fdClient, rawLine, i);
 
-		if (_clientsMap[fdClient].getServConfig() != NULL && (static_cast<int>(std::time(NULL)) - _clientsMap[fdClient].getEndPreviousRequest() >= _clientsMap[fdClient].keepAliveTimeOut))
-		{
-			keepAliveTimeoutLog();
-			supressClient(fdClient, i);
+		if (!checkKeepAliveTimeout(fdClient, i))
 			return;
-		}
 		
 		readLog(fdClient); //debug
 
@@ -201,21 +200,9 @@ void	Server::handleEvent(int fdClient, size_t & i)
 			status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
 		}
 		//CATCH AND WRITE RESPONSE
-
-		//HANDLE END
+		
 		if (status == 5)
-		{
-			if (_clientsMap[fdClient].getProcessRequest().closeConection() == true /*|| max requetes atteint*/)
-			{
-				supressClient(fdClient, i);
-				return;
-			}
-			_clientsMap[fdClient].increaseNbRequests();
-			_clientsMap[fdClient].actualizeEndPreviousRequest();
-			_clientsMap[fdClient].getProcessRequest().reset();
-		}
-		//HANDLE END
-
+			handleEnd(fdClient, i);
 	}
 	catch (const HttpErrorException& e)
 	{
@@ -259,26 +246,6 @@ void	Server::handleError(int errorCode, int fdClient, size_t & i)
 	supressClient(fdClient, i);
 }
 
-void	Server::checkTimeOut(int fdClient, size_t & i)
-{
-	if (_clientsMap[fdClient].getServConfig() == NULL)
-		return;
-	std::cout << "servConfig ptr: " << _clientsMap[fdClient].getServConfig() << std::endl;
-	std::time_t		timeNow = std::time(NULL);
-	std::cout << "timeout : " << _clientsMap[fdClient].getServConfig()->getSessionTimeout() << std::endl;
-	std::time_t		timeOut = static_cast<time_t>(_clientsMap[fdClient].getServConfig()->getSessionTimeout());
-	std::time_t		timeEnd = _clientsMap[fdClient].getStartTime() + timeOut;
-
-	std::cout << "\nTime: " << timeNow << std::endl;
-	std::cout << "timeout: " << timeOut << std::endl;
-	std::cout << "Will throw 408 exception at: " << timeEnd << "\n" << std::endl; 
-	if (timeNow > timeEnd)
-	{
-		supressClient(fdClient, i);
-		throw HttpErrorException(408);
-	}
-}
-
 void	Server::readSocket(int fd, std::string & rawLine, size_t & i)
 {
 	_clientsMap[fd].readDataFromSocket(rawLine); // quoi qu'il arrive on lit une ligne sur le socket
@@ -305,6 +272,39 @@ std::vector<ServerConfig> Server::ActiveServConfigVect(int Port, std::string IP)
 	return vect;
 }
 
+void	Server::handleEnd(int fd, size_t & i)
+{
+	if (_clientsMap[fd].getProcessRequest().closeConection() == true /*|| max requetes atteint*/)
+	{
+		supressClient(fd, i);
+		return;
+	}
+	_clientsMap[fd].increaseNbRequests();
+	_clientsMap[fd].actualizeEndPreviousRequest();
+	_clientsMap[fd].getProcessRequest().reset();
+}
+
+bool	Server::checkKeepAliveNbRequests(int fdClient, size_t & i)
+{
+	if (_clientsMap[fdClient].getServConfig() != NULL && (_clientsMap[fdClient].getNbRequests() >= _clientsMap[fdClient].keepAliveMaxRequests))
+	{
+		keepAliveNbRequestsMaxLog();
+		supressClient(fdClient, i);
+		return (false);
+	}
+	return (true);
+}
+
+bool	Server::checkKeepAliveTimeout(int fdClient, size_t & i)
+{
+	if (_clientsMap[fdClient].getServConfig() != NULL && (static_cast<int>(std::time(NULL)) - _clientsMap[fdClient].getEndPreviousRequest() >= _clientsMap[fdClient].keepAliveTimeOut))
+	{
+		keepAliveTimeoutLog();
+		supressClient(fdClient, i);
+		return (false);
+	}
+	return (true);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 ///                           INITIALIZATION                                 ///
@@ -377,7 +377,13 @@ void	Server::initServerConfig(int fd, int & keepAliveTimeOut, int & keepAliveMax
 void	Server::keepAliveTimeoutLog() const
 {
 	logTime();
-	std::cout << "[INFO] TIMEOUT, connexion closed." << std::endl;
+	std::cout << "[INFO] TIMEOUT, connection closed." << std::endl;
+}
+
+void	Server::keepAliveNbRequestsMaxLog() const
+{
+	logTime();
+	std::cout << "[INFO] Too many requests on a keepalive connection, connection closed." << std::endl;
 }
 
 void	Server::readLog(int fdClient)
