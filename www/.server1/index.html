@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Page d'accueil</title>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			height: 100vh;
+			background: linear-gradient(135deg, #1e3c72, #2a5298);
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			color: #f0f0f0;
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			text-align: center;
+			padding: 2rem;
+		}
+
+		h1 {
+			font-size: 3rem;
+			margin-bottom: 1rem;
+			color: #00ffe7;
+			text-shadow: 2px 2px 4px #000;
+			animation: pulse 2s infinite;
+		}
+
+		p {
+			font-size: 1.2rem;
+			margin-bottom: 1rem;
+			color: #ddd;
+		}
+
+		a {
+			display: inline-block;
+			padding: 0.8rem 1.5rem;
+			border-radius: 30px;
+			background: #00ffe7;
+			color: #1e3c72;
+			font-weight: bold;
+			text-decoration: none;
+			transition: background 0.3s, transform 0.2s;
+			box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+			margin: 0.5rem;
+		}
+
+		a:hover {
+			background: #00ccb5;
+			transform: scale(1.05);
+		}
+
+		@keyframes pulse {
+			0% {
+				text-shadow: 0 0 5px #00ffe7;
+			}
+
+			50% {
+				text-shadow: 0 0 20px #00ffe7;
+			}
+
+			100% {
+				text-shadow: 0 0 5px #00ffe7;
+			}
+		}
+	</style>
+</head>
+
+<body>
+	<h1>Welcome to ZEEEEUUUUUUB web server !</h1>
+
+	<p>Click here to say hello :</p>
+	<a href="/page2.html">👋 Say hello</a>
+
+	<p>Click here for a surprise :</p>
+	<a href="/img/surprise.PNG" target="_blank">🎁 See the surprise</a>
+
+	<p>Get the current date and time :</p>
+	<a href="/cgi-bin/date_cgi.py">📅 Show me the time</a>
+</body>
+
+</html>
