@@ -227,20 +227,36 @@ void	Server::handleEvent(int fdClient, size_t & i)
 
 void	Server::handleError(int errorCode, int fdClient, size_t & i)
 {
-	(void) errorCode;
-	(void) fdClient;
-	(void) i;
-	
-	//ProcessRequest	RequestError(errorCode, *_clientsMap[fdClient].getServConfig(), _clientsMap[fdClient].getProcessRequest().selectLocation());
+	try
+	{
+		_clientsMap[fdClient].getProcessRequest().buildError(errorCode);
 
-	// std::string	processedError = RequestError.processError();
+		std::string	processed = _clientsMap[fdClient].getProcessRequest().process("");
+		int status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
 		
-	// while (!processedError.empty())
-	// {
-	// 	_clientsMap[fdClient].writeDataToSocket(processedError);
-	// 	processedError = RequestError.processError();
-	// }
-	// supressClient(fdClient, i);
+		while (!processed.empty())
+		{
+			_clientsMap[fdClient].writeDataToSocket(processed);
+			processed = _clientsMap[fdClient].getProcessRequest().process("");
+			status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
+		}
+	}
+	catch(const HttpErrorException& e)
+	{
+		_clientsMap[fdClient].getProcessRequest().buildError(errorCode, true);
+
+		std::string	processed = _clientsMap[fdClient].getProcessRequest().process("");
+		int status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
+		
+		while (!processed.empty())
+		{
+			_clientsMap[fdClient].writeDataToSocket(processed);
+			processed = _clientsMap[fdClient].getProcessRequest().process("");
+			status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
+		}
+		supressClient(fdClient, i);
+	}
+	supressClient(fdClient, i);
 }
 
 void	Server::checkTimeOut(int fdClient, size_t & i)
