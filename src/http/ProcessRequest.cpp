@@ -205,10 +205,10 @@ void ProcessRequest::handleMethod()
 	if (_processStatus != HANDLING_METHOD)
 		return ;
 
-	selectHandler();
+	_handler = RequestHandlers::selectHandler(_request->getMethod());
 	if (!_handler)
-		throw HttpErrorException(500);
-	(this->*_handler)();
+		throw HttpErrorException(501);
+	(this->_handler)();
 }
 
 // From status WAITING_BODY to SENDING_HEADERS
@@ -320,102 +320,8 @@ void ProcessRequest::sendBody()
 }
 
 /* ************************************************************************** */
-/*                                      handlers                              */
+/*                                      cgi                                   */
 /* ************************************************************************** */
-
-void ProcessRequest::deleteHandler()
-{
-	if (!_request)
-		throw HttpErrorException(500);
-
-	if (_processStatus != HANDLING_METHOD)
-		return ;
-
-	std::string path = createPath();
-
-	checkDeleteValidity(path);
-
-	if (unlink(path.c_str()) == -1) {
-		throw HttpErrorException(500); }
-
-	std::map<std::string, std::string> headers;
-	headers["content-length"] = "0";
-	buildResponse(204, headers, "");
-	_processStatus = SENDING_HEADERS;
-	sendHeaders();
-}
-
-void ProcessRequest::getHandler()
-{
-	if (!_request)
-		throw HttpErrorException(500);
-
-	if (_processStatus != HANDLING_METHOD)
-		return ;
-	
-	std::string path = createPath();
-	if (!HttpUtils::fileExists(path))
-		throw HttpErrorException(404);
-
-	if (HttpUtils::isDirectory(path)) {
-		std::string indexFile = createIndexPath(path, _location);
-		if (HttpUtils::fileExists(indexFile))
-			path = indexFile;
-		else if (_location.isAutoIndex()) {
-			std::string body = generateAutoIndex(path, _request->getTarget());
-			std::map<std::string, std::string> headers;
-			headers["content-type"] = "text/html";
-			headers["content-length"] = HttpUtils::numberToString(body.length());
-			buildResponse(200, headers, body);
-			_processStatus = SENDING_HEADERS;
-			sendHeaders();
-			return ;
-		}
-		else
-			throw HttpErrorException(403);
-	}
-
-	if (_file) {
-		delete _file;
-		_file = NULL;
-	}
-	_file = new File(path);
-	std::map<std::string, std::string> headers;
-	headers["content-type"] = _file->getMimeType();
-	headers["content-length"] = HttpUtils::numberToString(_file->getSize());
-	buildResponse(200, headers, "");
-
-	_processStatus = SENDING_HEADERS;
-	sendHeaders();
-}
-
-void ProcessRequest::postHandler()
-{
-	if (!_request)
-		throw HttpErrorException(500);
-
-	if (_processStatus != HANDLING_METHOD)
-		return ;
-
-	if (_file)
-		throw HttpErrorException(500);
-	std::string path;
-	if (_request->hasHeader("content-type")
-		&& _request->getHeaderValue("content-type").find("multipart/form-data") == 0
-		&& _request->getHeaderValue("content-type").find("boundary") != std::string::npos) {
-		path = createUploadPath();
-		checkPostValidity(path);
-		std::string filepath = createUploadFilename(*_request, path);
-		_file = new File(filepath, true);
-	}
-	else {
-		path = createPath();
-		checkPostValidity(path);
-	}
-
-	_processStatus = WAITING_BODY;
-	waitBody();
-}
 
 void ProcessRequest::cgiGetHandler()
 {
@@ -427,11 +333,6 @@ void ProcessRequest::cgiGetHandler()
 
 	_processStatus = SENDING_HEADERS;
 	sendHeaders();
-}
-
-void ProcessRequest::cgiPostHandler()
-{
-
 }
 
 /* ************************************************************************** */

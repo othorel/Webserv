@@ -9,6 +9,7 @@
 # include "../../include/config/Location.hpp"
 # include "../../include/config/ServerConfig.hpp"
 # include "../../include/http/File.hpp"
+# include "../../include/http/RequestHandlers.hpp"
 
 # define BUFFER_SIZE 4096
 # define MAX_HEADERS_SIZE 8192
@@ -21,23 +22,24 @@ enum ProcessStatus {
 	SENDING_BODY,
 	DONE
 };
-
 class ProcessRequest
 {
+
+	friend class RequestHandlers;
+
 	private :
 
-		std::vector<ServerConfig>	_serversVector;
-		ProcessStatus				_processStatus;
-		ServerConfig				_server;
-		int							_serverTimeout;
-		Location					_location;
-		std::string					_inputData;
-		std::string					_outputData;
-		HttpResponse				_httpResponse;
-		typedef void	(ProcessRequest::*HandlerFunction)();
-		HandlerFunction 			_handler;
-		HttpRequest					*_request;
-		File						*_file;
+		std::vector<ServerConfig>		_serversVector;
+		ProcessStatus					_processStatus;
+		ServerConfig					_server;
+		int								_serverTimeout;
+		Location						_location;
+		std::string						_inputData;
+		std::string						_outputData;
+		HttpResponse					_httpResponse;
+		RequestHandlers::HandlerFunction _handler;
+		HttpRequest						*_request;
+		File							*_file;
 
 		void selectServer();
 		void selectLocation();
