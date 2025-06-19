@@ -22,6 +22,7 @@ static std::string sanitizeFilenamePart(const std::string & input);
 static std::string createUploadFilename(
 	const HttpRequest & request, const std::string & path);
 static bool isCgi(const std::string & path);
+static std::string findBoundary(const std::string & contentType);
 
 /* ************************************************************************** */
 /*                                  constructors                              */
@@ -139,32 +140,32 @@ ProcessRequest::~ProcessRequest()
 std::string ProcessRequest::process(std::string data)
 {
 	_inputData.append(data);
-	switch (_processStatus)
-		{
-			case WAITING_HEADERS:
-				waitHeaders();
-				break ;
-			case HANDLING_METHOD:
-				handleMethod();
-				break ;
-			case WAITING_BODY:
-				waitBody();
-				break ;
-			case SENDING_HEADERS:
-				sendHeaders();
-				break ;
-			case SENDING_BODY:
-				sendBody();
-				break ;
-			case DONE:
-				if (!_inputData.empty())
-					_inputData.clear();
-				if (!_outputData.empty())
-					_outputData.clear();
-				break;
-			default:
-				throw HttpErrorException(500);
-		}
+
+	switch (_processStatus) {
+		case WAITING_HEADERS:
+			waitHeaders();
+			break ;
+		case HANDLING_METHOD:
+			handleMethod();
+			break ;
+		case WAITING_BODY:
+			waitBody();
+			break ;
+		case SENDING_HEADERS:
+			sendHeaders();
+			break ;
+		case SENDING_BODY:
+			sendBody();
+			break ;
+		case DONE:
+			if (!_inputData.empty())
+				_inputData.clear();
+			if (!_outputData.empty())
+				_outputData.clear();
+			break;
+		default:
+			throw HttpErrorException(500);
+	}
 	std::string dataToSend = _outputData;
 	_outputData.clear();	
 	return (dataToSend);
@@ -234,8 +235,10 @@ void ProcessRequest::waitBody()
 			<< "\n" << std::endl;
 
 		if (bytesToWrite) {
-			if (_file->WriteChunk(_inputData.c_str(), bytesToWrite) != bytesToWrite)
-				throw HttpErrorException(500);
+			// dev
+			_file->WriteChunk(_inputData.c_str(), bytesToWrite);
+			// if (_file->WriteChunk(_inputData.c_str(), bytesToWrite) != bytesToWrite)
+			// 	throw HttpErrorException(500);
 		}
 		_inputData.clear();
 
@@ -411,11 +414,18 @@ void ProcessRequest::postHandler()
 	std::string path;
 	if (_request->hasHeader("content-type")
 		&& _request->getHeaderValue("content-type").find("multipart/form-data") == 0
-		&& _request->getHeaderValue("content-type").find("boundary") != std::string::npos) {
+		&& _request->getHeaderValue("content-type").find("boundary=") != std::string::npos) {
 		path = createUploadPath();
 		checkPostValidity(path);
 		std::string filepath = createUploadFilename(*_request, path);
-		_file = new File(filepath, true);
+
+		// dev
+		std::string boundary = findBoundary(_request->getHeaderValue("content-type"));
+		if (boundary.empty())
+			throw HttpErrorException(400);
+		_file = new File(filepath, boundary);
+
+		// _file = new File(filepath, true);
 	}
 	else {
 		path = createPath();
@@ -821,4 +831,25 @@ static bool isCgi(const std::string & path)
 	size_t end = path.find('?', start);
 	std::string ext = path.substr(start, end - start);
 	return (ext == ".py" || ext == ".php" || ext == ".pl");
+}
+
+static std::string findBoundary(const std::string & contentType)
+{
+	std::string boundary;
+
+	size_t start = contentType.find("boundary=");
+	if (start == std::string::npos)
+		throw HttpErrorException(400);
+	start += 9;
+
+	size_t end = contentType.find(";", start);
+	if (end == std::string::npos)
+		boundary = contentType.substr(start);
+	else
+		boundary = contentType.substr(start, end - start);
+
+	if (!boundary.empty() && boundary[0] == '"' && boundary[boundary.size() - 1] == '"')
+		boundary = boundary.substr(1, boundary.size() - 2);
+
+	return ("--" + boundary += "\r\n");
 }
