@@ -8,7 +8,10 @@
 	<style>
 		body {
 			font-family: Arial, sans-serif;
-			background: linear-gradient(to right, #0055A4 0%, #FFFFFF 50%, #EF4135 100%);
+			background-image: url('background.jpg'); 
+			background-size: cover;                 
+			background-position: center;            
+			background-repeat: no-repeat;           
 			text-align: center;
 			padding: 40px;
 			margin: 0;
@@ -23,20 +26,20 @@
 
 		.test-link {
 			display: inline-block;
-			font-size: 20px;
-			padding: 12px 24px;
 			margin: 10px;
-			background-color: #f1f1f1;
-			color: #333;
 			text-decoration: none;
-			border-radius: 8px;
-			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-			transition: transform 0.3s ease, background-color 0.3s ease;
 		}
 
-		.test-link:hover {
-			background-color: #e0e0e0;
+		.test-link img {
+			width: 220px; /* adapte à ta taille idéale */
+			border-radius: 8px;
+			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+			transition: transform 0.3s ease, box-shadow 0.3s ease;
+		}
+
+		.test-link:hover img {
 			transform: scale(1.1);
+			box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 		}
 
 		.homepage {
@@ -61,11 +64,25 @@
 <body>
 	<h1>GET Request Test Pages</h1>
 
-	<a href="page1.html" class="test-link">Page 1 – Basic Image Load</a><br>
-	<a href="page2.html" class="test-link">Page 2 – 404 Not Found</a><br>
-	<a href="page3.html" class="test-link">Page 3 – Directory Listing</a><br>
-	<a href="page4.html" class="test-link">Page 4 – Redirection</a><br>
-	<a href="page5.html" class="test-link">Page 5 – CGI with Parameters</a><br>
+	<a href="page1.html" class="test-link">
+		<img src="button-image.jpg" alt="Page 1 – Basic Image Load">
+	</a><br>
+
+	<a href="page2.html" class="test-link">
+		<img src="button-image.jpg" alt="Page 2 – 404 Not Found">
+	</a><br>
+
+	<a href="page3.html" class="test-link">
+		<img src="button-image.jpg" alt="Page 3 – Directory Listing">
+	</a><br>
+
+	<a href="page4.html" class="test-link">
+		<img src="button-image.jpg" alt="Page 4 – Redirection">
+	</a><br>
+
+	<a href="page5.html" class="test-link">
+		<img src="button-image.jpg" alt="Page 5 – CGI with Parameters">
+	</a><br>
 
 	<a href="/" class="homepage"> BACK TO HOME </a>
 </body>
