@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Page 2</title>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			height: 100vh;
+			background: linear-gradient(135deg, #141e30, #243b55);
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			color: #f0f0f0;
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			text-align: center;
+			padding: 2rem;
+		}
+
+		h1 {
+			font-size: 3rem;
+			margin-bottom: 1rem;
+			color: #ffcc00;
+			text-shadow: 2px 2px 6px #000;
+			animation: fadeIn 1.5s ease-in-out;
+		}
+
+		form {
+			margin-top: 1.5rem;
+		}
+
+		input[type="text"] {
+			padding: 0.5rem 1rem;
+			border-radius: 20px;
+			border: none;
+			font-size: 1rem;
+			margin-right: 1rem;
+		}
+
+		input[type="submit"] {
+			padding: 0.5rem 1.5rem;
+			border-radius: 30px;
+			background: #ffcc00;
+			color: #243b55;
+			font-weight: bold;
+			font-size: 1rem;
+			border: none;
+			cursor: pointer;
+			transition: background 0.3s, transform 0.2s;
+			box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+		}
+
+		input[type="submit"]:hover {
+			background: #e6b800;
+			transform: scale(1.05);
+		}
+
+		@keyframes fadeIn {
+			from {
+				opacity: 0;
+				transform: translateY(-20px);
+			}
+
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+	</style>
+</head>
+
+<body>
+	<h1>What's your name?</h1>
+
+	<form action="/cgi-bin/hello_user.py" method="post">
+		<input type="text" name="name" placeholder="Enter your name" required maxlength="20">
+		<input type="submit" value="Say hello">
+	</form>
+</body>
+
+</html>
