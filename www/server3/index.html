@@ -11,10 +11,10 @@
 	<img src="oscillo.gif" alt="Signal sinusoïdal" class="oscillo">
 
     <!-- Glow zones positionnées -->
-    <div id="glow-get" class="glow-zone" style="top:530px; left:182px; width:100px; height:100px;"></div>
-    <div id="glow-post" class="glow-zone" style="top:540px; left:328px; width:80px; height:80px;"></div>
-    <div id="glow-delete" class="glow-zone" style="top:530px; left:448px; width:112px; height:112px;"></div>
-    <div id="glow-cookies" class="glow-zone" style="top:538px; left:676px; width:182px; height:90px; border-radius:12px;"></div>
+    <div id="glow-get" class="glow-zone" style="top:52%; left:18%; width:10%; height:10%;"></div>
+    <div id="glow-post" class="glow-zone" style="top:53%; left:31%; width:10%; height:10%;"></div>
+    <div id="glow-delete" class="glow-zone" style="top:51%; left:44%; width:10%; height:10%;"></div>
+    <div id="glow-cookies" class="glow-zone" style="top:52%; left:67%; width:15%; height:15%; border-radius:12px;"></div>
 
     <map name="image-map">
       <area alt="Get" title="Get" href="Get/get_index.html" coords="232,580,50" shape="circle"
@@ -35,6 +35,10 @@
     function unhighlight(id) {
       document.getElementById(id).classList.remove('hover');
     }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/image-map-resizer@1.0.10/js/imageMapResizer.min.js"></script>
+  <script>
+	imageMapResize();
   </script>
 </body>
 </html>
