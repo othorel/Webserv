@@ -178,14 +178,15 @@ void	Server::handleEvent(int fdClient, size_t & i)
 			
 		readSocket(fdClient, rawLine, i);
 
-		if (!checkKeepAliveTimeout(fdClient, i))
-			return;
+		// if (!checkKeepAliveTimeout(fdClient, i))
+		// 	return;
 		
 		readLog(fdClient); //debug
 
 		//PROCESS HEADERS
 		std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLine);
 		status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
+		(void)status;
 		
 		if (_clientsMap[fdClient].getServConfig() == NULL)
 			initServerConfig(fdClient, _clientsMap[fdClient].keepAliveTimeOut, _clientsMap[fdClient].keepAliveMaxRequests);
@@ -197,7 +198,9 @@ void	Server::handleEvent(int fdClient, size_t & i)
 			_clientsMap[fdClient].writeDataToSocket(processed);
 			processed = _clientsMap[fdClient].getProcessRequest().process(rawLine);
 			status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
+
 		}
+		
 		//CATCH AND WRITE RESPONSE
 		
 		if (status == 5)
@@ -225,6 +228,8 @@ void	Server::handleError(int errorCode, int fdClient, size_t & i)
 			_clientsMap[fdClient].writeDataToSocket(processed);
 			processed = _clientsMap[fdClient].getProcessRequest().process("");
 			status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
+			(void)status;
+
 		}
 	}
 	catch(const HttpErrorException& e)
@@ -233,6 +238,8 @@ void	Server::handleError(int errorCode, int fdClient, size_t & i)
 
 		std::string	processed = _clientsMap[fdClient].getProcessRequest().process("");
 		int status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
+				(void)status;
+
 		
 		while (!processed.empty())
 		{

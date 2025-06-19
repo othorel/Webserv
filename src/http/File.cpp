@@ -134,9 +134,6 @@ std::string File::getMimeType() const
 	std::string extension = _path.substr(dot +1);
 	HttpUtils::stringToLower(extension);
 
-	//debug 
-	std::cout << "EXTENSION IS : " << extension << std::endl;
-
 	static std::map<std::string, std::string> extensionMap;
 	if (extensionMap.empty()) {
 		extensionMap["html"] = "text/html";
@@ -299,66 +296,51 @@ off_t File::getFileSize() const
 	return (-1);
 }
 
-
-
-
-
-
 /* ************************************************************************** */
-/*                                     test                                   */
+/*                                  sanitizer                                 */
 /* ************************************************************************** */
 
-// test by GPT OK
-// compile with g++ src/http/File.cpp src/http/HttpUtils.cpp 
-
-// #include <iostream>
-// #include <string>
-// #include <cstdlib>
-
-// int main(int argc, char **argv)
+// void File::sanitizeMultipart(const std::string & boundary)
 // {
-// 	if (argc != 3) {
-// 		std::cerr << "Usage: " << argv[0] << " <source_file> <destination_file>" << std::endl;
-// 		return 1;
-// 	}
+// 	const std::string tempPath = _path + ".cleaned";
 
-// 	std::string sourcePath = argv[1];
-// 	std::string destPath = argv[2];
+// 	std::ifstream in(_path.c_str(), std::ios::binary);
+// 	std::ofstream out(tempPath.c_str(), std::ios::binary | std::ios::trunc);
+// 	if (!in || !out)
+// 		throw HttpErrorException(500);
 
-// 	try {
-// 		File reader(sourcePath, false); // mode lecture
-// 		File writer(destPath, true);    // mode écriture
+// 	std::string line;
+// 	bool inFileContent = false;
 
-// 		const size_t chunkSize = 1024;
-// 		char buffer[chunkSize];
+// 	while (std::getline(in, line)) {
+// 		// Remettre le \n perdu par getline (utile pour binaires encodés)
+// 		line += '\n';
 
-// 		std::cout << "== Reader file before ==" << std::endl;
-// 		reader.debug();
-// 		std::cout << "== Writer file before ==" << std::endl;
-// 		writer.debug();
-
-// 		while (true)
-// 		{
-// 			size_t bytesRead = reader.ReadChunk(buffer, chunkSize);
-// 			if (bytesRead == 0)
-// 				break;
-// 			writer.WriteChunk(buffer, bytesRead);
+// 		if (!inFileContent) {
+// 			// On attend la ligne vide après les headers du part
+// 			if (line == "\r\n" || line == "\n")
+// 				inFileContent = true;
+// 			continue; // ne rien écrire tant qu'on n'est pas dans le contenu
 // 		}
 
-// 		std::cout << "\n== Reader file after ==" << std::endl;
-// 		reader.debug();
-// 		std::cout << "== Writer file after ==" << std::endl;
-// 		writer.debug();
-// 	}
-// 	catch (const HttpErrorException & e) {
-// 		std::cerr << "HttpErrorException: " << e.what() << std::endl;
-// 		return 1;
-// 	}
-// 	catch (const std::exception & e) {
-// 		std::cerr << "Exception: " << e.what() << std::endl;
-// 		return 1;
+// 		// Vérifie si on atteint le boundary final
+// 		if (line.find("--" + boundary) != std::string::npos)
+// 			break;
+
+// 		// Écrit la ligne dans le fichier nettoyé
+// 		out.write(line.c_str(), line.size());
 // 	}
 
-// 	std::cout << "Copy complete!" << std::endl;
-// 	return 0;
+// 	in.close();
+// 	out.close();
+
+// 	// Remplace l'ancien fichier par le fichier nettoyé
+// 	if (std::remove(_path.c_str()) != 0)
+// 		throw HttpErrorException(500);
+// 	if (std::rename(tempPath.c_str(), _path.c_str()) != 0)
+// 		throw HttpErrorException(500);
+
+// 	// Met à jour la taille
+// 	_size = getFileSize();
+// 	_offset = _size;
 // }
