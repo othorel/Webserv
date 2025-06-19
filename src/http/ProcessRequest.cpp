@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <unistd.h>
 #include <dirent.h>
+#include <cstdio>
 #include "../../include/http/ProcessRequest.hpp"
 # include "../../include/http/HttpErrorException.hpp"
 # include "../../include/http/RequestParser.hpp"
@@ -223,38 +224,34 @@ void ProcessRequest::waitBody()
 
 	// if body is a file to upload
 	if (_file) {
-		// dev
 		static size_t bytesSent = 0;
 		bytesSent += _inputData.size();
-
-
-
-
 		size_t remainingBytes = _request->getContentLength() - _file->getOffset();
 		size_t bytesToWrite = (_inputData.size() > remainingBytes) ? remainingBytes : _inputData.size();
 
-		// debug
-		std::cout << "RECEIVING BODY FOR FILE :"
-			<< "\ncontent-length = " << _request->getContentLength()
-			<< "\nfile offset = " << _file->getOffset()
-			<< "\nremaining bytes = " << remainingBytes
-			<< "\nbytes to write =  " << bytesToWrite
-			<< "\n" << std::endl;
-
 		if (bytesToWrite) {
-			// dev
 			_file->WriteChunk(_inputData.c_str(), bytesToWrite);
 			// if (_file->WriteChunk(_inputData.c_str(), bytesToWrite) != bytesToWrite)
 			// 	throw HttpErrorException(500);
 		}
 		_inputData.clear();
-
 		if (bytesSent >= _request->getContentLength()) {
+			_file->closeFile();
+
+			std::string originalPath = _file->getPath();
+			std::string headerName   = _file->getName();
+			headerName = sanitizeFilenamePart(headerName);
+			std::string newPath = originalPath + "-" + headerName;
+			rename(originalPath.c_str(), newPath.c_str());
+			
 			std::map<std::string, std::string> headers;
 			std::string relativePath = _location.getUploadPath();
 			if (!relativePath.empty() && relativePath[relativePath.size() - 1] != '/')
 				relativePath += "/";
 			relativePath += _file->getPath().substr(_file->getPath().find_last_of("/") + 1);
+			relativePath += "-";
+			relativePath += headerName;
+
 			headers["location"] = relativePath;
 			headers["content-type"] = "text/html";
 			std::string body =
@@ -264,7 +261,6 @@ void ProcessRequest::waitBody()
 				"</body></html>";
 			headers["content-length"] = HttpUtils::numberToString(body.length());
 			buildResponse(201, headers, body);
-			_file->closeFile();
 			if (_file) {
 				delete _file;
 				_file = NULL;
@@ -802,12 +798,9 @@ static std::string sanitizeFilenamePart(const std::string & input)
 	std::string result;
 	for (size_t i = 0; i < input.length(); ++i) {
 		char c = input[i];
-		if (std::isalnum(c) || c == '-' || c == '_') {
-			result += c; }
-		else {
-			result += '_'; }
-		if (result.size() > 39) {
-			break ; }}
+		if (std::isalnum(c) || c == '-' || c == '_' || c == '.')
+			result += c;
+		}
 	return (result);
 }
 
@@ -818,13 +811,7 @@ static std::string createUploadFilename(
 	if (request.hasHeader("content-type")) {
 		extension = HttpUtils::getExtensionFromMimeType(request.getHeaderValue("content-type")); }
 
-	std::string userAgent;
-	if (request.hasHeader("user-agent")) {
-		userAgent = "ua_" + sanitizeFilenamePart(request.getHeaderValue("user-agent")) + "_"; }
-	else {
-		userAgent = "ua_unknown_"; }
-
-	std::string filename = path + "/upload_" + userAgent + HttpUtils::generateUniqueTimestamp();
+	std::string filename = path + "/" + HttpUtils::generateUniqueTimestamp();
 	if (!extension.empty()) {
 		filename += "." + extension; }
 	return (filename);

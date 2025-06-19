@@ -44,6 +44,7 @@ class File
 		~File();
 
 		const std::string & getPath() const;
+		const std::string & getName() const;
 		off_t getSize() const;
 		int getFd() const;
 		size_t getOffset() const;

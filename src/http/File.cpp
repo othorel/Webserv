@@ -146,6 +146,11 @@ const std::string & File::getPath() const
 	return (_path);
 }
 
+const std::string & File::getName() const
+{
+	return(_name);
+}
+
 off_t File::getSize() const
 {
 	return (_size);
@@ -289,11 +294,21 @@ size_t File::writeChunkBoundary(const char * src, size_t writeSize)
 
 	if (_writeStatus == IN_FIRST_BOUNDARY) {
 		//debug
-		std::cout << "BUFFER = " << _buffer << std::endl;
+		// std::cout << "BUFFER = " << _buffer << std::endl;
 
 		// dev
 		size_t namePos = _buffer.find("filename=");
-		
+		if (namePos != std::string::npos) {
+			size_t start = namePos + 9;
+			if (_buffer[start] == '\"') ++start;
+			size_t end = _buffer.find_first_of("\"\n\r;", start);
+			if (end != std::string::npos) {
+				_name = _buffer.substr(start, end - start);
+
+				// debug
+				std::cout << "FILE NAME : " << _name << std::endl;
+			}
+		}
 
 		size_t pos = _buffer.find("\r\n\r\n");
 		if (pos == std::string::npos)
