@@ -15,6 +15,7 @@
 
 File::File() :
 	_path(""),
+	_name(""),
 	_size(-1),
 	_fd(-1),
 	_offset(0),
@@ -26,6 +27,7 @@ File::File() :
 
 File::File(const std::string & path, bool isWriteMode) :
 	_path(path),
+	_name(""),
 	_size(-1),
 	_fd(-1),
 	_offset(0),
@@ -61,6 +63,7 @@ File::File(const std::string & path, bool isWriteMode) :
 
 File::File(const std::string & path, const std::string & boundary) :
 	_path(path),
+	_name(""),
 	_size(-1),
 	_fd(-1),
 	_offset(0),
@@ -88,6 +91,7 @@ File::File(const std::string & path, const std::string & boundary) :
 
 File::File(const File & other) :
 	_path(other._path),
+	_name(other._name),
 	_size(other._size),
 	_fd(-1),
 	_offset(other._offset),
@@ -108,6 +112,7 @@ File & File::operator=(const File & other)
 		if (_fd != -1)
 			close(_fd);
 		_path = other._path;
+		_name = other._name;
 		_size = other._size;
 		_fd = -1;
 		_offset = other._offset;
@@ -273,7 +278,6 @@ size_t	File::WriteChunk(const char * src, size_t writeSize)
 size_t File::writeChunkBoundary(const char * src, size_t writeSize)
 {
 	_buffer.append(src, writeSize);
-	std::cout << "BUFFER = " << _buffer << std::endl;
 
 	if (_writeStatus == BEFORE_FIRST_BOUNDARY) {
 		size_t pos = _buffer.find(_boundary);
@@ -284,6 +288,13 @@ size_t File::writeChunkBoundary(const char * src, size_t writeSize)
 	}
 
 	if (_writeStatus == IN_FIRST_BOUNDARY) {
+		//debug
+		std::cout << "BUFFER = " << _buffer << std::endl;
+
+		// dev
+		size_t namePos = _buffer.find("filename=");
+		
+
 		size_t pos = _buffer.find("\r\n\r\n");
 		if (pos == std::string::npos)
 			return (writeSize);
@@ -298,7 +309,6 @@ size_t File::writeChunkBoundary(const char * src, size_t writeSize)
 		_offset += static_cast<size_t>(bytesWritten);
 		_size += static_cast<size_t>(bytesWritten);
 		_buffer.clear();
-		return (static_cast<size_t>(bytesWritten));
 	}
 
 	return (writeSize);

@@ -223,6 +223,13 @@ void ProcessRequest::waitBody()
 
 	// if body is a file to upload
 	if (_file) {
+		// dev
+		static size_t bytesSent = 0;
+		bytesSent += _inputData.size();
+
+
+
+
 		size_t remainingBytes = _request->getContentLength() - _file->getOffset();
 		size_t bytesToWrite = (_inputData.size() > remainingBytes) ? remainingBytes : _inputData.size();
 
@@ -242,7 +249,7 @@ void ProcessRequest::waitBody()
 		}
 		_inputData.clear();
 
-		if (_file->getOffset() >= _request->getContentLength()) {
+		if (bytesSent >= _request->getContentLength()) {
 			std::map<std::string, std::string> headers;
 			std::string relativePath = _location.getUploadPath();
 			if (!relativePath.empty() && relativePath[relativePath.size() - 1] != '/')

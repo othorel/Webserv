@@ -18,6 +18,7 @@ class File
 	private :
 
 		std::string	_path;
+		std::string _name;
 		off_t		_size;
 		int			_fd;
 		size_t		_offset;
