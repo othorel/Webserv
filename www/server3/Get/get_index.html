@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>GET Tests Index</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			background: linear-gradient(to right, #0055A4 0%, #FFFFFF 50%, #EF4135 100%);
+			text-align: center;
+			padding: 40px;
+			margin: 0;
+			min-height: 100vh;
+		}
+
+		h1 {
+			color: white;
+			text-shadow: 1px 1px 2px black;
+			margin-bottom: 40px;
+		}
+
+		.test-link {
+			display: inline-block;
+			font-size: 20px;
+			padding: 12px 24px;
+			margin: 10px;
+			background-color: #f1f1f1;
+			color: #333;
+			text-decoration: none;
+			border-radius: 8px;
+			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+			transition: transform 0.3s ease, background-color 0.3s ease;
+		}
+
+		.test-link:hover {
+			background-color: #e0e0e0;
+			transform: scale(1.1);
+		}
+
+		.homepage {
+			display: inline-block;
+			font-size: 21px;
+			padding: 10px 20px;
+			background-color: #8da6ec;
+			color: white;
+			text-decoration: none;
+			border-radius: 5px;
+			transition: background-color 0.3s ease, transform 0.3s ease;
+			margin-top: 40px;
+		}
+
+		.homepage:hover {
+			background-color: #0300b2;
+			transform: scale(1.2) rotate(5deg);
+		}
+	</style>
+</head>
+
+<body>
+	<h1>GET Request Test Pages</h1>
+
+	<a href="page1.html" class="test-link">Page 1 – Basic Image Load</a><br>
+	<a href="page2.html" class="test-link">Page 2 – 404 Not Found</a><br>
+	<a href="page3.html" class="test-link">Page 3 – Directory Listing</a><br>
+	<a href="page4.html" class="test-link">Page 4 – Redirection</a><br>
+	<a href="page5.html" class="test-link">Page 5 – CGI with Parameters</a><br>
+
+	<a href="/" class="homepage"> BACK TO HOME </a>
+</body>
+
+</html>

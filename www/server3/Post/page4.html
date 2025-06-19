@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Page 4 – Invalid POST Content-Type</title>
+	<script>
+		function sendInvalidPost() {
+			fetch('/post_receiver', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'text/plain'
+				},
+				body: "This is plain text, not JSON or form data."
+			})
+			.then(response => response.text())
+			.then(data => alert("Response: " + data))
+			.catch(err => alert("Error: " + err));
+		}
+	</script>
+</head>
+<body style="text-align:center; padding-top: 50px; font-family: sans-serif;">
+	<h2>POST with Invalid Content-Type</h2>
+	<button onclick="sendInvalidPost()">Send Plain Text</button>
+	<br><br>
+	<a href="post_index.html">← Back to POST Index</a>
+</body>
+</html>

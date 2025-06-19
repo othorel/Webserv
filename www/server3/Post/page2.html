@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Page 2 – JSON POST</title>
+	<script>
+		function sendJson() {
+			fetch('/post_receiver', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					message: document.getElementById("jsonInput").value
+				})
+			})
+			.then(response => response.text())
+			.then(data => alert("Response: " + data))
+			.catch(err => alert("Error: " + err));
+		}
+	</script>
+</head>
+<body style="text-align:center; padding-top: 50px; font-family: sans-serif;">
+	<h2>JSON POST via JavaScript</h2>
+	<input type="text" id="jsonInput" placeholder="Type a message"><br><br>
+	<button onclick="sendJson()">Send JSON</button>
+	<br><br>
+	<a href="post_index.html">← Back to POST Index</a>
+</body>
+</html>
