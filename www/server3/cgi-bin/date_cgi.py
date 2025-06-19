@@ -1,33 +1,19 @@
 #!/usr/bin/env python3
-import os
 import sys
 from datetime import datetime
-import urllib.parse
 
-# Lire la taille du body (envoyé par POST)
-content_length = int(os.environ.get("CONTENT_LENGTH", 0))
-post_data = sys.stdin.read(content_length)
+now = datetime.now().strftime("%A %d %B %Y, %H:%M:%S")
 
-# Parser le body (ex: nom=Lucas)
-params = urllib.parse.parse_qs(post_data)
-nom = params.get("name", ["unknown"])[0]
-
-# Récupérer la date actuelle
-date_str = datetime.now().strftime("%A %d %B %Y, %H:%M:%S")
-
-# Envoi du header CGI
-sys.stdout.write("content-type: text/html\r\n")
+sys.stdout.write("Content-Type: text/html\r\n")
 sys.stdout.write("\r\n")
-
-# Générer et envoyer le HTML stylisé
 sys.stdout.write(f"""<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <title>Bonjour {nom}</title>
+    <title>Date actuelle</title>
     <style>
         body {{
-            background: linear-gradient(135deg, #141e30, #243b55);
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
             color: #ffffff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             height: 100vh;
@@ -40,21 +26,17 @@ sys.stdout.write(f"""<!DOCTYPE html>
         }}
         h1 {{
             font-size: 2.5rem;
-            color: #ffcc00;
+            color: #00eaff;
             text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
             margin-bottom: 1rem;
-            animation: fadeIn 1s ease-in-out;
-        }}
-        p {{
-            font-size: 1.2rem;
-            margin-bottom: 1rem;
+            animation: slideIn 1s ease-in-out;
         }}
         a {{
             margin-top: 1rem;
             display: inline-block;
             padding: 0.6rem 1.2rem;
-            background: #ffcc00;
-            color: #243b55;
+            background: #00eaff;
+            color: #003344;
             font-weight: bold;
             text-decoration: none;
             border-radius: 30px;
@@ -62,18 +44,17 @@ sys.stdout.write(f"""<!DOCTYPE html>
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         }}
         a:hover {{
-            background: #e6b800;
+            background: #00c7d7;
             transform: scale(1.05);
         }}
-        @keyframes fadeIn {{
-            from {{ opacity: 0; transform: translateY(-20px); }}
+        @keyframes slideIn {{
+            from {{ opacity: 0; transform: translateY(-30px); }}
             to {{ opacity: 1; transform: translateY(0); }}
         }}
     </style>
 </head>
 <body>
-    <h1>Hello, {nom} !</h1>
-    <p>Current time: {date_str}.</p>
+    <h1>{now}</h1>
     <a href="/index.html">Retour à l'accueil</a>
 </body>
 </html>""")
