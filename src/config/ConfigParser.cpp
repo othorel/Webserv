@@ -283,5 +283,4 @@ void	ConfigParser::debug() const
 		std::cout << "Nombre de serveurs parsés : " << _serverConfigVector.size() << std::endl;
 		for (size_t i = 0; i < _serverConfigVector.size(); ++i)
 			_serverConfigVector[i].printServerConfig(i);
-		std::cout << "\nValidation réussie : la configuration est correcte." << std::endl;
 }
