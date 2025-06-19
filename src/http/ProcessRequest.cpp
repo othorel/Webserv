@@ -184,6 +184,7 @@ void ProcessRequest::waitHeaders()
 		std::string bodyPart = _inputData.substr(pos + 4);
 		RequestParser parser(headersPart);
 		_request = parser.release();
+		_request->debug();
 		_inputData = bodyPart;
 		selectServer();
 
@@ -214,12 +215,8 @@ void ProcessRequest::handleMethod()
 // From status WAITING_BODY to SENDING_HEADERS
 void ProcessRequest::waitBody()
 {
-	// debug
-	std::cout << "WAITBODY" << std::endl;
-
 	if (_processStatus  != WAITING_BODY)
 		return ;
-
 	if (!_request)
 		throw HttpErrorException(500);
 
@@ -227,6 +224,15 @@ void ProcessRequest::waitBody()
 	if (_file) {
 		size_t remainingBytes = _request->getContentLength() - _file->getOffset();
 		size_t bytesToWrite = (_inputData.size() > remainingBytes) ? remainingBytes : _inputData.size();
+
+		// debug
+		std::cout << "RECEIVING BODY FOR FILE :"
+			<< "\ncontent-length = " << _request->getContentLength()
+			<< "\nfile offset = " << _file->getOffset()
+			<< "\nremaining bytes = " << remainingBytes
+			<< "\nbytes to write =  " << bytesToWrite
+			<< "\n" << std::endl;
+
 		if (bytesToWrite) {
 			if (_file->WriteChunk(_inputData.c_str(), bytesToWrite) != bytesToWrite)
 				throw HttpErrorException(500);
@@ -236,8 +242,8 @@ void ProcessRequest::waitBody()
 		if (_file->getOffset() >= _request->getContentLength()) {
 			std::map<std::string, std::string> headers;
 			std::string relativePath = _location.getUploadPath();
-			if (!relativePath.empty() && relativePath[relativePath.size() - 1] != '/') {
-				relativePath += "/"; }
+			if (!relativePath.empty() && relativePath[relativePath.size() - 1] != '/')
+				relativePath += "/";
 			relativePath += _file->getPath().substr(_file->getPath().find_last_of("/") + 1);
 			headers["location"] = relativePath;
 			headers["content-type"] = "text/html";
@@ -248,6 +254,7 @@ void ProcessRequest::waitBody()
 				"</body></html>";
 			headers["content-length"] = HttpUtils::numberToString(body.length());
 			buildResponse(201, headers, body);
+			_file->closeFile();
 			if (_file) {
 				delete _file;
 				_file = NULL;
@@ -314,8 +321,10 @@ void ProcessRequest::sendBody()
 
 	size_t result = _file->ReadChunk(buffer, BUFFER_SIZE);
 	if (result == 0 || _file->getOffset() >= static_cast<size_t>(_file->getSize()))
+	{
+		_file->closeFile();
 		_processStatus = DONE;
-	
+	}
 	_outputData = std::string(buffer, result);
 }
 
