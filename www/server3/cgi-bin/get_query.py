@@ -48,29 +48,27 @@ try:
             margin-bottom: 20px;
             text-shadow: 1px 1px 2px black;
         }}
-        a {{
-            display: inline-block;
-            font-size: 20px;
-            padding: 10px 20px;
-            background-color: #8da6ec;
-            color: black;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: background-color 0.3s ease, transform 0.3s ease;
-            text-shadow: 1px 1px 2px black;
-        }}
-        a:hover {{
-            background-color: #0300b2;
-            transform: scale(1.1) rotate(3deg);
-            color: white;
-        }}
+		.homepage-button img{{
+			width: 220px;
+			border-radius: 8px;
+			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+			transition: transform 0.3s ease, box-shadow 0.3s ease;
+		}}
+		.homepage-button:hover img {{
+			transform: scale(1.1);
+			box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+		}}
     </style>
 </head>
 <body>
     <h1>GET Parameters Received</h1>
     <p><strong>Name:</strong> {name}</p>
     <p><strong>Age:</strong> {age}</p>
-    <a href="/Get/page5.html">⬅ Back to Form</a>
+    <a href="/Get/get_index.html" class="homepage-button">
+		<div class="button-wrapper" style="position: relative; top:52%; left:0%; width:100%; height:100%;">
+			<img src="/img/back_index.png" alt="Index" style="width: 15%; height: 15%; object-fit: cover;">
+		</div>
+	</a>
 </body>
 </html>
 """)
