@@ -83,10 +83,6 @@ File::File(const std::string & path, const std::string & boundary) :
 		}
 		else
 			_size = 0;
-
-
-	// debug
-	std::cout << "AT FILE CONSTRUCTION, BOUNDARY= " << _boundary << std::endl;
 }
 
 File::File(const File & other) :
@@ -179,8 +175,8 @@ bool File::isOpen() const
 std::string File::getMimeType() const
 {
 	size_t dot = _path.rfind('.');
-	if (dot == std::string::npos) {
-		return ("application/octet-stream"); }
+	if (dot == std::string::npos)
+		return ("application/octet-stream");
 	std::string extension = _path.substr(dot +1);
 	HttpUtils::stringToLower(extension);
 
@@ -293,10 +289,6 @@ size_t File::writeChunkBoundary(const char * src, size_t writeSize)
 	}
 
 	if (_writeStatus == IN_FIRST_BOUNDARY) {
-		//debug
-		// std::cout << "BUFFER = " << _buffer << std::endl;
-
-		// dev
 		size_t namePos = _buffer.find("filename=");
 		if (namePos != std::string::npos) {
 			size_t start = namePos + 9;
@@ -304,9 +296,6 @@ size_t File::writeChunkBoundary(const char * src, size_t writeSize)
 			size_t end = _buffer.find_first_of("\"\n\r;", start);
 			if (end != std::string::npos) {
 				_name = _buffer.substr(start, end - start);
-
-			// debug
-			std::cout << "FILE NAME : " << _name << std::endl;
 			}
 		}
 
@@ -396,52 +385,3 @@ off_t File::getFileSize() const
 		return (s.st_size);
 	return (-1);
 }
-
-/* ************************************************************************** */
-/*                                  sanitizer                                 */
-/* ************************************************************************** */
-
-// void File::sanitizeMultipart(const std::string & boundary)
-// {
-// 	const std::string tempPath = _path + ".cleaned";
-
-// 	std::ifstream in(_path.c_str(), std::ios::binary);
-// 	std::ofstream out(tempPath.c_str(), std::ios::binary | std::ios::trunc);
-// 	if (!in || !out)
-// 		throw HttpErrorException(500);
-
-// 	std::string line;
-// 	bool inFileContent = false;
-
-// 	while (std::getline(in, line)) {
-// 		// Remettre le \n perdu par getline (utile pour binaires encodés)
-// 		line += '\n';
-
-// 		if (!inFileContent) {
-// 			// On attend la ligne vide après les headers du part
-// 			if (line == "\r\n" || line == "\n")
-// 				inFileContent = true;
-// 			continue; // ne rien écrire tant qu'on n'est pas dans le contenu
-// 		}
-
-// 		// Vérifie si on atteint le boundary final
-// 		if (line.find("--" + boundary) != std::string::npos)
-// 			break;
-
-// 		// Écrit la ligne dans le fichier nettoyé
-// 		out.write(line.c_str(), line.size());
-// 	}
-
-// 	in.close();
-// 	out.close();
-
-// 	// Remplace l'ancien fichier par le fichier nettoyé
-// 	if (std::remove(_path.c_str()) != 0)
-// 		throw HttpErrorException(500);
-// 	if (std::rename(tempPath.c_str(), _path.c_str()) != 0)
-// 		throw HttpErrorException(500);
-
-// 	// Met à jour la taille
-// 	_size = getFileSize();
-// 	_offset = _size;
-// }
