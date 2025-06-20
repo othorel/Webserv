@@ -173,8 +173,8 @@ void	Server::handleEvent(int fdClient, size_t & i)
 
 	try
 	{
-		if (!checkKeepAliveNbRequests(fdClient, i))
-			return;
+		// if (!checkKeepAliveNbRequests(fdClient, i))
+		// 	return;
 			
 		readSocket(fdClient, rawLine, i);
 
@@ -212,6 +212,7 @@ void	Server::handleEvent(int fdClient, size_t & i)
 	catch (const HttpErrorException& e)
 	{
 		std::cerr << e.what() << e.getStatusCode() << std::endl;
+
 		handleError(e.getStatusCode(), fdClient, i);
 		return;
 	}
@@ -219,10 +220,12 @@ void	Server::handleEvent(int fdClient, size_t & i)
 
 void	Server::handleError(int errorCode, int fdClient, size_t & i)
 {
+	if (_clientsMap[fdClient].getProcessRequest().getFilePtr())
+		_clientsMap[fdClient].getProcessRequest().getFilePtr()->closeFile();
 	try
 	{
+		
 		_clientsMap[fdClient].getProcessRequest().errorBuilder(errorCode);
-
 		std::string	processed = _clientsMap[fdClient].getProcessRequest().process("");
 		std::cout << "first processed: " << processed <<std::endl;
 		int status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
@@ -299,6 +302,7 @@ void	Server::handleEnd(int fd, size_t & i)
 	_clientsMap[fd].increaseNbRequests();
 	_clientsMap[fd].actualizeEndPreviousRequest();
 	_clientsMap[fd].getProcessRequest().reset();
+	supressClient(fd, i);
 }
 
 bool	Server::checkKeepAliveNbRequests(int fdClient, size_t & i)
