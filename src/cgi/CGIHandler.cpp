@@ -126,6 +126,11 @@ std::string CGIHandler::execute()
 	if (pid < 0)
 		throw HttpErrorException(500);
 
+		// debug bloc
+	std::cout << "IN CGI SCRIPT :" << std::endl;
+	std::cout << "QUERY STRING : " << _queryString << std::endl;
+	std::cout << "PATH : " << _scriptPath << std::endl;		
+
 	if (pid == 0) {
 		dup2(inputPipe[0], STDIN_FILENO);
 		dup2(outputPipe[1], STDOUT_FILENO);
@@ -138,10 +143,7 @@ std::string CGIHandler::execute()
 			envp.push_back(const_cast<char*>(envVec[i].c_str()));
 		envp.push_back(NULL);
 
-		// debug bloc
-		std::cout << "IN CGI SCRIPT :" << std::endl;
-		std::cout << "QUERY STRING : " << _queryString << std::endl;
-		std::cout << "PATH : " << _scriptPath << std::endl;
+
 	
 		char* av[] = {const_cast<char*>(_scriptPath.c_str()), NULL};
 		execve(_scriptPath.c_str(), av, &envp[0]);

@@ -34,6 +34,7 @@ class ProcessRequest
 		std::string					_inputData;
 		std::string					_outputData;
 		HttpResponse				_httpResponse;
+		size_t						_bytesSent;
 		typedef void	(ProcessRequest::*HandlerFunction)();
 		HandlerFunction 			_handler;
 		HttpRequest					*_request;
@@ -79,6 +80,7 @@ class ProcessRequest
 		ProcessStatus getProcessStatus() const;
 		const ServerConfig & getServer() const;
 		int getServerTimeout() const;
+		File * getFilePtr() const;
 		bool closeConection();
 		std::string process(std::string data);
 		void errorBuilder(int statusCode, bool secondTime = false);

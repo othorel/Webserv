@@ -305,8 +305,8 @@ size_t File::writeChunkBoundary(const char * src, size_t writeSize)
 			if (end != std::string::npos) {
 				_name = _buffer.substr(start, end - start);
 
-				// debug
-				std::cout << "FILE NAME : " << _name << std::endl;
+			// debug
+			std::cout << "FILE NAME : " << _name << std::endl;
 			}
 		}
 
@@ -327,38 +327,6 @@ size_t File::writeChunkBoundary(const char * src, size_t writeSize)
 	}
 
 	return (writeSize);
-
-
-
-	// if (_writeStatus < IN_BODY) {
-	// 	size_t	i = 0;
-	// 	while (i < writeSize) {
-	// 		if (_writeStatus != IN_FIRT_BOUNDARY) {
-	// 			if (src[i] == _boundary[_buffer.size()]) {
-	// 				_buffer += src[i];
-	// 				std::cout << "BOUNDARY BUFFER = " << _buffer << std::endl;
-	// 				_inBoundary = true;
-	// 			}
-	// 		}
-	// 		else {
-	// 			if (src[i] == _boundary[_buffer.size()]) {
-	// 				_buffer += src[i];
-	// 				std::cout << "BOUNDARY BUFFER = " << _buffer << std::endl;
-	// 				if (_buffer == _boundary) {
-	// 					_inBoundary = false;
-	// 					_inBody = true;
-	// 					break ;
-	// 				}
-	// 			}
-	// 			else {
-	// 				_buffer.clear();
-	// 				_inBoundary = false;
-	// 			}
-	// 		}
-	// 		i++;
-	// 	}
-	// }
-
 }
 
 /* ************************************************************************** */

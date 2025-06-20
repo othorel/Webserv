@@ -10,7 +10,7 @@
   <style>
     body {
       font-family: 'IM Fell English SC', sans-serif;
-      background-image: url('background.jpg');
+      background-image: url('/img/background.jpg');
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -70,9 +70,12 @@
 </head>
 
 <body>
-  <h1>CGI GET Request</h1>
-  <p>Click to test a CGI script with a bloody query string:</p>
-  <a href="/cgi-bin/hello.py?name=Jean+Luc" class="cgi-link">→ Call CGI with name=Jean Luc</a>
+  <h1>Test CGI GET with Parameters</h1>
+  <form action="/cgi-bin/get_query.py" method="GET">
+    <input type="text" name="name" placeholder="Your name" required />
+    <input type="number" name="age" placeholder="age" required min="1" max="120" />
+    <button type="submit">Submit</button>
+  </form>
   <br><br>
   <a href="get_index.html" class="homepage">⬅️ BACK TO GET INDEX</a>
 </body>
