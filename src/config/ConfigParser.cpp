@@ -60,7 +60,7 @@ void ConfigParser::parsefile(const std::string& filepath) {
 	bool loc_autoindex = false;
 	std::vector<std::string> loc_cgi_extension;
 	bool loc_cookies_enabled = false;
-	size_t loc_client_max_body_size = 0;
+	size_t loc_client_max_body_size = -1;
 
 	while (std::getline(file, line)) {
 		line = trim(line);
@@ -99,6 +99,7 @@ void ConfigParser::parsefile(const std::string& filepath) {
 		}
 		if (line == "}") {
 			if (inLocation) {
+				validateCgiExtension(loc_cgi_extension);
 				if (loc_root.empty())
 					loc_root = root;
 				Location loc(loc_path, loc_methods, loc_error_pages, loc_upload_path, loc_root, loc_index, loc_redirect_path, loc_redirect_code, loc_has_redirect, loc_autoindex, loc_cgi_extension, loc_cookies_enabled, loc_client_max_body_size);
