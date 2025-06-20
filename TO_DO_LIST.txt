@@ -5,9 +5,4 @@
 - extensions cgi dans parsing
 - ci valide dans location a recup pour porcessRequest
 
-- select pout max bodySize
-
 - gestion des cookies
-
-- 
-
