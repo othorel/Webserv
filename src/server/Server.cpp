@@ -204,10 +204,7 @@ void	Server::handleEvent(int fdClient, size_t & i)
 		//CATCH AND WRITE RESPONSE
 		
 		if (status == 5)
-		{
-			std::cout << "status = 5" << std::endl;
 			handleEnd(fdClient, i);
-		}
 	}
 	catch (const HttpErrorException& e)
 	{
