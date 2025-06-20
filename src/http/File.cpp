@@ -15,18 +15,26 @@
 
 File::File() :
 	_path(""),
+	_name(""),
 	_size(-1),
 	_fd(-1),
 	_offset(0),
-	_isWriteMode(false)
+	_isWriteMode(false),
+	_boundary(""),
+	_buffer(""),
+	_writeStatus(IN_BODY)
 {}
 
 File::File(const std::string & path, bool isWriteMode) :
 	_path(path),
+	_name(""),
 	_size(-1),
 	_fd(-1),
 	_offset(0),
-	_isWriteMode(isWriteMode)
+	_isWriteMode(isWriteMode),
+	_boundary(""),
+	_buffer(""),
+	_writeStatus(IN_BODY)
 {
 	
 	if (!_isWriteMode) {
@@ -53,12 +61,45 @@ File::File(const std::string & path, bool isWriteMode) :
 	}
 }
 
+File::File(const std::string & path, const std::string & boundary) :
+	_path(path),
+	_name(""),
+	_size(-1),
+	_fd(-1),
+	_offset(0),
+	_isWriteMode(true),
+	_boundary(boundary),
+	_buffer(""),
+	_writeStatus(BEFORE_FIRST_BOUNDARY)
+{
+		if (!isWritableDirectory())
+			throw HttpErrorException(403);
+		if (isExistingFile()) {
+			if (!isWritableRegularFile())
+				throw HttpErrorException(403);
+			_size = getFileSize();
+			if (_size < 0)
+				throw HttpErrorException(500);
+		}
+		else
+			_size = 0;
+
+
+	// debug
+	std::cout << "AT FILE CONSTRUCTION, BOUNDARY= " << _boundary << std::endl;
+}
+
 File::File(const File & other) :
 	_path(other._path),
+	_name(other._name),
 	_size(other._size),
 	_fd(-1),
 	_offset(other._offset),
-	_isWriteMode(other._isWriteMode)
+	_isWriteMode(other._isWriteMode),
+	_boundary(other._boundary),
+	_buffer(other._buffer),
+	_writeStatus(other._writeStatus)
+
 {}
 
 /* ************************************************************************** */
@@ -71,10 +112,14 @@ File & File::operator=(const File & other)
 		if (_fd != -1)
 			close(_fd);
 		_path = other._path;
+		_name = other._name;
 		_size = other._size;
 		_fd = -1;
 		_offset = other._offset;
 		_isWriteMode = other._isWriteMode;
+		_boundary = other._boundary;
+		_buffer = other._buffer;
+		_writeStatus = other._writeStatus;
 	}
 	return (*this);
 }
@@ -99,6 +144,11 @@ File::~File()
 const std::string & File::getPath() const
 {
 	return (_path);
+}
+
+const std::string & File::getName() const
+{
+	return(_name);
 }
 
 off_t File::getSize() const
@@ -147,8 +197,8 @@ std::string File::getMimeType() const
 		extensionMap["gif"] = "image/gif";
 		extensionMap["ico"] = "image/x-icon";
 		extensionMap["json"] = "application/x-json";
-		extensionMap["pdf"] = "application/pdf"; }
-	
+		extensionMap["pdf"] = "application/pdf";
+	}
 	if (extensionMap.find(extension) != extensionMap.end()) {
 		return (extensionMap[extension]); }
 	return ("application/octet-stream");
@@ -220,12 +270,95 @@ size_t	File::WriteChunk(const char * src, size_t writeSize)
 	if (!isOpen()) {
 		if (!openFile())
 			throw HttpErrorException(500);}
+	if (!_boundary.empty())
+		return (writeChunkBoundary(src, writeSize));
 	ssize_t bytesWritten = write(_fd, src, writeSize);
 	if (bytesWritten < 0)
 		throw HttpErrorException(500);
 	_offset += static_cast<size_t>(bytesWritten);
 	_size += static_cast<size_t>(bytesWritten);
 	return (static_cast<size_t>(bytesWritten));
+}
+
+size_t File::writeChunkBoundary(const char * src, size_t writeSize)
+{
+	_buffer.append(src, writeSize);
+
+	if (_writeStatus == BEFORE_FIRST_BOUNDARY) {
+		size_t pos = _buffer.find(_boundary);
+		if (pos == std::string::npos)
+			return (writeSize);
+		_buffer = _buffer.substr(pos + _boundary.size());
+		_writeStatus = IN_FIRST_BOUNDARY;
+	}
+
+	if (_writeStatus == IN_FIRST_BOUNDARY) {
+		//debug
+		// std::cout << "BUFFER = " << _buffer << std::endl;
+
+		// dev
+		size_t namePos = _buffer.find("filename=");
+		if (namePos != std::string::npos) {
+			size_t start = namePos + 9;
+			if (_buffer[start] == '\"') ++start;
+			size_t end = _buffer.find_first_of("\"\n\r;", start);
+			if (end != std::string::npos) {
+				_name = _buffer.substr(start, end - start);
+
+				// debug
+				std::cout << "FILE NAME : " << _name << std::endl;
+			}
+		}
+
+		size_t pos = _buffer.find("\r\n\r\n");
+		if (pos == std::string::npos)
+			return (writeSize);
+		_buffer = _buffer.substr(pos + 4);
+		_writeStatus = IN_BODY;
+	}
+
+	if (_writeStatus == IN_BODY) {
+		ssize_t bytesWritten = write(_fd, _buffer.c_str(), _buffer.size());
+		if (bytesWritten < 0)
+			throw HttpErrorException(500);
+		_offset += static_cast<size_t>(bytesWritten);
+		_size += static_cast<size_t>(bytesWritten);
+		_buffer.clear();
+	}
+
+	return (writeSize);
+
+
+
+	// if (_writeStatus < IN_BODY) {
+	// 	size_t	i = 0;
+	// 	while (i < writeSize) {
+	// 		if (_writeStatus != IN_FIRT_BOUNDARY) {
+	// 			if (src[i] == _boundary[_buffer.size()]) {
+	// 				_buffer += src[i];
+	// 				std::cout << "BOUNDARY BUFFER = " << _buffer << std::endl;
+	// 				_inBoundary = true;
+	// 			}
+	// 		}
+	// 		else {
+	// 			if (src[i] == _boundary[_buffer.size()]) {
+	// 				_buffer += src[i];
+	// 				std::cout << "BOUNDARY BUFFER = " << _buffer << std::endl;
+	// 				if (_buffer == _boundary) {
+	// 					_inBoundary = false;
+	// 					_inBody = true;
+	// 					break ;
+	// 				}
+	// 			}
+	// 			else {
+	// 				_buffer.clear();
+	// 				_inBoundary = false;
+	// 			}
+	// 		}
+	// 		i++;
+	// 	}
+	// }
+
 }
 
 /* ************************************************************************** */
