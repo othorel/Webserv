@@ -4,7 +4,7 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Page 2 – File Upload</title>
+	<title>Delete</title>
 	<link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
 	<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&display=swap" rel="stylesheet">
 	<style>
@@ -29,26 +29,35 @@
 			margin-bottom: 30px;
 		}
 
+		form {
+			font-family: 'IM Fell English SC', sans-serif;
+			background-color: rgba(0, 0, 0, 0.5);
+			padding: 20px;
+			border-radius: 10px;
+			display: inline-block;
+			box-shadow: 0 0 10px black;
+		}
+
 		label {
 			font-family: 'IM Fell English SC', sans-serif;
 			font-size: 20px;
-			margin-bottom: 10px;
-			display: block;
+			color: #ffdddd;
 		}
 
-		input[type="file"] {
+		input[type="text"] {
 			font-family: 'IM Fell English SC', sans-serif;
 			padding: 10px;
 			font-size: 16px;
-			background-color: #444;
-			color: white;
-			border: 1px solid #ccc;
+			border: none;
 			border-radius: 5px;
+			margin-top: 10px;
+			width: 300px;
 		}
 
 		button {
 			font-family: 'IM Fell English SC', sans-serif;
-			font-size: 20px;
+			margin-top: 20px;
+			font-size: 18px;
 			padding: 10px 25px;
 			background-color: #b22222;
 			color: white;
@@ -63,7 +72,7 @@
 			background-color: #8b0000;
 			transform: scale(1.1);
 		}
-		
+
 		.homepage-button img{
 			width: 220px;
 			border-radius: 8px;
@@ -80,16 +89,16 @@
 </head>
 
 <body>
-	<h2>Upload a File</h2>
-	<form action="/post_receiver" method="POST" enctype="multipart/form-data">
-		<label>Select your file, survivor:</label>
-		<input type="file" name="myfile"><br><br>
-		<button type="submit">Upload</button>
+	<h2>DELETE</h2>
+	<form action="/cgi-bin/post_handler.cgi" method="POST">
+		<label>Select the file that no longer deserves to live:</label><br>
+		<input type="text" name="speech"><br><br>
+		<button type="submit">Do it</button>
 	</form>
 	<br>
-	<a href="post_index.html" class="homepage-button">
+	<a href="/" class="homepage-button">
 		<div class="button-wrapper" style="position: relative; top:100%; left:0%; width:100%; height:100%;">
-			<img src="/img/back_index.png" alt="Index" style="width: 15%; height: 15%; object-fit: cover;">
+			<img src="/img/back_home.png" alt="Index" style="width: 15%; height: 15%; object-fit: cover;">
 		</div>
 	</a>
 </body>
