@@ -56,8 +56,6 @@ ProcessRequest::ProcessRequest(const std::vector<ServerConfig> & serversVector) 
 	_request(NULL),
 	_file(NULL)
 {
-	// debug
-	std::cout << "[PROCESS REQUEST] an OBJECT has been created" << std::endl;
 	if (serversVector.empty())
 		throw HttpErrorException(500);
 	_server = serversVector[0];
@@ -135,7 +133,6 @@ ProcessRequest & ProcessRequest::operator=(const ProcessRequest & other)
 
 ProcessRequest::~ProcessRequest()
 {
-	std::cout << "[PROCESS REQUEST] an OBJECT has been destroyed" << std::endl;
 	if (_file)
 		delete _file;
 	if (_request)
@@ -148,13 +145,7 @@ ProcessRequest::~ProcessRequest()
 
 std::string ProcessRequest::process(std::string data)
 {
-	std::cout << "[PROCESS REQUEST] process has been called with :\n"
-		<< "status : "<< _processStatus
-		<< "\ndata : " << data << std::endl;
-
 	_inputData.append(data);
-
-	std::cout << "Data after append : " << _inputData << std::endl;
 
 	switch (_processStatus) {
 		case WAITING_HEADERS:
@@ -200,7 +191,6 @@ void ProcessRequest::waitHeaders()
 		std::string bodyPart = _inputData.substr(pos + 4);
 		RequestParser parser(headersPart);
 		_request = parser.release();
-		_request->debug();
 		_inputData = bodyPart;
 		selectServer();
 
@@ -651,9 +641,6 @@ void ProcessRequest::buildRedirect()
 
 void ProcessRequest::errorBuilder(int statusCode, bool secondTime)
 {
-	// debug
-	std::cout << "====IN ERROR BUILDER=====" << std::endl;
-
 	if (_file) {
 		delete _file;
 		_file = NULL;
@@ -691,9 +678,6 @@ void ProcessRequest::errorBuilder(int statusCode, bool secondTime)
 		headers["allow"] = allowedMethods;
 	}
 	buildResponse(statusCode, headers, body);
-
-	// debug
-	std::cout << "=====RESPONSE=====\n" << _httpResponse.toRawString() << std::endl;
 
 	_processStatus = SENDING_HEADERS;
 }

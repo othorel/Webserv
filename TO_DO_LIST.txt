@@ -1,8 +1,13 @@
-- toLower dans Exit du serveur DONE
-- timeout dans serveur
-- config par default
+- timeout pour la recption des headers, des fichiers, de lenvoi des fichiers, de la lecture d un cgi
 
-- faire fonctionner POST dans cgi
-- limiter la taille du header part de la request ?
+- limiter la taille du header part de la request ? 8k
 
+- extensions cgi dans parsing
+- ci valide dans location a recup pour porcessRequest
+
+- select pout max bodySize
+
+- gestion des cookies
+
+- 
 
