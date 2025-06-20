@@ -6,12 +6,15 @@
 # include <string>
 # include "../../include/http/HttpRequest.hpp"
 # include "../../include/http/HttpResponse.hpp"
+# include "../../include/http/ResponseBuilder.hpp"
 # include "../../include/config/Location.hpp"
 # include "../../include/config/ServerConfig.hpp"
 # include "../../include/http/File.hpp"
 
 # define BUFFER_SIZE 4096
 # define MAX_HEADERS_SIZE 8192
+
+class ResponseBuilder;
 
 enum ProcessStatus {
 	WAITING_HEADERS,
@@ -24,6 +27,9 @@ enum ProcessStatus {
 
 class ProcessRequest
 {
+
+	friend class ResponseBuilder;
+
 	private :
 
 		std::vector<ServerConfig>	_serversVector;
@@ -58,16 +64,10 @@ class ProcessRequest
 		void getHandler();
 		void postHandler();
 		void cgiGetHandler();
-		void cgiPostHandler();
-
-		void buildResponse(int statusCode, const std::map<std::string, std::string> & headers, const std::string & body);
-		void addFinalHeaders();
-		void buildRedirect();
 
 		void checkMethodValidity();
 		std::string createPath();
 		std::string createUploadPath();
-		std::string createErrorFilePath(const std::string & errorPage);
 		void checkPostValidity(const std::string & path);
 		
 	public :
