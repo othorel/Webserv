@@ -3,3 +3,4 @@
 # print("Hello from CGI script!")
 import sys
 sys.stdout.write("Content-Type: text/html\r\n")
+sys.stdout.write("ok\n")
