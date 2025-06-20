@@ -45,6 +45,7 @@ class ProcessRequest
 		void selectHandler();
 		const std::string & selectRoot();
 		std::string selectErrorPage(int statusCode);
+		size_t selectMaxBodySize();
 
 		void waitHeaders();
 		void handleMethod();

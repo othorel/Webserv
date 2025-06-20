@@ -74,8 +74,26 @@ ProcessRequest::ProcessRequest(const ProcessRequest & other) :
 	_bytesSent(other._bytesSent),
 	_handler(other._handler)
 {
-	_file = other._file ? new File(*other._file) : NULL;
-	_request = other._request ? new HttpRequest(*other._request) : NULL;
+	if (!other._file)
+		_file = NULL;
+	else {
+		try {
+			_file = new File(*other._file);
+		}
+		catch (const std::bad_alloc&) {
+			throw HttpErrorException(500);
+		}
+	}
+	if (!other._request)
+		_request = NULL;
+	else {
+		try {
+			_request = new HttpRequest(*other._request);
+		}
+		catch (const std::bad_alloc&) {
+			throw HttpErrorException(500);
+		}
+	}
 }
 
 void ProcessRequest::reset()
@@ -119,10 +137,28 @@ ProcessRequest & ProcessRequest::operator=(const ProcessRequest & other)
 		_bytesSent = other._bytesSent;
 		if (_file)
 			delete _file;
-		_file = other._file ? new File(*other._file) : NULL;
 		if (_request)
 			delete _request;
-		_request = other._request ? new HttpRequest(*other._request) : NULL;
+		if (!other._file)
+			_file = NULL;
+		else {
+			try {
+				_file = new File(*other._file);
+			}
+			catch (const std::bad_alloc&) {
+				throw HttpErrorException(500);
+			}
+		}
+		if (!other._request)
+			_request = NULL;
+		else {
+			try {
+				_request = new HttpRequest(*other._request);
+			}
+			catch (const std::bad_alloc&) {
+				throw HttpErrorException(500);
+			}
+		}
 	}
 	return (*this);
 }
@@ -145,6 +181,9 @@ ProcessRequest::~ProcessRequest()
 
 std::string ProcessRequest::process(std::string data)
 {
+	if (_processStatus == WAITING_HEADERS && _inputData.size() + data.size() > 80192)
+		throw HttpErrorException(431);
+
 	_inputData.append(data);
 
 	switch (_processStatus) {
@@ -194,7 +233,7 @@ void ProcessRequest::waitHeaders()
 		_inputData = bodyPart;
 		selectServer();
 
-		if (_request->getContentLength() > _server.getClientMaxBodySize())
+		if (_request->getContentLength() > selectMaxBodySize())
 			throw HttpErrorException(413);
 		
 		_serverTimeout = _server.getSessionTimeout();
@@ -397,7 +436,12 @@ void ProcessRequest::getHandler()
 		delete _file;
 		_file = NULL;
 	}
-	_file = new File(path);
+	try {
+		_file = new File(path);
+	}
+	catch (const std::bad_alloc&) {
+		throw HttpErrorException(500);
+	}
 	std::map<std::string, std::string> headers;
 	headers["content-type"] = _file->getMimeType();
 	headers["content-length"] = HttpUtils::numberToString(_file->getSize());
@@ -429,9 +473,13 @@ void ProcessRequest::postHandler()
 		std::string boundary = findBoundary(_request->getHeaderValue("content-type"));
 		if (boundary.empty())
 			throw HttpErrorException(400);
-		_file = new File(filepath, boundary);
+		try {
+			_file = new File(filepath, boundary);
+		}
+		catch (const std::bad_alloc&) {
+			throw HttpErrorException(500);
+		}
 
-		// _file = new File(filepath, true);
 	}
 	else {
 		path = createPath();
@@ -452,11 +500,6 @@ void ProcessRequest::cgiGetHandler()
 
 	_processStatus = SENDING_HEADERS;
 	sendHeaders();
-}
-
-void ProcessRequest::cgiPostHandler()
-{
-
 }
 
 /* ************************************************************************** */
@@ -511,11 +554,6 @@ void ProcessRequest::selectLocation()
 	_location = locations.find(bestMatch)->second;
 }
 
-const std::string & ProcessRequest::selectRoot()
-{
-	return (!_location.getRoot().empty() ? _location.getRoot() : _server.getRoot());
-}
-
 void ProcessRequest::selectHandler()
 {
 	if (!_request)
@@ -536,6 +574,11 @@ void ProcessRequest::selectHandler()
 		throw HttpErrorException(405);
 }
 
+const std::string & ProcessRequest::selectRoot()
+{
+	return (!_location.getRoot().empty() ? _location.getRoot() : _server.getRoot());
+}
+
 std::string ProcessRequest::selectErrorPage(int statusCode)
 {
 	if (_location.hasErrorPage(statusCode)) {
@@ -543,6 +586,13 @@ std::string ProcessRequest::selectErrorPage(int statusCode)
 	if (_server.hasErrorPage(statusCode)) {	
 		return (_server.getErrorPage(statusCode)); }
 	return ("");
+}
+
+size_t ProcessRequest::selectMaxBodySize()
+{
+	if (_location.getClientMaxBodySize() >= 0)
+		return (_location.getClientMaxBodySize());
+	return (_server.getClientMaxBodySize());
 }
 
 /* ************************************************************************** */
@@ -654,7 +704,12 @@ void ProcessRequest::errorBuilder(int statusCode, bool secondTime)
 	// if there is a file to read
 	if (!errorPage.empty() && !secondTime) {
 		std::string errorFilePath = createErrorFilePath(errorPage);
-		_file = new File(errorFilePath);
+		try {
+			_file = new File(errorFilePath);
+		}
+		catch (const std::bad_alloc&) {
+			throw HttpErrorException(500);
+		}
 		mimeType = _file->getMimeType();
 		bodyLen = _file->getSize();
 	}
@@ -757,7 +812,7 @@ void ProcessRequest::checkPostValidity(const std::string & path)
 		if (!HttpUtils::fileExists(path))
 			throw HttpErrorException(404);
 	}
-	if (_request->getContentLength() > (_server.getClientMaxBodySize()))
+	if (_request->getContentLength() > (selectMaxBodySize()))
 		throw HttpErrorException(413);
 }
 
