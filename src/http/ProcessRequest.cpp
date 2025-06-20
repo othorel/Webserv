@@ -38,6 +38,7 @@ ProcessRequest::ProcessRequest() :
 	_inputData(""),
 	_outputData(""),
 	_httpResponse(),
+	_bytesSent(0),
 	_handler(NULL),
 	_request(NULL),
 	_file(NULL)
@@ -50,12 +51,13 @@ ProcessRequest::ProcessRequest(const std::vector<ServerConfig> & serversVector) 
 	_inputData(""),
 	_outputData(""),
 	_httpResponse(),
+	_bytesSent(0),
 	_handler(NULL),
 	_request(NULL),
 	_file(NULL)
 {
 	// debug
-	std::cout << "========A PROCESS REQUEST HAS BEEN CREATED========" << std::endl;
+	std::cout << "[PROCESS REQUEST] an OBJECT has been created" << std::endl;
 	if (serversVector.empty())
 		throw HttpErrorException(500);
 	_server = serversVector[0];
@@ -71,6 +73,7 @@ ProcessRequest::ProcessRequest(const ProcessRequest & other) :
 	_inputData(other._inputData),
 	_outputData(other._outputData),
 	_httpResponse(other._httpResponse),
+	_bytesSent(other._bytesSent),
 	_handler(other._handler)
 {
 	_file = other._file ? new File(*other._file) : NULL;
@@ -95,6 +98,7 @@ void ProcessRequest::reset()
 	_inputData.clear();
 	_outputData.clear();
 	_serverTimeout = 0;
+	_bytesSent = 0;
 }
 
 /* ************************************************************************** */
@@ -114,6 +118,7 @@ ProcessRequest & ProcessRequest::operator=(const ProcessRequest & other)
 		_httpResponse = other._httpResponse;
 		_inputData = other._inputData;
 		_outputData = other._outputData;
+		_bytesSent = other._bytesSent;
 		if (_file)
 			delete _file;
 		_file = other._file ? new File(*other._file) : NULL;
@@ -130,6 +135,7 @@ ProcessRequest & ProcessRequest::operator=(const ProcessRequest & other)
 
 ProcessRequest::~ProcessRequest()
 {
+	std::cout << "[PROCESS REQUEST] an OBJECT has been destroyed" << std::endl;
 	if (_file)
 		delete _file;
 	if (_request)
@@ -142,7 +148,13 @@ ProcessRequest::~ProcessRequest()
 
 std::string ProcessRequest::process(std::string data)
 {
+	std::cout << "[PROCESS REQUEST] process has been called with :\n"
+		<< "status : "<< _processStatus
+		<< "\ndata : " << data << std::endl;
+
 	_inputData.append(data);
+
+	std::cout << "Data after append : " << _inputData << std::endl;
 
 	switch (_processStatus) {
 		case WAITING_HEADERS:
@@ -226,8 +238,7 @@ void ProcessRequest::waitBody()
 
 	// if body is a file to upload
 	if (_file) {
-		static size_t bytesSent = 0;
-		bytesSent += _inputData.size();
+		_bytesSent += _inputData.size();
 		size_t remainingBytes = _request->getContentLength() - _file->getOffset();
 		size_t bytesToWrite = (_inputData.size() > remainingBytes) ? remainingBytes : _inputData.size();
 
@@ -237,7 +248,7 @@ void ProcessRequest::waitBody()
 			// 	throw HttpErrorException(500);
 		}
 		_inputData.clear();
-		if (bytesSent >= _request->getContentLength()) {
+		if (_bytesSent >= _request->getContentLength()) {
 			_file->closeFile();
 
 			std::string originalPath = _file->getPath();
@@ -563,6 +574,13 @@ int ProcessRequest::getServerTimeout() const
 	return (_serverTimeout);
 }
 
+File * ProcessRequest::getFilePtr() const
+{
+	if (_file)
+		return (_file);
+	return (NULL);
+}
+
 bool ProcessRequest::closeConection()
 {
 	if (!_request || !_request->hasHeader("connection"))
@@ -586,12 +604,13 @@ void ProcessRequest::addFinalHeaders()
 {
 	if (_httpResponse.getHeaders().find("date") == _httpResponse.getHeaders().end())
 		_httpResponse.addHeader("date", HttpUtils::getCurrentDate());
-	if (_httpResponse.getHeaders().find("connection") == _httpResponse.getHeaders().end()) {
-		if (_request && _request->hasHeader("connection") && _request->getHeaderValue("connection") == "close")
-			_httpResponse.addHeader("connection", "close");
-		else
-			_httpResponse.addHeader("connection", "keep-alive");
-	}
+	// if (_httpResponse.getHeaders().find("connection") == _httpResponse.getHeaders().end()) {
+	// 	if (_request && _request->hasHeader("connection") && _request->getHeaderValue("connection") == "close")
+	// 		_httpResponse.addHeader("connection", "close");
+	// 	else
+	// 		_httpResponse.addHeader("connection", "keep-alive");
+	// }
+	_httpResponse.addHeader("connection", "close");
 
 	if (_httpResponse.getHeaders().find("server") == _httpResponse.getHeaders().end()) {
 		std::ostringstream oss;

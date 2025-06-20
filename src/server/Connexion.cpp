@@ -64,35 +64,22 @@ Connexion &Connexion::operator=(const Connexion & other)
 void	Connexion::readDataFromSocket(std::string &line)
 {
 	char bufIn[BUFFER_SIZE];
-	// memset(bufIn, 0, BUFFER_SIZE);
 	_bytesIn = recv(_fd, bufIn, sizeof(bufIn), 0);
 
 	if (_bytesIn <= 0)
-		return;
-		
-	// _bufferIn.append(bufIn, _bytesIn);
+		throw HttpErrorException(500);
 	_bufferIn.assign(bufIn, _bytesIn);
 	line.assign(bufIn, _bytesIn);
 	
-	// std::size_t pos = _bufferIn.find("\r\n\r\n");
-	// if (pos != std::string::npos)
-	// {
-	// 	line = _bufferIn.substr(0, pos + 4); //je recupere tout jusqu'a la fin du paquet
-	// 	_bufferIn.erase(0, pos + 4); //si il y avait des caracteres apres la fin du paquet je les garde pour la prochaine lecture
-	// }
+
 }
 
 void	Connexion::writeDataToSocket(const std::string & response)
 {
-	ssize_t sent = send(_fd, response.c_str(), response.size(), 0);
+	_bytesOut = send(_fd, response.c_str(), response.size(), 0);
 
-	if (sent == -1)
-	{
-		_bytesOut = -1;
+	if (_bytesOut == -1)
 		throw HttpErrorException(500);
-		return;
-	}
-	_bytesOut = sent;
 }
 
 bool	Connexion::endTransmission(std::string line)
