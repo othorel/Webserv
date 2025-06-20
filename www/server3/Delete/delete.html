@@ -88,11 +88,25 @@
 	</style>
 </head>
 
+<script>
+	document.getElementById("deleteForm").addEventListener("submit", function(e) {
+		e.preventDefault();
+		const filename = document.getElementById("speech").value;
+	
+		fetch(`/cgi-bin/delete.py?speech=${encodeURIComponent(filename)}`, {
+			method: "DELETE"
+		})
+		.then(response => response.text())
+		.then(html => document.body.innerHTML = html)
+		.catch(err => alert("Something went wrong"));
+	});
+</script>
+
 <body>
 	<h2>DELETE</h2>
-	<form action="/cgi-bin/post_handler.cgi" method="POST">
+	<form id="deleteForm">
 		<label>Select the file that no longer deserves to live:</label><br>
-		<input type="text" name="speech"><br><br>
+		<input type="text" name="speech" id="speech"><br><br>
 		<button type="submit">Do it</button>
 	</form>
 	<br>
