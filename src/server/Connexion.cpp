@@ -68,8 +68,10 @@ void	Connexion::readDataFromSocket(std::string &line)
 	_bytesIn = recv(_fd, bufIn, sizeof(bufIn), 0);
 
 	if (_bytesIn <= 0)
+	{
+		throw HttpErrorException(500);
 		return;
-		
+	}
 	// _bufferIn.append(bufIn, _bytesIn);
 	_bufferIn.assign(bufIn, _bytesIn);
 	line.assign(bufIn, _bytesIn);
@@ -84,15 +86,14 @@ void	Connexion::readDataFromSocket(std::string &line)
 
 void	Connexion::writeDataToSocket(const std::string & response)
 {
-	ssize_t sent = send(_fd, response.c_str(), response.size(), 0);
+	_bytesOut = send(_fd, response.c_str(), response.size(), 0);
 
-	if (sent == -1)
+	if (_bytesOut == -1)
 	{
-		_bytesOut = -1;
 		throw HttpErrorException(500);
 		return;
 	}
-	_bytesOut = sent;
+	std::cout << "------------response sent:--------------\n" << response << "\n" << std::endl;
 }
 
 bool	Connexion::endTransmission(std::string line)

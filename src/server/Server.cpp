@@ -299,6 +299,8 @@ void	Server::handleEnd(int fd, size_t & i)
 	_clientsMap[fd].increaseNbRequests();
 	_clientsMap[fd].actualizeEndPreviousRequest();
 	_clientsMap[fd].getProcessRequest().reset();
+	// a enlever si on garde le keepalive
+	supressClient(fd, i);
 }
 
 bool	Server::checkKeepAliveNbRequests(int fdClient, size_t & i)
