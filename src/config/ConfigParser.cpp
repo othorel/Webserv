@@ -143,7 +143,7 @@ void ConfigParser::parsefile(const std::string& filepath) {
 			loc_has_redirect = false;
 			loc_autoindex = false;
 			loc_cookies_enabled = false;
-			loc_client_max_body_size = 0;
+			loc_client_max_body_size = -1;
 			continue;
 		}
 		std::istringstream iss(line);
