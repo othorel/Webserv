@@ -812,8 +812,6 @@ void ProcessRequest::checkPostValidity(const std::string & path)
 		if (!HttpUtils::fileExists(path))
 			throw HttpErrorException(404);
 	}
-	if (_request->getContentLength() > (selectMaxBodySize()))
-		throw HttpErrorException(413);
 }
 
 /* ************************************************************************** */
