@@ -25,46 +25,43 @@ sys.stdout.write(f"""<!DOCTYPE html>
 <head>
     <meta charset="utf-8">
     <title>Bonjour {nom}</title>
+	<link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&display=swap" rel="stylesheet">
     <style>
         body {{
-            background: linear-gradient(135deg, #141e30, #243b55);
-            color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            height: 100vh;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
+			font-family: 'IM Fell English SC', sans-serif;
+            background-image: url('/img/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
             text-align: center;
+            padding: 40px;
+            margin: 0;
+            min-height: 100vh;
+            color: white;
         }}
         h1 {{
-            font-size: 2.5rem;
-            color: #ffcc00;
-            text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
-            margin-bottom: 1rem;
-            animation: fadeIn 1s ease-in-out;
+            font-family: 'Creepster', cursive;
+            color: darkred;
+            font-size: 70px;
+            text-shadow: 2px 2px 4px black, 0 10px 10px rgba(139, 0, 0, 0.6);
+            margin-bottom: 20px;
+			animation: fadeIn 1s ease-in-out;
         }}
         p {{
             font-size: 1.2rem;
             margin-bottom: 1rem;
         }}
-        a {{
-            margin-top: 1rem;
-            display: inline-block;
-            padding: 0.6rem 1.2rem;
-            background: #ffcc00;
-            color: #243b55;
-            font-weight: bold;
-            text-decoration: none;
-            border-radius: 30px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-        }}
-        a:hover {{
-            background: #e6b800;
-            transform: scale(1.05);
-        }}
+		.homepage-button img{{
+			width: 220px;
+			border-radius: 8px;
+			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+			transition: transform 0.3s ease, box-shadow 0.3s ease;
+		}}
+		.homepage-button:hover img {{
+			transform: scale(1.1);
+			box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+		}}
         @keyframes fadeIn {{
             from {{ opacity: 0; transform: translateY(-20px); }}
             to {{ opacity: 1; transform: translateY(0); }}
@@ -74,6 +71,10 @@ sys.stdout.write(f"""<!DOCTYPE html>
 <body>
     <h1>Hello, {nom} !</h1>
     <p>Current time: {date_str}.</p>
-    <a href="/index.html">Retour à l'accueil</a>
+    <a href="/Post/post_index.html" class="homepage-button">
+		<div class="button-wrapper" style="position: relative; top:52%; left:0%; width:100%; height:100%;">
+			<img src="/img/back_index.png" alt="Index" style="width: 15%; height: 15%; object-fit: cover;">
+		</div>
+	</a>
 </body>
 </html>""")

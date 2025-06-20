@@ -258,7 +258,6 @@ void	Server::handleError(int errorCode, int fdClient, size_t & i)
 			processed = _clientsMap[fdClient].getProcessRequest().process("");
 			status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
 		}
-		supressClient(fdClient, i);
 	}
 	supressClient(fdClient, i);
 }
