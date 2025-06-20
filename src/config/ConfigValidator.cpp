@@ -71,7 +71,7 @@ void validateAutoIndex(const std::string& value) {
 		throw ValidationException("Autoindex must be 'on' or 'off'");
 }
 
-void validateCgiPass(const std::string& cgi_pass) {
-	if (access(cgi_pass.c_str(), X_OK) != 0)
-		throw ValidationException("CGI script not executable: " + cgi_pass);
+void validateCgiExtension(const std::vector<std::string>& extensions) {
+	const std::set<std::string> allowedExtensions;
+	
 }
