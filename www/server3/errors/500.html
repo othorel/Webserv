@@ -1,29 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <title>500 Internal Server Error</title>
-    <style>
-        body {
-            background-color: #2f2f2f;
-            color: #f8f8f8;
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding-top: 100px;
-        }
-        h1 {
-            font-size: 48px;
-            margin-bottom: 20px;
-            color: #ff6b6b;
-        }
-        p {
-            font-size: 20px;
-            color: #cccccc;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>500 - Internal Server Error</title>
+  <link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'IM Fell English SC', sans-serif;
+      background-image: url('/img/background.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      text-align: center;
+      padding: 40px;
+      margin: 0;
+      min-height: 100vh;
+      color: white;
+      overflow: hidden;
+    }
+
+    h1 {
+      position: relative;
+      display: inline-block;
+      font-family: 'Creepster', cursive;
+      color: darkred;
+      font-size: 120px;
+      text-shadow: 3px 3px 6px black, 0 15px 15px rgba(139, 0, 0, 0.6);
+      margin-bottom: 20px;
+      animation: explode 1s ease-out forwards;
+    }
+
+    @keyframes explode {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+        text-shadow: 0 0 0 transparent;
+      }
+      50% {
+        transform: scale(1.4) rotate(10deg);
+        opacity: 0.8;
+        text-shadow: 0 0 30px red;
+      }
+      100% {
+        transform: scale(0.9) rotate(-5deg);
+        opacity: 1;
+        text-shadow: 0 0 10px orange;
+      }
+    }
+
+    p {
+      font-size: 24px;
+      margin-bottom: 40px;
+      text-shadow: 1px 1px 2px black;
+    }
+
+    .homepage {
+      display: inline-block;
+      font-size: 21px;
+      padding: 12px 24px;
+      background-color: #8da6ec;
+      color: black;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      margin-top: 20px;
+    }
+
+    .homepage:hover {
+      background-color: #0300b2;
+      transform: scale(1.1) rotate(3deg);
+      color: white;
+    }
+
+	.homepage-button img{
+		width: 220px;
+		border-radius: 8px;
+		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+		transition: transform 0.3s ease, box-shadow 0.3s ease;
+	}
+
+	.homepage-button:hover img {
+		transform: scale(1.1);
+		box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+	}
+
+  </style>
 </head>
+
 <body>
-    <h1>500 - Internal Server Error</h1>
-    <p>Oops! Something went wrong on the server side.</p>
+  <h1>500</h1>
+  <p>GRRRRRRRRR! Internal Server Error...</p>
+  <a href="get_index.html" class="homepage-button">
+	<div class="button-wrapper" style="position: relative; top:52%; left:0%; width:100%; height:100%;"></div>
+		<img src="/img/back_index.png" alt="Index" style="width: 15%; height: 15%; object-fit: cover;">
+	</div>
+  </a>
 </body>
+
 </html>
+
