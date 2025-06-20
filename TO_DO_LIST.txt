@@ -5,5 +5,4 @@
 - faire fonctionner POST dans cgi
 - limiter la taille du header part de la request ?
 
-- erreurs http a catch pour lancer une reponse d erreur
 

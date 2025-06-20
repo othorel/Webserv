@@ -204,11 +204,14 @@ void	Server::handleEvent(int fdClient, size_t & i)
 		//CATCH AND WRITE RESPONSE
 		
 		if (status == 5)
+		{
+			std::cout << "status = 5" << std::endl;
 			handleEnd(fdClient, i);
+		}
 	}
 	catch (const HttpErrorException& e)
 	{
-		std::cerr << e.what() << " " << e.getStatusCode() << std::endl;
+		std::cerr << e.what() << e.getStatusCode() << std::endl;
 		handleError(e.getStatusCode(), fdClient, i);
 		return;
 	}
@@ -221,15 +224,23 @@ void	Server::handleError(int errorCode, int fdClient, size_t & i)
 		_clientsMap[fdClient].getProcessRequest().errorBuilder(errorCode);
 
 		std::string	processed = _clientsMap[fdClient].getProcessRequest().process("");
+		std::cout << "first processed: " << processed <<std::endl;
 		int status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
 		
-		while (!processed.empty())
+		if (!processed.empty())
 		{
-			_clientsMap[fdClient].writeDataToSocket(processed);
-			processed = _clientsMap[fdClient].getProcessRequest().process("");
-			status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
-			(void)status;
-
+			while (!processed.empty())
+			{
+				_clientsMap[fdClient].writeDataToSocket(processed);
+				processed = _clientsMap[fdClient].getProcessRequest().process("");
+				std::cout << "processed while: " << processed << std::endl;
+				status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
+				(void)status;
+			}
+		}
+		else
+		{
+			;
 		}
 	}
 	catch(const HttpErrorException& e)

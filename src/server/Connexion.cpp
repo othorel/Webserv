@@ -84,21 +84,15 @@ void	Connexion::readDataFromSocket(std::string &line)
 
 void	Connexion::writeDataToSocket(const std::string & response)
 {
-	ssize_t		totalSent = 0;
-	ssize_t		toSend = 0;
-	ssize_t		sent = 0;
-	while (static_cast<size_t>(totalSent) < response.size())
+	ssize_t sent = send(_fd, response.c_str(), response.size(), 0);
+
+	if (sent == -1)
 	{
-		toSend = std::min(static_cast<size_t>(BUFFER_SIZE), response.size() - totalSent);
-		sent = send(_fd, response.c_str() + totalSent, toSend, 0);
-		if (sent == -1)
-		{
-			_bytesOut = -1;
-			return;
-		}
-		totalSent += sent;
+		_bytesOut = -1;
+		throw HttpErrorException(500);
+		return;
 	}
-	_bytesOut = totalSent;
+	_bytesOut = sent;
 }
 
 bool	Connexion::endTransmission(std::string line)

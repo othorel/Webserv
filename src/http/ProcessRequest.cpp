@@ -54,6 +54,8 @@ ProcessRequest::ProcessRequest(const std::vector<ServerConfig> & serversVector) 
 	_request(NULL),
 	_file(NULL)
 {
+	// debug
+	std::cout << "========A PROCESS REQUEST HAS BEEN CREATED========" << std::endl;
 	if (serversVector.empty())
 		throw HttpErrorException(500);
 	_server = serversVector[0];
@@ -590,6 +592,7 @@ void ProcessRequest::addFinalHeaders()
 		else
 			_httpResponse.addHeader("connection", "keep-alive");
 	}
+
 	if (_httpResponse.getHeaders().find("server") == _httpResponse.getHeaders().end()) {
 		std::ostringstream oss;
 		std::vector<std::string>::const_iterator cit = _server.getServerNames().begin();
@@ -629,6 +632,9 @@ void ProcessRequest::buildRedirect()
 
 void ProcessRequest::errorBuilder(int statusCode, bool secondTime)
 {
+	// debug
+	std::cout << "====IN ERROR BUILDER=====" << std::endl;
+
 	if (_file) {
 		delete _file;
 		_file = NULL;
@@ -666,6 +672,10 @@ void ProcessRequest::errorBuilder(int statusCode, bool secondTime)
 		headers["allow"] = allowedMethods;
 	}
 	buildResponse(statusCode, headers, body);
+
+	// debug
+	std::cout << "=====RESPONSE=====\n" << _httpResponse.toRawString() << std::endl;
+
 	_processStatus = SENDING_HEADERS;
 }
 
