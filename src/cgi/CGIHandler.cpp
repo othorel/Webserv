@@ -1,5 +1,7 @@
 #include <iostream>
 #include <sstream>
+#include <signal.h>
+#include <poll.h>
 #include "../../include/cgi/CGIHandler.hpp"
 #include "../../include/http/HttpErrorException.hpp"
 #include "../../include/http/HttpResponse.hpp"
@@ -64,11 +66,10 @@ void CGIHandler::buildResponse()
 {
 	std::string rawResponse = execute();
 
-
 	size_t pos = rawResponse.find("\r\n\r\n");
 	if (pos == std::string::npos)
 		throw HttpErrorException(500);
-	
+
 	std::string headersPart = rawResponse.substr(0, pos);
 	std::string body = rawResponse.substr(pos + 4);
 
@@ -126,10 +127,9 @@ std::string CGIHandler::execute()
 	if (pid < 0)
 		throw HttpErrorException(500);
 
-		// debug bloc
-	std::cout << "IN CGI SCRIPT :" << std::endl;
-	std::cout << "QUERY STRING : " << _queryString << std::endl;
-	std::cout << "PATH : " << _scriptPath << std::endl;		
+	// std::cout << "IN CGI SCRIPT :" << std::endl;
+	// std::cout << "QUERY STRING : " << _queryString << std::endl;
+	// std::cout << "PATH : " << _scriptPath << std::endl;		
 
 	if (pid == 0) {
 		dup2(inputPipe[0], STDIN_FILENO);
@@ -143,8 +143,6 @@ std::string CGIHandler::execute()
 			envp.push_back(const_cast<char*>(envVec[i].c_str()));
 		envp.push_back(NULL);
 
-
-	
 		char* av[] = {const_cast<char*>(_scriptPath.c_str()), NULL};
 		execve(_scriptPath.c_str(), av, &envp[0]);
 		perror("execve");
@@ -153,12 +151,29 @@ std::string CGIHandler::execute()
 	else {
 		close(inputPipe[0]);
 		close(outputPipe[1]);
+
 		if (_request.getMethod() == "POST" && !_request.getBody().empty())
 			write(inputPipe[1], _request.getBody().c_str(), _request.getBody().size());
 		close(inputPipe[1]);
 
-		char buffer[4096];
 		std::string result;
+		char buffer[4096];
+
+		struct pollfd pfd;
+		pfd.fd = outputPipe[0];
+		pfd.events = POLLIN;
+
+		int pollStatus = poll(&pfd, 1, 3000); // timeout 3s
+
+		if (pollStatus == -1) {
+			throw HttpErrorException(500);
+		}
+		else if (pollStatus == 0) {
+			kill(pid, SIGKILL);
+			waitpid(pid, NULL, 0);
+			throw HttpErrorException(504);
+		}
+
 		ssize_t bytes;
 		while ((bytes = read(outputPipe[0], buffer, sizeof(buffer))) > 0)
 			result.append(buffer, bytes);
@@ -206,47 +221,3 @@ static void stringToLower(std::string & string)
 	for (size_t i = 0; i < string.size(); ++i)
 		string[i] = static_cast<char>(std::tolower(string[i]));
 }
-
-// std::string CGIHandler::execute() {
-// 	int inputPipe[2];
-// 	int outputPipe[2];
-// 	if (pipe(inputPipe) == -1 || pipe(outputPipe) == -1)
-// 		throw CGIException("Failed to create pipes");
-// 	pid_t pid = fork();
-// 	if (pid < 0)
-// 		throw CGIException("Fork failed");
-// 	if (pid == 0) {
-// 		dup2(inputPipe[0], STDIN_FILENO);
-// 		dup2(outputPipe[1], STDOUT_FILENO);
-// 		close(inputPipe[1]);
-// 		close(outputPipe[0]);
-// 		std::vector<std::string> envVec = buildEnv();
-// 		std::vector<char*> envp;
-// 		for (size_t i = 0; i < envVec.size(); i++)
-// 			envp.push_back(const_cast<char*>(envVec[i].c_str()));
-// 		envp.push_back(NULL);
-// 		char* av[] = {const_cast<char*>(_scriptPath.c_str()), NULL};
-// 		std::cerr << "Trying to execve: " << _scriptPath << std::endl;
-// 		execve(_scriptPath.c_str(), av, &envp[0]);
-// 		perror("execve");
-// 		exit(1);
-// 	}
-// 	else {
-// 		close(inputPipe[0]);
-// 		close(outputPipe[1]);
-// 		if (_method == "POST" && !_body.empty())
-// 			write(inputPipe[1], _body.c_str(), _body.size());
-// 		close(inputPipe[1]);
-// 		char buffer[4096];
-// 		std::string result;
-// 		ssize_t bytes;
-// 		while ((bytes = read(outputPipe[0], buffer, sizeof(buffer))) > 0)
-// 			result.append(buffer, bytes);
-// 		close(outputPipe[0]);
-// 		int status;
-// 		waitpid(pid, &status, 0);
-// 		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
-// 			throw CGIException("CGI script execution failed");
-// 		return (result);
-// 	}
-// }
