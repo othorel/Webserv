@@ -1,8 +1,5 @@
-- timeout pour la recption des headers, des fichiers, de lenvoi des fichiers, de la lecture d un cgi
-
-- limiter la taille du header part de la request ? 8k
-
+- timeout pour la recption des headers, des fichiers, de lenvoi des fichiers
 - extensions cgi dans parsing
-- ci valide dans location a recup pour porcessRequest
+- cgi valide dans location a recup pour porcessRequest
 
 - gestion des cookies

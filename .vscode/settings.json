@@ -74,6 +74,7 @@
 		"print": "cpp",
 		"queue": "cpp",
 		"stack": "cpp",
-		"__assertion_handler": "cpp"
+		"__assertion_handler": "cpp",
+		"set": "cpp"
 	}
 }

@@ -20,8 +20,7 @@ static void checkDeleteValidity(const std::string & path);
 static std::string createIndexPath(std::string path, const Location & location);
 static std::string generateAutoIndex(const std::string & dirPath, const std::string & uriPath);
 static std::string sanitizeFilenamePart(const std::string & input);
-static std::string createUploadFilename(
-	const HttpRequest & request, const std::string & path);
+static std::string createUploadFilename(const std::string & path);
 static bool isCgi(const std::string & path);
 static std::string findBoundary(const std::string & contentType);
 
@@ -239,8 +238,11 @@ void ProcessRequest::waitHeaders()
 		_serverTimeout = _server.getSessionTimeout();
 		selectLocation();
 		checkMethodValidity();
-		if (_location.hasRedirect()) 
-			buildRedirect();
+		if (_location.hasRedirect()) {
+			ResponseBuilder::buildRedirect(this);
+			_processStatus = SENDING_HEADERS;
+			sendHeaders();
+		}
 		_processStatus = HANDLING_METHOD;
 		handleMethod();
 	}
@@ -272,9 +274,8 @@ void ProcessRequest::waitBody()
 		size_t bytesToWrite = (_inputData.size() > remainingBytes) ? remainingBytes : _inputData.size();
 
 		if (bytesToWrite) {
-			_file->WriteChunk(_inputData.c_str(), bytesToWrite);
-			// if (_file->WriteChunk(_inputData.c_str(), bytesToWrite) != bytesToWrite)
-			// 	throw HttpErrorException(500);
+			if (_file->WriteChunk(_inputData.c_str(), bytesToWrite) != bytesToWrite)
+				throw HttpErrorException(500);
 		}
 		_inputData.clear();
 		if (_bytesSent >= _request->getContentLength()) {
@@ -282,15 +283,17 @@ void ProcessRequest::waitBody()
 
 			std::string originalPath = _file->getPath();
 			std::string headerName   = _file->getName();
-			headerName = sanitizeFilenamePart(headerName);
-			std::string newPath = originalPath + "-" + headerName;
-			rename(originalPath.c_str(), newPath.c_str());
+			if (!headerName.empty()) {
+				headerName = sanitizeFilenamePart(headerName);
+				std::string newPath = originalPath + "-" + headerName;
+				rename(originalPath.c_str(), newPath.c_str());
+			}
 			
 			std::map<std::string, std::string> headers;
-			std::string relativePath = _location.getUploadPath();
+			std::string relativePath = _location.getPath();
 			if (!relativePath.empty() && relativePath[relativePath.size() - 1] != '/')
 				relativePath += "/";
-			relativePath += _file->getPath().substr(_file->getPath().find_last_of("/") + 1);
+			relativePath += _file->getPath().substr(_file->getPath().find_last_of("/") + 1); // nom du fichier renommé
 			relativePath += "-";
 			relativePath += headerName;
 
@@ -302,11 +305,9 @@ void ProcessRequest::waitBody()
 				"<a href=\"" + relativePath  + "\">See file</a>\n"
 				"</body></html>";
 			headers["content-length"] = HttpUtils::numberToString(body.length());
-			buildResponse(201, headers, body);
-			if (_file) {
-				delete _file;
-				_file = NULL;
-			}
+			ResponseBuilder::buildResponse(this, 201, headers, body);
+			delete _file;
+			_file = NULL;
 			_processStatus = SENDING_HEADERS;
 			sendHeaders();
 		}
@@ -330,7 +331,7 @@ void ProcessRequest::waitBody()
 					std::string path = createPath();
 					CGIHandler cgi(*_request, path);
 					_httpResponse = cgi.getHttpResponse();
-					addFinalHeaders();
+					ResponseBuilder::addFinalHeaders(this);
 					_processStatus = SENDING_HEADERS;
 					sendHeaders();
 					return ;
@@ -389,7 +390,6 @@ void ProcessRequest::deleteHandler()
 		return ;
 
 	std::string path = createPath();
-
 	checkDeleteValidity(path);
 
 	if (unlink(path.c_str()) == -1) {
@@ -397,7 +397,7 @@ void ProcessRequest::deleteHandler()
 
 	std::map<std::string, std::string> headers;
 	headers["content-length"] = "0";
-	buildResponse(204, headers, "");
+	ResponseBuilder::buildResponse(this, 204, headers, "");
 	_processStatus = SENDING_HEADERS;
 	sendHeaders();
 }
@@ -423,7 +423,7 @@ void ProcessRequest::getHandler()
 			std::map<std::string, std::string> headers;
 			headers["content-type"] = "text/html";
 			headers["content-length"] = HttpUtils::numberToString(body.length());
-			buildResponse(200, headers, body);
+			ResponseBuilder::buildResponse(this, 200, headers, body);
 			_processStatus = SENDING_HEADERS;
 			sendHeaders();
 			return ;
@@ -445,32 +445,52 @@ void ProcessRequest::getHandler()
 	std::map<std::string, std::string> headers;
 	headers["content-type"] = _file->getMimeType();
 	headers["content-length"] = HttpUtils::numberToString(_file->getSize());
-	buildResponse(200, headers, "");
+	ResponseBuilder::buildResponse(this, 200, headers, "");
 
 	_processStatus = SENDING_HEADERS;
 	sendHeaders();
 }
-
+//test
 void ProcessRequest::postHandler()
 {
-	if (!_request)
-		throw HttpErrorException(500);
-
 	if (_processStatus != HANDLING_METHOD)
 		return ;
-
-	if (_file)
+	if (!_request || _file)
 		throw HttpErrorException(500);
-	std::string path;
-	if (_request->hasHeader("content-type")
-		&& _request->getHeaderValue("content-type").find("multipart/form-data") == 0
-		&& _request->getHeaderValue("content-type").find("boundary=") != std::string::npos) {
-		path = createUploadPath();
-		checkPostValidity(path);
-		std::string filepath = createUploadFilename(*_request, path);
 
-		// dev
-		std::string boundary = findBoundary(_request->getHeaderValue("content-type"));
+	std::string contentType = "";
+	if (_request->hasHeader("content-type"))
+		contentType = _request->getHeaderValue("content-type");
+
+	if (!contentType.empty() && (
+			(contentType.find("multipart/form-data") == 0 &&
+			contentType.find("boundary=") != std::string::npos) ||
+			contentType.find("application/octet-stream") == 0))
+		handleUpload(contentType);
+	else {
+		std::string path = createPath();
+		checkPostValidity(path);
+	}
+	_processStatus = WAITING_BODY;
+	waitBody();
+}
+
+void ProcessRequest::handleUpload(const std::string & contentType)
+{
+	std::string path = createUploadPath();
+	checkPostValidity(path);
+	std::string filepath = createUploadFilename(path);
+
+	if (contentType.find("application/octet-stream") == 0) {
+		try {
+			_file = new File(filepath, true);
+		}
+		catch (const std::bad_alloc&) {
+			throw HttpErrorException(500);
+		}
+	}
+	else {
+		std::string boundary = findBoundary(contentType);
 		if (boundary.empty())
 			throw HttpErrorException(400);
 		try {
@@ -479,15 +499,7 @@ void ProcessRequest::postHandler()
 		catch (const std::bad_alloc&) {
 			throw HttpErrorException(500);
 		}
-
 	}
-	else {
-		path = createPath();
-		checkPostValidity(path);
-	}
-
-	_processStatus = WAITING_BODY;
-	waitBody();
 }
 
 void ProcessRequest::cgiGetHandler()
@@ -496,7 +508,7 @@ void ProcessRequest::cgiGetHandler()
 
 	CGIHandler cgi(*_request, path);
 	_httpResponse = cgi.getHttpResponse();
-	addFinalHeaders();
+	ResponseBuilder::addFinalHeaders(this);
 
 	_processStatus = SENDING_HEADERS;
 	sendHeaders();
@@ -579,15 +591,6 @@ const std::string & ProcessRequest::selectRoot()
 	return (!_location.getRoot().empty() ? _location.getRoot() : _server.getRoot());
 }
 
-std::string ProcessRequest::selectErrorPage(int statusCode)
-{
-	if (_location.hasErrorPage(statusCode)) {
-		return (_location.getErrorPage(statusCode)); }
-	if (_server.hasErrorPage(statusCode)) {	
-		return (_server.getErrorPage(statusCode)); }
-	return ("");
-}
-
 size_t ProcessRequest::selectMaxBodySize()
 {
 	if (_location.getClientMaxBodySize() >= 0)
@@ -634,121 +637,10 @@ bool ProcessRequest::closeConection()
 /*                              response builder                              */
 /* ************************************************************************** */
 
-void ProcessRequest::buildResponse(int statusCode, const std::map<std::string, std::string> & headers, const std::string & body)
-{
-	_httpResponse = HttpResponse("HTTP/1.1", statusCode, headers, body);
-	addFinalHeaders();
-}
-
-void ProcessRequest::addFinalHeaders()
-{
-	if (_httpResponse.getHeaders().find("date") == _httpResponse.getHeaders().end())
-		_httpResponse.addHeader("date", HttpUtils::getCurrentDate());
-	// if (_httpResponse.getHeaders().find("connection") == _httpResponse.getHeaders().end()) {
-	// 	if (_request && _request->hasHeader("connection") && _request->getHeaderValue("connection") == "close")
-	// 		_httpResponse.addHeader("connection", "close");
-	// 	else
-	// 		_httpResponse.addHeader("connection", "keep-alive");
-	// }
-	_httpResponse.addHeader("connection", "close");
-
-	if (_httpResponse.getHeaders().find("server") == _httpResponse.getHeaders().end()) {
-		std::ostringstream oss;
-		std::vector<std::string>::const_iterator cit = _server.getServerNames().begin();
-		if (cit != _server.getServerNames().end()) {
-			oss << *cit;
-			++cit;
-			for (; cit != _server.getServerNames().end(); ++cit) {
-				oss << " " << *cit; }}
-		_httpResponse.addHeader("server", oss.str());
-	}
-	if (_httpResponse.getHeaders().find("content-length") == _httpResponse.getHeaders().end())
-		_httpResponse.addHeader("content-length", HttpUtils::numberToString(_httpResponse.getBody().size()));
-}
-
-void ProcessRequest::buildRedirect()
-{
-	std::string redirectPath = _location.getRedirectPath();
-	int redirectCode = _location.getRedirectCode();
-
-	std::string body =
-		"<html><body><h1>" + HttpUtils::httpStatusMessage(redirectCode) + "</h1>\n"
-		"<p>Redirecting to <a href=\"" + redirectPath + "\">" + redirectPath + "</a></p>\n"
-		"</body></html>";
-
-	std::map<std::string, std::string> headers;
-	headers["content-type"] = "text/html";
-	headers["location"] = redirectPath;
-	headers["content-length"] = HttpUtils::numberToString(body.length());
-
-	if (_file) {
-		delete _file;
-		_file = NULL;
-	}
-	buildResponse(redirectCode, headers, body);
-	_processStatus = SENDING_HEADERS;
-}
-
 void ProcessRequest::errorBuilder(int statusCode, bool secondTime)
 {
-	if (_file) {
-		delete _file;
-		_file = NULL;
-	}
-	std::string errorPage = selectErrorPage(statusCode);
-	std::map<std::string, std::string> headers;
-	std::string mimeType = "text/html";
-	std::string body = "";
-	size_t bodyLen = 0;
-
-	// if there is a file to read
-	if (!errorPage.empty() && !secondTime) {
-		std::string errorFilePath = createErrorFilePath(errorPage);
-		try {
-			_file = new File(errorFilePath);
-		}
-		catch (const std::bad_alloc&) {
-			throw HttpErrorException(500);
-		}
-		mimeType = _file->getMimeType();
-		bodyLen = _file->getSize();
-	}
-	// there is no file
-	else {
-		body = "<html><body><h1>" + HttpUtils::numberToString(statusCode) + " " +
-			HttpUtils::httpStatusMessage(statusCode) + "</h1></body></html>";
-		bodyLen = body.size();
-	}
-	headers["content-type"] = mimeType;
-	headers["content-length"] = HttpUtils::numberToString(bodyLen);
-	if (statusCode == 405) {
-		std::string allowedMethods;
-		std::vector<std::string>::const_iterator cit = _location.getMethods().begin();
-		for (; cit != _location.getMethods().end(); ++cit) {
-			if (allowedMethods.empty())
-				allowedMethods += *cit;
-			else
-				allowedMethods += " " + *cit;
-		}
-		headers["allow"] = allowedMethods;
-	}
-	buildResponse(statusCode, headers, body);
-
+	ResponseBuilder::errorBuilder(this, statusCode, secondTime);
 	_processStatus = SENDING_HEADERS;
-}
-
-std::string ProcessRequest::createErrorFilePath(const std::string & errorPage)
-{
-	if (!_request)
-		throw HttpErrorException(500);
-
-	std::string root = selectRoot();
-
-	std::string filePath = errorPage;
-	HttpUtils::trimFinalSlash(root);
-	HttpUtils::trimSlashes(filePath);
-
-	return (root + '/' + filePath);
 }
 
 /* ************************************************************************** */
@@ -870,17 +762,9 @@ static std::string sanitizeFilenamePart(const std::string & input)
 	return (result);
 }
 
-static std::string createUploadFilename(
-	const HttpRequest & request, const std::string & path)
+static std::string createUploadFilename(const std::string & path)
 {
-	std::string extension;
-	if (request.hasHeader("content-type")) {
-		extension = HttpUtils::getExtensionFromMimeType(request.getHeaderValue("content-type")); }
-
-	std::string filename = path + "/" + HttpUtils::generateUniqueTimestamp();
-	if (!extension.empty()) {
-		filename += "." + extension; }
-	return (filename);
+	return (path + "/" + HttpUtils::generateUniqueTimestamp());
 }
 
 static bool isCgi(const std::string & path)
