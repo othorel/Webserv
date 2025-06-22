@@ -39,22 +39,22 @@ File::File(const std::string & path, bool isWriteMode) :
 	
 	if (!_isWriteMode) {
 		if (!isExistingFile())
-			throw HttpErrorException(404);
+			throw HttpErrorException(404, "in F: Invalid path.");
 		if (!isReadableRegularFile())
-			throw HttpErrorException(403);
+			throw HttpErrorException(403, "in F: Path is not a regular file.");
 		_size = getFileSize();
 		if (_size < 0)
-			throw (HttpErrorException(500));
+			throw (HttpErrorException(500, "in F: Invalid file size."));
 	}
 	else {
 		if (!isWritableDirectory())
-			throw HttpErrorException(403);
+			throw HttpErrorException(403, "in F: Path is not a writable directory.");
 		if (isExistingFile()) {
 			if (!isWritableRegularFile())
-				throw HttpErrorException(403);
+				throw HttpErrorException(403, "in F: Path is not a writable regular file.");
 			_size = getFileSize();
 			if (_size < 0)
-				throw HttpErrorException(500);
+				throw HttpErrorException(500, "in F: Invalid file size.");
 		}
 		else
 			_size = 0;
@@ -73,13 +73,13 @@ File::File(const std::string & path, const std::string & boundary) :
 	_writeStatus(BEFORE_FIRST_BOUNDARY)
 {
 		if (!isWritableDirectory())
-			throw HttpErrorException(403);
+			throw HttpErrorException(403, "in F: Path is not a writable directory.");
 		if (isExistingFile()) {
 			if (!isWritableRegularFile())
-				throw HttpErrorException(403);
+				throw HttpErrorException(403, "in F: Path is not a regular writable file.");
 			_size = getFileSize();
 			if (_size < 0)
-				throw HttpErrorException(500);
+				throw HttpErrorException(500, "in F: Invalid file size.");
 		}
 		else
 			_size = 0;
@@ -212,23 +212,23 @@ bool File::openFile()
 	int flags;
 	if (_isWriteMode) {
 		if (!isWritableDirectory())
-			throw HttpErrorException(403);
+			throw HttpErrorException(403, "in F: Path is not a writable directory.");
 		flags = O_WRONLY | O_CREAT | O_APPEND | O_NONBLOCK;
 	}
 	else {
 		if (!isExistingFile())
-			throw HttpErrorException(404);
+			throw HttpErrorException(404, "in F: File does not exists.");
 		if (!isReadableRegularFile())
-			throw HttpErrorException(403);
+			throw HttpErrorException(403, "in F: Path is not a regular file.");
 
 		_size = getFileSize();
 		if (_size < 0)
-			throw HttpErrorException(500);
+			throw HttpErrorException(50, "in F: Invalid file size.");
 		flags = O_RDONLY | O_NONBLOCK;
 	}
 	_fd = open(_path.c_str(), flags, 0644);
 	if (_fd == -1)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in F: Unable to open file.");
 	return (true);
 }
 
@@ -248,13 +248,14 @@ bool File::closeFile()
 size_t	File::ReadChunk(char * buffer, size_t readSize)
 {
 	if (_isWriteMode)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in F: File is in write mode.");
 	if (!isOpen()) {
 		if (!openFile())
-			throw HttpErrorException(500);}
+			throw HttpErrorException(500, "in F: Unable to open file.");
+	}
 	ssize_t bytesRead = read(_fd, buffer, readSize);
 	if (bytesRead < 0)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in F: No bytes to read.");
 	_offset += static_cast<size_t>(bytesRead);
 	return (static_cast<size_t>(bytesRead));
 }
@@ -262,15 +263,16 @@ size_t	File::ReadChunk(char * buffer, size_t readSize)
 size_t	File::WriteChunk(const char * src, size_t writeSize)
 {
 	if (!_isWriteMode)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in F: File is not in write mode.");
 	if (!isOpen()) {
 		if (!openFile())
-			throw HttpErrorException(500);}
+			throw HttpErrorException(500, "in F: Unable to open file.");
+	}
 	if (!_boundary.empty())
 		return (writeChunkBoundary(src, writeSize));
 	ssize_t bytesWritten = write(_fd, src, writeSize);
 	if (bytesWritten < 0)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in F: Error while writing bytes.");
 	_offset += static_cast<size_t>(bytesWritten);
 	_size += static_cast<size_t>(bytesWritten);
 	return (static_cast<size_t>(bytesWritten));
@@ -309,7 +311,7 @@ size_t File::writeChunkBoundary(const char * src, size_t writeSize)
 	if (_writeStatus == IN_BODY) {
 		ssize_t bytesWritten = write(_fd, _buffer.c_str(), _buffer.size());
 		if (bytesWritten < 0)
-			throw HttpErrorException(500);
+			throw HttpErrorException(500, "in F: Error while writtin bytes.");
 		_offset += static_cast<size_t>(bytesWritten);
 		_size += static_cast<size_t>(bytesWritten);
 		_buffer.clear();

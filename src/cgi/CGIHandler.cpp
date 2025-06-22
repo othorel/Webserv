@@ -68,7 +68,7 @@ void CGIHandler::buildResponse()
 
 	size_t pos = rawResponse.find("\r\n\r\n");
 	if (pos == std::string::npos)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in CGI: no double endl.");
 
 	std::string headersPart = rawResponse.substr(0, pos);
 	std::string body = rawResponse.substr(pos + 4);
@@ -151,11 +151,11 @@ std::string CGIHandler::execute()
 	int inputPipe[2];
 	int outputPipe[2];
 	if (pipe(inputPipe) == -1 || pipe(outputPipe) == -1)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in CGI: pipe failed.");
 
 	pid_t pid = fork();
 	if (pid < 0)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in CGI: fork failed.");
 
 	// debug bloc
 	// std::cout << "IN CGI SCRIPT :" << std::endl;
@@ -202,7 +202,7 @@ std::string CGIHandler::execute()
 			std::cerr << "WIFEXITED = " << WIFEXITED(status) << std::endl;
 			std::cerr << "Exit code = " << WEXITSTATUS(status) << std::endl;
 			std::cerr << "Script output:\n" << result << std::endl;
-			throw HttpErrorException(500);
+			throw HttpErrorException(500, "in CGI: waitpid error.");
 		}
 		return result;
 	}

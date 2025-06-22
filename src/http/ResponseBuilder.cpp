@@ -12,7 +12,7 @@ void ResponseBuilder::buildResponse(ProcessRequest * process, int statusCode,
 	const std::map<std::string, std::string> & headers, const std::string & body)
 {
 	if (!process)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in RB: Request is NULL.");
 	process->_httpResponse = HttpResponse("HTTP/1.1", statusCode, headers, body);
 	addFinalHeaders(process);
 }
@@ -20,7 +20,7 @@ void ResponseBuilder::buildResponse(ProcessRequest * process, int statusCode,
 void ResponseBuilder::buildRedirect(ProcessRequest * process)
 {
 	if (!process)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in RB: Process is NULL.");
 
 	std::string redirectPath = process->_location.getRedirectPath();
 	int redirectCode = process->_location.getRedirectCode();
@@ -45,7 +45,7 @@ void ResponseBuilder::buildRedirect(ProcessRequest * process)
 void ResponseBuilder::errorBuilder(ProcessRequest * process, int statusCode, bool secondTime)
 {
 	if (!process)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in RB: Process is NULL.");
 
 	if (process->_file) {
 		delete process->_file;
@@ -64,7 +64,7 @@ void ResponseBuilder::errorBuilder(ProcessRequest * process, int statusCode, boo
 			process->_file = new File(errorFilePath);
 		}
 		catch (const std::bad_alloc&) {
-			throw HttpErrorException(500);
+			throw HttpErrorException(500, "in RB: Bad alloc.");
 		}
 		mimeType = process->_file->getMimeType();
 		bodyLen = process->_file->getSize();
@@ -98,7 +98,7 @@ void ResponseBuilder::errorBuilder(ProcessRequest * process, int statusCode, boo
 std::string ResponseBuilder::createErrorFilePath(ProcessRequest * process, const std::string & errorPage)
 {
 	if (!process->_request)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in RB: Request is NULL.");
 
 	std::string root = selectRoot(process);
 

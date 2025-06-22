@@ -1,4 +1,4 @@
-
+#include <string>
 #include "../../include/server/Connexion.hpp"
 #include "../../include/http/RequestParser.hpp"
 #include "../../include/http/HttpRequest.hpp"
@@ -67,11 +67,9 @@ void	Connexion::readDataFromSocket(std::string &line)
 	_bytesIn = recv(_fd, bufIn, sizeof(bufIn), 0);
 
 	if (_bytesIn <= 0)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in C: recv failed: " + std::string(strerror(errno)));
 	_bufferIn.assign(bufIn, _bytesIn);
 	line.assign(bufIn, _bytesIn);
-	
-
 }
 
 void	Connexion::writeDataToSocket(const std::string & response)
@@ -79,7 +77,7 @@ void	Connexion::writeDataToSocket(const std::string & response)
 	_bytesOut = send(_fd, response.c_str(), response.size(), 0);
 
 	if (_bytesOut == -1)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in C: send failed.");
 }
 
 bool	Connexion::endTransmission(std::string line)

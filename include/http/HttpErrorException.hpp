@@ -2,17 +2,22 @@
 # define HTTPERROREXCEPTION_HPP
 
 # include <exception>
+# include <string>
 
 class HttpErrorException : public std::exception
 {
 	private:
 
-		int _statusCode;
+		int			_statusCode;
+		std::string	_message;
 
 	public:
 
-		HttpErrorException(int code) :
-			_statusCode(code)
+		virtual ~HttpErrorException() throw() {};
+
+		HttpErrorException(int code, std::string message) :
+			_statusCode(code),
+			_message(message)
 		{}
 
 		int getStatusCode() const
@@ -22,7 +27,7 @@ class HttpErrorException : public std::exception
 
 		const char* what() const throw()
 		{
-			return ("HTTP Error Exception");
+			return (_message.c_str());
 		}
 
 };
