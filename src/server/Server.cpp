@@ -208,7 +208,7 @@ void	Server::handleEvent(int fdClient, size_t & i)
 	}
 	catch (const HttpErrorException& e)
 	{
-		std::cerr << e.what() << e.getStatusCode() << std::endl;
+		std::cerr << "HttpErrorException caught : " << e.getStatusCode() << ": "<< e.what() << std::endl;
 
 		handleError(e.getStatusCode(), fdClient, i);
 		return;

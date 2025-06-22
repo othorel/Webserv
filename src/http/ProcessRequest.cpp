@@ -56,7 +56,7 @@ ProcessRequest::ProcessRequest(const std::vector<ServerConfig> & serversVector) 
 	_file(NULL)
 {
 	if (serversVector.empty())
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in PR: ServerConfig is empty.");
 	_server = serversVector[0];
 	_serverTimeout = _server.getSessionTimeout();
 }
@@ -80,7 +80,7 @@ ProcessRequest::ProcessRequest(const ProcessRequest & other) :
 			_file = new File(*other._file);
 		}
 		catch (const std::bad_alloc&) {
-			throw HttpErrorException(500);
+			throw HttpErrorException(500, "in PR: Bad alloc.");
 		}
 	}
 	if (!other._request)
@@ -90,7 +90,7 @@ ProcessRequest::ProcessRequest(const ProcessRequest & other) :
 			_request = new HttpRequest(*other._request);
 		}
 		catch (const std::bad_alloc&) {
-			throw HttpErrorException(500);
+			throw HttpErrorException(500, "in PR: Bad alloc.");
 		}
 	}
 }
@@ -145,7 +145,7 @@ ProcessRequest & ProcessRequest::operator=(const ProcessRequest & other)
 				_file = new File(*other._file);
 			}
 			catch (const std::bad_alloc&) {
-				throw HttpErrorException(500);
+				throw HttpErrorException(500, "in PR: Bad alloc.");
 			}
 		}
 		if (!other._request)
@@ -155,7 +155,7 @@ ProcessRequest & ProcessRequest::operator=(const ProcessRequest & other)
 				_request = new HttpRequest(*other._request);
 			}
 			catch (const std::bad_alloc&) {
-				throw HttpErrorException(500);
+				throw HttpErrorException(500, "in PR: Bad alloc.");
 			}
 		}
 	}
@@ -181,7 +181,7 @@ ProcessRequest::~ProcessRequest()
 std::string ProcessRequest::process(std::string data)
 {
 	if (_processStatus == WAITING_HEADERS && _inputData.size() + data.size() > 80192)
-		throw HttpErrorException(431);
+		throw HttpErrorException(431, "in PR: Input data too large for headers.");
 
 	_inputData.append(data);
 
@@ -208,7 +208,7 @@ std::string ProcessRequest::process(std::string data)
 				_outputData.clear();
 			break;
 		default:
-			throw HttpErrorException(500);
+			throw HttpErrorException(500, "in PR: Invalid default switch case.");
 	}
 	std::string dataToSend = _outputData;
 	_outputData.clear();	
@@ -221,8 +221,6 @@ void ProcessRequest::waitHeaders()
 	if (_processStatus != WAITING_HEADERS)
 		return ;
 
-	if (_inputData.size() > MAX_HEADERS_SIZE)
-		throw HttpErrorException(431);
 	size_t pos = _inputData.find("\r\n\r\n");
 	if (pos != std::string::npos) {
 		std::string headersPart = _inputData.substr(0, pos + 4);
@@ -233,16 +231,10 @@ void ProcessRequest::waitHeaders()
 		selectServer();
 
 		if (_request->getContentLength() > selectMaxBodySize())
-			throw HttpErrorException(413);
+			throw HttpErrorException(413, "in PR: Content-Length too large.");
 		
 		_serverTimeout = _server.getSessionTimeout();
 		selectLocation();
-		checkMethodValidity();
-		if (_location.hasRedirect()) {
-			ResponseBuilder::buildRedirect(this);
-			_processStatus = SENDING_HEADERS;
-			sendHeaders();
-		}
 		_processStatus = HANDLING_METHOD;
 		handleMethod();
 	}
@@ -254,8 +246,13 @@ void ProcessRequest::handleMethod()
 		return ;
 
 	selectHandler();
+	if (_location.hasRedirect()) {
+		ResponseBuilder::buildRedirect(this);
+		_processStatus = SENDING_HEADERS;
+		sendHeaders();
+	}
 	if (!_handler)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in PR: Unable to select handler.");
 	(this->*_handler)();
 }
 
@@ -265,7 +262,7 @@ void ProcessRequest::waitBody()
 	if (_processStatus  != WAITING_BODY)
 		return ;
 	if (!_request)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in PR: Request is NULL.");
 
 	// if body is a file to upload
 	if (_file) {
@@ -275,7 +272,7 @@ void ProcessRequest::waitBody()
 
 		if (bytesToWrite) {
 			if (_file->WriteChunk(_inputData.c_str(), bytesToWrite) != bytesToWrite)
-				throw HttpErrorException(500);
+				throw HttpErrorException(500, "in PR: bytes written not equal to bytes to write.");
 		}
 		_inputData.clear();
 		if (_bytesSent >= _request->getContentLength()) {
@@ -293,7 +290,7 @@ void ProcessRequest::waitBody()
 			std::string relativePath = _location.getPath();
 			if (!relativePath.empty() && relativePath[relativePath.size() - 1] != '/')
 				relativePath += "/";
-			relativePath += _file->getPath().substr(_file->getPath().find_last_of("/") + 1); // nom du fichier renommé
+			relativePath += _file->getPath().substr(_file->getPath().find_last_of("/") + 1);
 			relativePath += "-";
 			relativePath += headerName;
 
@@ -363,7 +360,7 @@ void ProcessRequest::sendBody()
 		return ;
 		
 	if (!_file)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in PR: File is NULL.");
 	
 	char buffer[BUFFER_SIZE];
 	memset(buffer, 0, BUFFER_SIZE);
@@ -384,7 +381,7 @@ void ProcessRequest::sendBody()
 void ProcessRequest::deleteHandler()
 {
 	if (!_request)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in PR: Request is NULL.");
 
 	if (_processStatus != HANDLING_METHOD)
 		return ;
@@ -392,8 +389,8 @@ void ProcessRequest::deleteHandler()
 	std::string path = createPath();
 	checkDeleteValidity(path);
 
-	if (unlink(path.c_str()) == -1) {
-		throw HttpErrorException(500); }
+	if (unlink(path.c_str()) == -1)
+		throw HttpErrorException(500, "in PR: Unlink failed.");
 
 	std::map<std::string, std::string> headers;
 	headers["content-length"] = "0";
@@ -405,14 +402,14 @@ void ProcessRequest::deleteHandler()
 void ProcessRequest::getHandler()
 {
 	if (!_request)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in PR: Request is NULL.");
 
 	if (_processStatus != HANDLING_METHOD)
 		return ;
 	
 	std::string path = createPath();
 	if (!HttpUtils::fileExists(path))
-		throw HttpErrorException(404);
+		throw HttpErrorException(404, "in PR: Invalid path.");
 
 	if (HttpUtils::isDirectory(path)) {
 		std::string indexFile = createIndexPath(path, _location);
@@ -429,7 +426,7 @@ void ProcessRequest::getHandler()
 			return ;
 		}
 		else
-			throw HttpErrorException(403);
+			throw HttpErrorException(403, "in PR: Invalid directory path.");
 	}
 
 	if (_file) {
@@ -440,7 +437,7 @@ void ProcessRequest::getHandler()
 		_file = new File(path);
 	}
 	catch (const std::bad_alloc&) {
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in PR: Bad alloc.");
 	}
 	std::map<std::string, std::string> headers;
 	headers["content-type"] = _file->getMimeType();
@@ -455,8 +452,10 @@ void ProcessRequest::postHandler()
 {
 	if (_processStatus != HANDLING_METHOD)
 		return ;
-	if (!_request || _file)
-		throw HttpErrorException(500);
+	if (!_request)
+		throw HttpErrorException(500, "in PR: Request is NULL.");
+	if (_file)
+		throw HttpErrorException(500, "in PR: File exists but should not.");
 
 	std::string contentType = "";
 	if (_request->hasHeader("content-type"))
@@ -486,18 +485,18 @@ void ProcessRequest::handleUpload(const std::string & contentType)
 			_file = new File(filepath, true);
 		}
 		catch (const std::bad_alloc&) {
-			throw HttpErrorException(500);
+			throw HttpErrorException(500, "in PR: Bad alloc.");
 		}
 	}
 	else {
 		std::string boundary = findBoundary(contentType);
 		if (boundary.empty())
-			throw HttpErrorException(400);
+			throw HttpErrorException(400, "in PR: No boundary.");
 		try {
 			_file = new File(filepath, boundary);
 		}
 		catch (const std::bad_alloc&) {
-			throw HttpErrorException(500);
+			throw HttpErrorException(500, "in PR: Bad alloc.");
 		}
 	}
 }
@@ -521,7 +520,7 @@ void ProcessRequest::cgiGetHandler()
 void ProcessRequest::selectServer()
 {
 	if (!_request)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in PR: Request is NULL.");
 
 	const std::map<std::string, std::string> & headers = _request->getHeaders();
 	std::map<std::string, std::string>::const_iterator headersCit = headers.find("host"); 
@@ -535,7 +534,7 @@ void ProcessRequest::selectServer()
 		}
 	}
 	if (_serversVector.empty()) {
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in PR: Unable to select server.");
 	}
 	_server = _serversVector[0];
 }
@@ -543,7 +542,7 @@ void ProcessRequest::selectServer()
 void ProcessRequest::selectLocation()
 {
 	if (!_request)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in PR: Request is NULL.");
 
 	const std::map<std::string, Location> & locations = _server.getLocations();
 
@@ -561,7 +560,7 @@ void ProcessRequest::selectLocation()
 		}
 	}
 	if (bestMatch.empty())
-		throw HttpErrorException(404);
+		throw HttpErrorException(404, "in PR: Unable to select location.");
 	
 	_location = locations.find(bestMatch)->second;
 }
@@ -569,7 +568,7 @@ void ProcessRequest::selectLocation()
 void ProcessRequest::selectHandler()
 {
 	if (!_request)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in PR: Request is NULL.");
 
 	const std::string & method = _request->getMethod();
 	if (isCgi(_request->getTarget()) && method == "GET")
@@ -581,9 +580,9 @@ void ProcessRequest::selectHandler()
 	else if (method == "GET")
 		_handler = &ProcessRequest::getHandler;
 	else
-		throw HttpErrorException(405);
+		throw HttpErrorException(501, "in PR: Method not implemented.");
 	if (!_location.isValidMethod(method))
-		throw HttpErrorException(405);
+		throw HttpErrorException(405, "in PR: Method not allowed.");
 }
 
 const std::string & ProcessRequest::selectRoot()
@@ -647,28 +646,17 @@ void ProcessRequest::errorBuilder(int statusCode, bool secondTime)
 /*                            private utils methods                           */
 /* ************************************************************************** */
 
-void ProcessRequest::checkMethodValidity()
-{
-	const std::vector<std::string> & allowedMethods = _location.getMethods();
-	std::vector<std::string>::const_iterator cit = allowedMethods.begin();
-	for (; cit != allowedMethods.end(); ++cit) {
-		if (*cit == _request->getMethod())
-			return ;
-	}
-	throw HttpErrorException (405);
-}
-
 std::string ProcessRequest::createPath()
 {
 	if (!_request)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in PR: Request is NULL.");
 
 	std::string locationPath = _location.getPath();
 	std::string target = _request->getTarget();
 	std::string root = selectRoot();
 
 	if (target.find(locationPath) != 0)
-		throw HttpErrorException(404);
+		throw HttpErrorException(404, "in PR: Invalid path.");
 
 	std::string relativePath = target.substr(locationPath.size());
 	HttpUtils::trimFinalSlash(root);
@@ -680,7 +668,7 @@ std::string ProcessRequest::createPath()
 std::string ProcessRequest::createUploadPath()
 {
 	if (!_request)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in PR: Request is NULL.");
 
 	std::string root = selectRoot();
 	std::string locationPath = _location.getUploadPath();
@@ -694,15 +682,15 @@ void ProcessRequest::checkPostValidity(const std::string & path)
 {
 	if (_file) {
 		if (_location.getUploadPath().empty())
-			throw HttpErrorException(500);
+			throw HttpErrorException(500, "in PR: No upload path.");
 		if (!HttpUtils::isDirectory(path))
-			throw HttpErrorException(500);
+			throw HttpErrorException(500, "in PR: Upload path is not a directory.");
 		if (!HttpUtils::hasWritePermission(path))
-			throw HttpErrorException(403);
+			throw HttpErrorException(403, "in PR: Invalid permission for upload path.");
 	}
 	else {
 		if (!HttpUtils::fileExists(path))
-			throw HttpErrorException(404);
+			throw HttpErrorException(404, "in PR: Unknown path.");
 	}
 }
 
@@ -712,12 +700,12 @@ void ProcessRequest::checkPostValidity(const std::string & path)
 
 static void checkDeleteValidity(const std::string & path)
 {
-	if (!HttpUtils::fileExists(path)) {
-		throw HttpErrorException(404); }
-	if (!HttpUtils::isRegularFile(path)) {
-		throw HttpErrorException(403); }
-	if (!HttpUtils::hasWritePermission(path)) {
-		throw HttpErrorException(403); }
+	if (!HttpUtils::fileExists(path))
+		throw HttpErrorException(404, "in PR: Unknown path.");
+	if (!HttpUtils::isRegularFile(path))
+		throw HttpErrorException(403, "in PR: Path is not a regular file.");
+	if (!HttpUtils::hasWritePermission(path))
+		throw HttpErrorException(403, "in PR: Invalid permission for delete.");
 }
 
 static std::string createIndexPath(std::string path, const Location & location)
@@ -733,8 +721,8 @@ static std::string createIndexPath(std::string path, const Location & location)
 static std::string generateAutoIndex(const std::string & dirPath, const std::string & uriPath)
 {
 	DIR* dir = opendir(dirPath.c_str());
-	if (!dir) {
-		throw HttpErrorException(500); }
+	if (!dir)
+		throw HttpErrorException(500, "in PR: Opendir failed.");
 	std::ostringstream html;
 	html << "<html><body><h1>Index of " << uriPath << "</h1><ul>";
 	struct dirent* entry;
@@ -783,7 +771,7 @@ static std::string findBoundary(const std::string & contentType)
 
 	size_t start = contentType.find("boundary=");
 	if (start == std::string::npos)
-		throw HttpErrorException(400);
+		throw HttpErrorException(400, "in PR: No boundary found.");
 	start += 9;
 
 	size_t end = contentType.find(";", start);

@@ -47,7 +47,7 @@ RequestParser::~RequestParser()
 const HttpRequest & RequestParser::getHttpRequest() const
 {
 	if (!_httpRequest)
-		throw HttpErrorException(500);
+		throw HttpErrorException(500, "in HR: Request is NULL.");
 	return (*_httpRequest);
 }
 
@@ -61,15 +61,15 @@ void RequestParser::parseRequest(const std::string & raw_request)
 		delete _httpRequest;
 
 	if (raw_request.empty())
-		throw HttpErrorException(400);
+		throw HttpErrorException(400, "in HR: Raw request is empty.");
 
 	std::string buffer = raw_request;
 	std::string requestLine = extractLineAndRemove(buffer);
 
 	if (requestLine.empty())
-		throw HttpErrorException(400);
+		throw HttpErrorException(400, "in HR: Requestline is empty.");
 	if (buffer.empty())
-		throw HttpErrorException(400);
+		throw HttpErrorException(400, "in HR: Buffer is empty.");
 
 	std::istringstream iss(requestLine);
 	std::string method = extractMethod(iss);
@@ -77,15 +77,15 @@ void RequestParser::parseRequest(const std::string & raw_request)
 	std::string version = extractVersion(iss);
 	
 	if (version != "HTTP/1.1")
-		throw HttpErrorException(400);
+		throw HttpErrorException(400, "in HR: Invalid HTTP version.");
 
 	std::string shouldBeEmpty;
-	if ((iss >> shouldBeEmpty)) {
-		throw HttpErrorException(400); }
+	if ((iss >> shouldBeEmpty))
+		throw HttpErrorException(400, "in HR: Too many arguments in request line.");
 
 	std::map<std::string, std::string> headers = extractHeaders(buffer);
 	if (!headers.count("host") || headers.find("host")->second.empty())
-		throw HttpErrorException(400);
+		throw HttpErrorException(400, "in HR: No host header.");
 
 	unsigned int contentLength = calculateContentLength(headers);
 	std::string body = extractBody(buffer, contentLength);
@@ -93,7 +93,7 @@ void RequestParser::parseRequest(const std::string & raw_request)
 	try {
 		_httpRequest = new HttpRequest(method, uri, version, headers, body); }
 	catch (const std::bad_alloc&) {
-		throw HttpErrorException(500); }
+		throw HttpErrorException(500, "in HR: Bad alloc."); }
 }
 
 /* ************************************************************************** */
@@ -118,7 +118,7 @@ std::string extractMethod(std::istringstream & iss)
 {
 	std::string method;
 	if (!(iss >> method))
-		throw HttpErrorException(400);
+		throw HttpErrorException(400, "in HR: Method is empty.");
 	return (method);
 }
 
@@ -126,7 +126,7 @@ std::string extractUri(std::istringstream & iss)
 {
 	std::string uri;
 	if (!(iss >> uri))
-		throw HttpErrorException(400);
+		throw HttpErrorException(400, "in HR: Uri is empty.");
 	return (uri);
 }
 
@@ -134,14 +134,14 @@ std::string extractVersion(std::istringstream & iss)
 {
 	std::string version;
 	if (!(iss >> version))
-		throw HttpErrorException(400);
+		throw HttpErrorException(400, "in HR: Version is empty.");
 	return (version);
 }
 
 std::map<std::string, std::string> extractHeaders(std::string & buffer)
 {
 	if (buffer.empty())
-		throw HttpErrorException(400);
+		throw HttpErrorException(400, "in HR: Buffer is empty.");
 
 	std::map<std::string, std::string> headers;
 	std::string headerLine;
@@ -149,7 +149,7 @@ std::map<std::string, std::string> extractHeaders(std::string & buffer)
 	while ((headerLine = extractLineAndRemove(buffer)) != "") {
 		size_t pos = headerLine.find(':');
 		if (pos == std::string::npos)
-			throw HttpErrorException(400);
+			throw HttpErrorException(400, "in HR: No semicolon in header line.");
 
 		std::string key = headerLine.substr(0, pos);
 		std::string value = headerLine.substr(pos + 1);
@@ -158,7 +158,7 @@ std::map<std::string, std::string> extractHeaders(std::string & buffer)
 			key[i] = std::tolower(key[i]);
 		pos = value.find_first_not_of(" \t");
 		if (pos == std::string::npos)
-			throw HttpErrorException(400);
+			throw HttpErrorException(400, "in HR: No whitespace in header.");
 		value = value.substr(pos);
 		size_t end = value.find_last_not_of(" \t");
 		if (end != std::string::npos)
@@ -177,10 +177,10 @@ size_t calculateContentLength(const std::map<std::string, std::string> & headers
 	if (cit != headers.end()) {
 		std::string contentLengthValue = cit->second;
 		if (contentLengthValue.empty())
-			throw HttpErrorException(400);
+			throw HttpErrorException(400, "in HR: Content-Length is empty.");
 		for (size_t i = 0; i < contentLengthValue.length(); i++) {
 			if (!std::isdigit(contentLengthValue[i]))
-				throw HttpErrorException(400);
+				throw HttpErrorException(400, "in HR: Non digit character in Content-Length.");
 		}
 		std::istringstream iss(contentLengthValue);
 		iss >> contentLength;

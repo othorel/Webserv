@@ -50,7 +50,6 @@ class ProcessRequest
 		void selectLocation();
 		void selectHandler();
 		const std::string & selectRoot();
-		std::string selectErrorPage(int statusCode);
 		size_t selectMaxBodySize();
 
 		void waitHeaders();
@@ -66,7 +65,6 @@ class ProcessRequest
 		void handleUpload(const std::string & contentType);
 		void cgiGetHandler();
 
-		void checkMethodValidity();
 		std::string createPath();
 		std::string createUploadPath();
 		void checkPostValidity(const std::string & path);
