@@ -20,8 +20,7 @@ static void checkDeleteValidity(const std::string & path);
 static std::string createIndexPath(std::string path, const Location & location);
 static std::string generateAutoIndex(const std::string & dirPath, const std::string & uriPath);
 static std::string sanitizeFilenamePart(const std::string & input);
-static std::string createUploadFilename(
-	const HttpRequest & request, const std::string & path);
+static std::string createUploadFilename(const std::string & path);
 static bool isCgi(const std::string & path);
 static std::string findBoundary(const std::string & contentType);
 
@@ -284,9 +283,11 @@ void ProcessRequest::waitBody()
 
 			std::string originalPath = _file->getPath();
 			std::string headerName   = _file->getName();
-			headerName = sanitizeFilenamePart(headerName);
-			std::string newPath = originalPath + "-" + headerName;
-			rename(originalPath.c_str(), newPath.c_str());
+			if (!headerName.empty()) {
+				headerName = sanitizeFilenamePart(headerName);
+				std::string newPath = originalPath + "-" + headerName;
+				rename(originalPath.c_str(), newPath.c_str());
+			}
 			
 			std::map<std::string, std::string> headers;
 			std::string relativePath = _location.getPath();
@@ -305,10 +306,8 @@ void ProcessRequest::waitBody()
 				"</body></html>";
 			headers["content-length"] = HttpUtils::numberToString(body.length());
 			ResponseBuilder::buildResponse(this, 201, headers, body);
-			if (_file) {
-				delete _file;
-				_file = NULL;
-			}
+			delete _file;
+			_file = NULL;
 			_processStatus = SENDING_HEADERS;
 			sendHeaders();
 		}
@@ -451,28 +450,47 @@ void ProcessRequest::getHandler()
 	_processStatus = SENDING_HEADERS;
 	sendHeaders();
 }
-
+//test
 void ProcessRequest::postHandler()
 {
-	if (!_request)
-		throw HttpErrorException(500);
-
 	if (_processStatus != HANDLING_METHOD)
 		return ;
-
-	if (_file)
+	if (!_request || _file)
 		throw HttpErrorException(500);
 
-	std::string path;
-	if (_request->hasHeader("content-type")
-		&& _request->getHeaderValue("content-type").find("multipart/form-data") == 0
-		&& _request->getHeaderValue("content-type").find("boundary=") != std::string::npos) {
-		path = createUploadPath();
-		checkPostValidity(path);
-		std::string filepath = createUploadFilename(*_request, path);
+	std::string contentType = "";
+	if (_request->hasHeader("content-type"))
+		contentType = _request->getHeaderValue("content-type");
 
-		// dev
-		std::string boundary = findBoundary(_request->getHeaderValue("content-type"));
+	if (!contentType.empty() && (
+			(contentType.find("multipart/form-data") == 0 &&
+			contentType.find("boundary=") != std::string::npos) ||
+			contentType.find("application/octet-stream") == 0))
+		handleUpload(contentType);
+	else {
+		std::string path = createPath();
+		checkPostValidity(path);
+	}
+	_processStatus = WAITING_BODY;
+	waitBody();
+}
+
+void ProcessRequest::handleUpload(const std::string & contentType)
+{
+	std::string path = createUploadPath();
+	checkPostValidity(path);
+	std::string filepath = createUploadFilename(path);
+
+	if (contentType.find("application/octet-stream") == 0) {
+		try {
+			_file = new File(filepath, true);
+		}
+		catch (const std::bad_alloc&) {
+			throw HttpErrorException(500);
+		}
+	}
+	else {
+		std::string boundary = findBoundary(contentType);
 		if (boundary.empty())
 			throw HttpErrorException(400);
 		try {
@@ -481,15 +499,7 @@ void ProcessRequest::postHandler()
 		catch (const std::bad_alloc&) {
 			throw HttpErrorException(500);
 		}
-
 	}
-	else {
-		path = createPath();
-		checkPostValidity(path);
-	}
-
-	_processStatus = WAITING_BODY;
-	waitBody();
 }
 
 void ProcessRequest::cgiGetHandler()
@@ -752,17 +762,9 @@ static std::string sanitizeFilenamePart(const std::string & input)
 	return (result);
 }
 
-static std::string createUploadFilename(
-	const HttpRequest & request, const std::string & path)
+static std::string createUploadFilename(const std::string & path)
 {
-	std::string extension;
-	if (request.hasHeader("content-type")) {
-		extension = HttpUtils::getExtensionFromMimeType(request.getHeaderValue("content-type")); }
-
-	std::string filename = path + "/" + HttpUtils::generateUniqueTimestamp();
-	if (!extension.empty()) {
-		filename += "." + extension; }
-	return (filename);
+	return (path + "/" + HttpUtils::generateUniqueTimestamp());
 }
 
 static bool isCgi(const std::string & path)

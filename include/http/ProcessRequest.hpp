@@ -63,6 +63,7 @@ class ProcessRequest
 		void deleteHandler();
 		void getHandler();
 		void postHandler();
+		void handleUpload(const std::string & contentType);
 		void cgiGetHandler();
 
 		void checkMethodValidity();
