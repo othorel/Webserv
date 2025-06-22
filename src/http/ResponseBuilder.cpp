@@ -2,6 +2,7 @@
 #include "../../include/http/HttpErrorException.hpp"
 #include "../../include/http/ProcessRequest.hpp"
 #include "../../include/http/HttpUtils.hpp"
+#include "../../include/http/CookieHandler.hpp"
 
 /* ************************************************************************** */
 /*                              response builders                             */
@@ -110,6 +111,9 @@ std::string ResponseBuilder::createErrorFilePath(ProcessRequest * process, const
 
 void ResponseBuilder::addFinalHeaders(ProcessRequest * process)
 {
+	if (process->_location.isCookiesEnabled() && process->_request)
+		CookieHandler::handleCookie(process->_httpResponse, *process->_request);
+
 	if (process->_httpResponse.getHeaders().find("date") == process->_httpResponse.getHeaders().end())
 		process->_httpResponse.addHeader("date", HttpUtils::getCurrentDate());
 	// if (process->_httpResponse.getHeaders().find("connection") == process->_httpResponse.getHeaders().end()) {
