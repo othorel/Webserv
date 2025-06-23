@@ -662,6 +662,14 @@ std::string ProcessRequest::createPath()
 	HttpUtils::trimFinalSlash(root);
 	HttpUtils::trimSlashes(relativePath);
 
+	//debug
+	// std::cout	<< "PATH CREATION : \n"
+	// 			<< "location : " << locationPath << "\n"
+	// 			<< "target : " << target << "\n"
+	// 			<< "root : " << root << "\n"
+	// 			<< "relative path : " << relativePath << "\n"
+	// 			<< "final path : " << root + '/' + relativePath << std::endl;
+
 	return (root + '/' + relativePath);
 }
 
