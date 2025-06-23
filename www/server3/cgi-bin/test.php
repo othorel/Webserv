@@ -1,7 +1,6 @@
-#!/usr/bin/php
+#!/usr/bin/php-cgi
 <?php
 setcookie('user_id', '1234');
-echo "Content-Type: text/html\r\n\r\n";
 ?>
 <!DOCTYPE html>
 <html>
@@ -13,3 +12,5 @@ echo "Content-Type: text/html\r\n\r\n";
 	<p>Script has been successfuly executed.</p>
 </body>
 </html>
+<!-- /opt/homebrew/bin/php-cgi -->
+<!-- #!/usr/bin/env php -->
