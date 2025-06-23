@@ -256,14 +256,6 @@ void ProcessRequest::handleMethod()
 	(this->*_handler)();
 }
 
-std::string ProcessRequest::createRelativeFilePath(const std::string & realFilePath)
-{
-	std::string uploadPath = createUploadPath();
-	std::string clientPath = createUploadPathForClient();
-	std::string relativeFilePath = clientPath + realFilePath.substr(uploadPath.size());
-	return (relativeFilePath);
-}
-
 // From status WAITING_BODY to SENDING_HEADERS
 void ProcessRequest::waitBody()
 {
@@ -699,6 +691,14 @@ std::string ProcessRequest::createUploadPathForClient()
 	HttpUtils::trimSlashes(locationPath);
 
 	return (path + '/' + locationPath);
+}
+
+std::string ProcessRequest::createRelativeFilePath(const std::string & realFilePath)
+{
+	std::string uploadPath = createUploadPath();
+	std::string clientPath = createUploadPathForClient();
+	std::string relativeFilePath = clientPath + realFilePath.substr(uploadPath.size());
+	return (relativeFilePath);
 }
 
 void ProcessRequest::checkPostValidity(const std::string & path)
