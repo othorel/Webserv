@@ -8,7 +8,7 @@ SRC     := $(SRCDIR)/config/ConfigParser.cpp          \
 		   $(SRCDIR)/config/ConfigValidator.cpp       \
 		   $(SRCDIR)/config/Location.cpp              \
 		   $(SRCDIR)/config/ServerConfig.cpp          \
-		   $(SRCDIR)/http/CookieHandler.cpp        \
+		   $(SRCDIR)/session/CookieHandler.cpp        \
 		   $(SRCDIR)/http/File.cpp        \
 		   $(SRCDIR)/http/HttpRequest.cpp        \
 		   $(SRCDIR)/http/HttpResponse.cpp        \
