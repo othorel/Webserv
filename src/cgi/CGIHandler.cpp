@@ -156,8 +156,6 @@ std::string CGIHandler::execute()
 	int		timeout_ms = 5000;
 	struct	timeval start, now;
 
-	gettimeofday(&start, NULL);
-
 	pid_t pid = fork();
 	if (pid < 0)
 		throw HttpErrorException(500, "in CGI: fork failed.");
@@ -186,7 +184,8 @@ std::string CGIHandler::execute()
 		perror("execve");
 		exit(1);
 	}
-	else {
+	else
+	{
 		int 	status;
 		pid_t	resultPid;
 
@@ -201,8 +200,54 @@ std::string CGIHandler::execute()
 		std::string result;
 		ssize_t bytes;
 
-		while ((bytes = read(outputPipe[0], buffer, sizeof(buffer))) > 0)
-			result.append(buffer, bytes);
+		gettimeofday(&start, NULL);
+		while (true)
+		{
+			fd_set readfds;
+			FD_ZERO(&readfds);
+			FD_SET(outputPipe[0], &readfds);
+
+			gettimeofday(&now, NULL);
+			long elapsed = (now.tv_sec - start.tv_sec) * 1000 + (now.tv_usec - start.tv_usec) / 1000;
+			long timeout_left = timeout_ms - elapsed;
+			if (timeout_left <= 0)
+			{
+				kill(pid, SIGKILL);
+				waitpid(pid, &status, 0);
+				throw HttpErrorException(504, "in CGI: timeout exceeded.");
+				break;
+			}
+
+			struct timeval tv;
+			tv.tv_sec = timeout_left / 1000;
+			tv.tv_usec = (timeout_left % 1000) * 1000;
+
+			int ready = select(outputPipe[0] + 1, &readfds, NULL, NULL, &tv);
+			if (ready > 0)
+			{
+				bytes = read(outputPipe[0], buffer, sizeof(buffer));
+				if (bytes > 0)
+					result.append(buffer, bytes);
+				else if (bytes == 0)
+					break;
+				else
+				{
+					throw HttpErrorException(500, "in CGI: read error.");
+					break;
+				}
+			}
+			else if (ready == 0)
+			{
+				kill(pid, SIGKILL);
+				waitpid(pid, &status, 0);
+				return (HttpErrorException(500, "in CGI: timeout exceeded.").what());
+			}
+			else
+			{
+				throw HttpErrorException(500, "in CGI: select error.");
+				break;
+			}
+		}
 		close(outputPipe[0]);
 
 		while (1)
@@ -210,14 +255,6 @@ std::string CGIHandler::execute()
 			resultPid = waitpid(pid, &status, WNOHANG);
 			if (resultPid != 0)
 				break;
-			gettimeofday(&now, NULL);
-			long elapsed = (now.tv_sec - start.tv_sec) * 1000 + (now.tv_usec - start.tv_usec) / 1000;
-			if (elapsed > timeout_ms)
-			{
-				kill(pid, SIGKILL);
-				waitpid(pid, &status, 0);
-				return (HttpErrorException(500, "in CGI: waitpid error.").what());
-			}
 			usleep(100000);
 		}
 		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {

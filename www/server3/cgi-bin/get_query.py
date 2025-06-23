@@ -12,6 +12,8 @@ try:
     form = cgi.FieldStorage()
     name = form.getfirst("name", "Unknown").strip()
     age = form.getfirst("age", "Not specified").strip()
+    # while(True):
+    #     print("boucle infinie ")
 
     # Send HTTP header
     print("Content-Type: text/html\r\n\r\n")
