@@ -70,6 +70,12 @@
 	<h1>Cookies 🍪</h1>
 	<p>This site uses cookies to enhance your experience. By continuing, you agree to our cookie policy.</p>
 	<img src="/img/cookie.jpg" alt="Cookie image" class="soft-frame">
+	<form action="/cgi-bin/cookies.py" method="post">
+		<input type="text" name="name" placeholder="Enter your name" required maxlength="20">
+		<input type="text" name="age" placeholder="Enter your age" required maxlength="3">
+		<input type="text" name="favorite_animal" placeholder="Enter your favorite animal" required maxlength="20">
+		<input type="submit" value="I accept cookies">
+	</form>
 	<br>
 	<a href="/" class="homepage-button">
 		<div class="button-wrapper">
