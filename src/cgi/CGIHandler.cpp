@@ -152,6 +152,11 @@ std::string CGIHandler::execute()
 	int outputPipe[2];
 	if (pipe(inputPipe) == -1 || pipe(outputPipe) == -1)
 		throw HttpErrorException(500, "in CGI: pipe failed.");
+	
+	int		timeout_ms = 5000;
+	struct	timeval start, now;
+
+	gettimeofday(&start, NULL);
 
 	pid_t pid = fork();
 	if (pid < 0)
@@ -182,8 +187,12 @@ std::string CGIHandler::execute()
 		exit(1);
 	}
 	else {
+		int 	status;
+		pid_t	resultPid;
+
 		close(inputPipe[0]);
 		close(outputPipe[1]);
+
 		if (_request.getMethod() == "POST" && !_request.getBody().empty())
 			write(inputPipe[1], _request.getBody().c_str(), _request.getBody().size());
 		close(inputPipe[1]);
@@ -191,12 +200,26 @@ std::string CGIHandler::execute()
 		char buffer[4096];
 		std::string result;
 		ssize_t bytes;
+
 		while ((bytes = read(outputPipe[0], buffer, sizeof(buffer))) > 0)
 			result.append(buffer, bytes);
 		close(outputPipe[0]);
 
-		int status;
-		waitpid(pid, &status, 0);
+		while (1)
+		{
+			resultPid = waitpid(pid, &status, WNOHANG);
+			if (resultPid != 0)
+				break;
+			gettimeofday(&now, NULL);
+			long elapsed = (now.tv_sec - start.tv_sec) * 1000 + (now.tv_usec - start.tv_usec) / 1000;
+			if (elapsed > timeout_ms)
+			{
+				kill(pid, SIGKILL);
+				waitpid(pid, &status, 0);
+				return (HttpErrorException(500, "in CGI: waitpid error.").what());
+			}
+			usleep(100000);
+		}
 		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
 			std::cerr << "CGI script exited abnormally." << std::endl;
 			std::cerr << "WIFEXITED = " << WIFEXITED(status) << std::endl;
