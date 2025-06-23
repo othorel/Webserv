@@ -105,6 +105,7 @@ std::vector<std::string> CGIHandler::buildEnv()
 	env.push_back("QUERY_STRING=" + _queryString);
 	env.push_back("SERVER_PROTOCOL=" + _request.getVersion());
 	env.push_back("SERVER_SOFTWARE=MiniWebServ/1.0");
+	env.push_back("REDIRECT_STATUS=200");
 
 	std::map<std::string, std::string>::const_iterator it;
 	it =_request.getHeaders().find("content-type");
@@ -264,7 +265,8 @@ std::string CGIHandler::execute()
 			std::cerr << "Script output:\n" << result << std::endl;
 			throw HttpErrorException(500, "in CGI: waitpid error.");
 		}
-		return result;
+		std::cout << "IN CGI HANDLER, OUTPUT IS :\n" << result << std::endl;
+		return (result);
 	}
 }
 
