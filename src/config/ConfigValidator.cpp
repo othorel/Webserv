@@ -73,7 +73,6 @@ void validateAutoIndex(const std::string& value) {
 
 void validateCgiExtension(const std::vector<std::string>& extensions) {
 	std::set<std::string> allowedExtensions;
-	allowedExtensions.insert(".cgi");
 	allowedExtensions.insert(".pl");
 	allowedExtensions.insert(".py");
 	for (std::vector<std::string>::const_iterator it = extensions.begin(); it != extensions.end(); it++) {

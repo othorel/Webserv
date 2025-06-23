@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -21,86 +20,81 @@
 			color: white;
 		}
 
-		h2 {
-			font-family: 'Creepster', cursive;
-			color: darkred;
-			font-size: 70px;
-			text-shadow: 2px 2px 4px black, 0 10px 10px rgba(139, 0, 0, 0.6);
-			margin-bottom: 30px;
-		}
+    h2 {
+      font-family: 'Creepster', cursive;
+      color: darkred;
+      font-size: 70px;
+      text-shadow: 2px 2px 4px black, 0 10px 10px rgba(139, 0, 0, 0.6);
+      margin-bottom: 30px;
+    }
 
-		form {
-			font-family: 'IM Fell English SC', sans-serif;
-			background-color: rgba(0, 0, 0, 0.5);
-			padding: 20px;
-			border-radius: 10px;
-			display: inline-block;
-			box-shadow: 0 0 10px black;
-		}
+    form {
+      font-family: 'IM Fell English SC', sans-serif;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 20px;
+      border-radius: 10px;
+      display: inline-block;
+      box-shadow: 0 0 10px black;
+    }
 
-		label {
-			font-family: 'IM Fell English SC', sans-serif;
-			font-size: 20px;
-			color: #ffdddd;
-		}
+    label {
+      font-size: 20px;
+      color: #ffdddd;
+    }
 
-		input[type="text"] {
-			font-family: 'IM Fell English SC', sans-serif;
-			padding: 10px;
-			font-size: 16px;
-			border: none;
-			border-radius: 5px;
-			margin-top: 10px;
-			width: 300px;
-		}
+    input[type="text"] {
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      margin-top: 10px;
+      width: 300px;
+    }
 
-		button {
-			font-family: 'IM Fell English SC', sans-serif;
-			margin-top: 20px;
-			font-size: 18px;
-			padding: 10px 25px;
-			background-color: #b22222;
-			color: white;
-			border: none;
-			border-radius: 5px;
-			cursor: pointer;
-			box-shadow: 2px 2px 6px black;
-			transition: transform 0.2s, background-color 0.3s;
-		}
+    button {
+      margin-top: 20px;
+      font-size: 18px;
+      padding: 10px 25px;
+      background-color: #b22222;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: 2px 2px 6px black;
+      transition: transform 0.2s, background-color 0.3s;
+    }
 
-		button:hover {
-			background-color: #8b0000;
-			transform: scale(1.1);
-		}
+    button:hover {
+      background-color: #8b0000;
+      transform: scale(1.1);
+    }
 
-		.homepage-button img{
-			width: 220px;
-			border-radius: 8px;
-			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-			transition: transform 0.3s ease, box-shadow 0.3s ease;
-		}
+    .homepage-button img {
+      width: 220px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
 
-		.homepage-button:hover img {
-			transform: scale(1.1);
-			box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-		}
-
-	</style>
+    .homepage-button:hover img {
+      transform: scale(1.1);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+  </style>
 </head>
 
 <body>
-	<h2>POST to CGI Script</h2>
-	<form action="/cgi-bin/post_handler.cgi" method="POST">
-		<label>Say something:</label><br>
-		<input type="text" name="speech"><br><br>
-		<button type="submit">Send to CGI</button>
-	</form>
-	<br>
-	<a href="post_index.html" class="homepage-button">
-		<div class="button-wrapper" style="position: relative; top:100%; left:0%; width:100%; height:100%;">
-			<img src="/img/back_index.png" alt="Index" style="width: 15%; height: 15%; object-fit: cover;">
-		</div>
-	</a>
+  <h2>POST to Perl CGI Script</h2>
+  <form action="/cgi-bin/post_handler.pl" method="POST">
+    <label>Say something:</label><br>
+    <input type="text" name="speech"><br><br>
+    <button type="submit">Send to CGI</button>
+  </form>
+  <br>
+  <a href="post_index.html" class="homepage-button">
+    <div class="button-wrapper">
+      <img src="/img/back_index.png" alt="Index" style="width: 15%; height: 15%; object-fit: cover;">
+    </div>
+  </a>
 </body>
-
 </html>
