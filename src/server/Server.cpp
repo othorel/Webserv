@@ -224,7 +224,6 @@ void	Server::handleError(int errorCode, int fdClient, size_t & i)
 		
 		_clientsMap[fdClient].getProcessRequest().errorBuilder(errorCode);
 		std::string	processed = _clientsMap[fdClient].getProcessRequest().process("");
-		std::cout << "first processed: " << processed <<std::endl;
 		int status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
 		
 		if (!processed.empty())
@@ -233,7 +232,6 @@ void	Server::handleError(int errorCode, int fdClient, size_t & i)
 			{
 				_clientsMap[fdClient].writeDataToSocket(processed);
 				processed = _clientsMap[fdClient].getProcessRequest().process("");
-				std::cout << "processed while: " << processed << std::endl;
 				status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
 				(void)status;
 			}
