@@ -256,6 +256,14 @@ void ProcessRequest::handleMethod()
 	(this->*_handler)();
 }
 
+std::string ProcessRequest::createRelativeFilePath(const std::string & realFilePath)
+{
+	std::string uploadPath = createUploadPath();
+	std::string clientPath = createUploadPathForClient();
+	std::string relativeFilePath = clientPath + realFilePath.substr(uploadPath.size());
+	return (relativeFilePath);
+}
+
 // From status WAITING_BODY to SENDING_HEADERS
 void ProcessRequest::waitBody()
 {
@@ -280,26 +288,20 @@ void ProcessRequest::waitBody()
 
 			std::string originalPath = _file->getPath();
 			std::string headerName   = _file->getName();
+			std::string newPath = originalPath;
 			if (!headerName.empty()) {
 				headerName = sanitizeFilenamePart(headerName);
-				std::string newPath = originalPath + "-" + headerName;
+				newPath = originalPath + "-" + headerName;
 				rename(originalPath.c_str(), newPath.c_str());
 			}
-			
+			std::string relativeFilePath = createRelativeFilePath(newPath);
 			std::map<std::string, std::string> headers;
-			std::string relativePath = _location.getPath();
-			if (!relativePath.empty() && relativePath[relativePath.size() - 1] != '/')
-				relativePath += "/";
-			relativePath += _file->getPath().substr(_file->getPath().find_last_of("/") + 1);
-			relativePath += "-";
-			relativePath += headerName;
-
-			headers["location"] = relativePath;
+			headers["location"] = relativeFilePath;
 			headers["content-type"] = "text/html";
 			std::string body =
 				"<html><body><h1>201 Created</h1>\n"
 				"<p>The resource has been successfully created.</p>\n"
-				"<a href=\"" + relativePath  + "\">See file</a>\n"
+				"<a href=\"" + relativeFilePath  + "\">See file</a>\n"
 				"</body></html>";
 			headers["content-length"] = HttpUtils::numberToString(body.length());
 			ResponseBuilder::buildResponse(this, 201, headers, body);
@@ -447,7 +449,7 @@ void ProcessRequest::getHandler()
 	_processStatus = SENDING_HEADERS;
 	sendHeaders();
 }
-//test
+
 void ProcessRequest::postHandler()
 {
 	if (_processStatus != HANDLING_METHOD)
@@ -684,6 +686,19 @@ std::string ProcessRequest::createUploadPath()
 	HttpUtils::trimSlashes(locationPath);
 
 	return (root + '/' + locationPath);
+}
+
+std::string ProcessRequest::createUploadPathForClient()
+{
+	if (!_request)
+		throw HttpErrorException(500, "in PR: Request is NULL.");
+
+	std::string path = _location.getPath();
+	std::string locationPath = _location.getUploadPath();
+	HttpUtils::trimFinalSlash(path);
+	HttpUtils::trimSlashes(locationPath);
+
+	return (path + '/' + locationPath);
 }
 
 void ProcessRequest::checkPostValidity(const std::string & path)

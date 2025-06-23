@@ -67,6 +67,8 @@ class ProcessRequest
 
 		std::string createPath();
 		std::string createUploadPath();
+		std::string createUploadPathForClient();
+		std::string createRelativeFilePath(const std::string & realPath);
 		void checkPostValidity(const std::string & path);
 		
 	public :
