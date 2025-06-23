@@ -10,6 +10,9 @@
 # include <cstdlib>
 # include <cstdio>
 # include <iostream>
+# include <ctime>
+# include <sys/time.h>
+# include <sys/select.h>
 
 # include "../http/HttpRequest.hpp"
 # include "../http/HttpResponse.hpp"

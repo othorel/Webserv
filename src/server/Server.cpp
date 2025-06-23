@@ -104,7 +104,7 @@ void	Server::StartEventLoop()
 {
 	while (1)
 	{
-		_pollManager->pollExec(-1);
+		_pollManager->pollExec(50);
 		for (size_t i = 0; i != _pollManager->getPollFdVector().size(); i++)
 		{
 			int		fd = _pollManager->getPollFdVector()[i].fd;
