@@ -1,4 +1,5 @@
 #include <string>
+#include <cerrno>
 #include "../../include/server/Connexion.hpp"
 #include "../../include/http/RequestParser.hpp"
 #include "../../include/http/HttpRequest.hpp"
