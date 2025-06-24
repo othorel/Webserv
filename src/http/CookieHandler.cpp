@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <string>
-#include "../../include/session/CookieHandler.hpp"
+#include "../../include/http/CookieHandler.hpp"
 #include "../../include/http/HttpResponse.hpp"
 #include "../../include/http/HttpRequest.hpp"
 #include "../../include/http/HttpUtils.hpp"

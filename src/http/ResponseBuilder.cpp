@@ -2,7 +2,7 @@
 #include "../../include/http/HttpErrorException.hpp"
 #include "../../include/http/ProcessRequest.hpp"
 #include "../../include/http/HttpUtils.hpp"
-#include "../../include/session/CookieHandler.hpp"
+#include "../../include/http/CookieHandler.hpp"
 
 /* ************************************************************************** */
 /*                              response builders                             */
