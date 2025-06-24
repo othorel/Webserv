@@ -21,7 +21,7 @@ ServerConfig::ServerConfig(
 	std::string root,
 	std::map<int, std::string> error_pages,
 	std::map<std::string, Location> locations,
-	size_t client_max_body_size,
+	ssize_t client_max_body_size,
 	bool keepAlive,
 	int keepAliveTimeout,
 	int keepAliveMaxRequests,
@@ -97,7 +97,7 @@ const std::map<std::string, Location>& ServerConfig::getLocations() const {
 	return (_locations);
 }
 
-size_t ServerConfig::getClientMaxBodySize() const {
+ssize_t ServerConfig::getClientMaxBodySize() const {
 	return (_client_max_body_size);
 }
 

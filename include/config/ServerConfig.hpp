@@ -18,7 +18,7 @@ class ServerConfig {
 		std::string _root;
 		std::map<int, std::string> _error_pages;
 		std::map<std::string, Location> _locations;
-		size_t _client_max_body_size;
+		ssize_t _client_max_body_size;
 		bool _keepAlive;
 		int _keepAliveTimeout;
 		int _keepAliveMaxRequests;
@@ -35,7 +35,7 @@ class ServerConfig {
 			std::string root,
 			std::map<int, std::string> error_pages,
 			std::map<std::string, Location> locations,
-			size_t client_max_body_size,
+			ssize_t client_max_body_size,
 			bool keepAlive,
 			int keepAliveTimeout,
 			int keepAliveMaxRequests,
@@ -57,7 +57,7 @@ class ServerConfig {
 		int getKeepAliveTimeout() const;
 		int getKeepAliveMaxRequests() const;
 		int getSessionTimeout() const;
-		size_t getClientMaxBodySize() const;
+		ssize_t getClientMaxBodySize() const;
 		bool hasErrorPage(int code) const;
 		bool getKeepAlive() const;
 		bool isSessionEnable() const;

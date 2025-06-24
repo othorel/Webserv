@@ -586,8 +586,8 @@ const std::string & ProcessRequest::selectRoot()
 
 size_t ProcessRequest::selectMaxBodySize()
 {
-	//if (_location.getClientMaxBodySize() >= 0)
-		//return (_location.getClientMaxBodySize());
+	if (_location.getClientMaxBodySize() >= 0)
+		return (_location.getClientMaxBodySize());
 	return (_server.getClientMaxBodySize());
 }
 
