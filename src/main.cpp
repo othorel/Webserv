@@ -61,7 +61,7 @@ void	printBanner()
 void handle_sigint(int signal) {
 	(void)signal;
 	g_stop = 1;
-	std::cout << "\n[Signal] Ctrl+C received, server shutdown requested...";
+	std::cout << "\n\033[1;31m[Signal] Ctrl+C received, server shutdown requested...\033[0m";
 }
 
 int	main(int argc, char **argv) {
