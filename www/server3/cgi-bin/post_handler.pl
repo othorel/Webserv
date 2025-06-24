@@ -82,7 +82,7 @@ print <<HTML;
 
   <!-- Back button image link to return to the form -->
   <br>
-  <a href="/" class="back-link">
+  <a href="/Post" class="back-link">
     <img src="/img/back_index.png" alt="Return to form">
   </a>
 </body>

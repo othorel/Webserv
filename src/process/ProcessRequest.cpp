@@ -292,6 +292,7 @@ void ProcessRequest::writeBodyWithFile()
 			"<html><body><h1>201 Created</h1>\n"
 			"<p>The resource has been successfully created.</p>\n"
 			"<a href=\"" + relativeFilePath  + "\">See file</a>\n"
+			"<a href=\"/\">Home</a>\n" 
 			"</body></html>";
 		headers["content-length"] = HttpUtils::numberToString(body.length());
 		ResponseBuilder::buildResponse(this, 201, headers, body);
@@ -739,7 +740,9 @@ static std::string generateAutoIndex(const std::string & dirPath, const std::str
 			html << "/";
 		html << name << "\">" << name << "</a></li>"; }
 	closedir(dir);
-	html << "</ul></body></html>";
+	html << "</ul>\n"
+		<< "<footer><a href=\"/\">Home</a></footer>\n"
+		<< "</body></html>";
 	return (html.str());
 }
 

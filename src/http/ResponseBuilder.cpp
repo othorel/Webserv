@@ -72,7 +72,10 @@ void ResponseBuilder::errorBuilder(ProcessRequest * process, int statusCode, boo
 	// there is no file
 	else {
 		body = "<html><body><h1>" + HttpUtils::numberToString(statusCode) + " " +
-			HttpUtils::httpStatusMessage(statusCode) + "</h1></body></html>";
+			HttpUtils::httpStatusMessage(statusCode) + "</h1>\n"
+			"</body>\n"
+			 "<footer><a href=\"/\">Home</a></footer>\n"
+			"</html>";
 		bodyLen = body.size();
 	}
 	headers["content-type"] = mimeType;

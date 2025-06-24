@@ -27,9 +27,11 @@ class CGIHandler
 		std::string		_queryString;
 		HttpResponse	_response;
 		
-		void buildResponse();
 		std::string execute();
+		void executeChildProcess(int inputPipe[], int outputPipe[]);
+		std::string executeParentProcess(int inputPipe[], int outputPipe[], pid_t pid);
 		std::vector<std::string> buildEnv();
+		void buildResponse();
 
 	public:
 

@@ -101,104 +101,104 @@ std::string CGIHandler::execute()
 	int outputPipe[2];
 	if (pipe(inputPipe) == -1 || pipe(outputPipe) == -1)
 		throw HttpErrorException(500, "in CGI: pipe failed.");
-	
-	int		timeout_ms = 5000;
-	struct	timeval start, now;
 
 	pid_t pid = fork();
 	if (pid < 0)
 		throw HttpErrorException(500, "in CGI: fork failed.");
+	if (pid == 0)
+		executeChildProcess(inputPipe, outputPipe);
+	return (executeParentProcess(inputPipe, outputPipe, pid));
+}
 
-	if (pid == 0) {
-		dup2(inputPipe[0], STDIN_FILENO);
-		dup2(outputPipe[1], STDOUT_FILENO);
-		close(inputPipe[1]);
-		close(outputPipe[0]);
+void CGIHandler::executeChildProcess(int inputPipe[], int outputPipe[])
+{
+	dup2(inputPipe[0], STDIN_FILENO);
+	dup2(outputPipe[1], STDOUT_FILENO);
+	close(inputPipe[1]);
+	close(outputPipe[0]);
 
-		std::vector<std::string> envVec = buildEnv();
-		std::vector<char*> envp;
-		for (size_t i = 0; i < envVec.size(); i++)
-			envp.push_back(const_cast<char*>(envVec[i].c_str()));
-		envp.push_back(NULL);
-	
-		char* av[] = {const_cast<char*>(_scriptPath.c_str()), NULL};
-		execve(_scriptPath.c_str(), av, &envp[0]);
-		perror("execve");
-		exit(1);
-	}
-	else {
-		int 	status;
-		pid_t	resultPid;
+	std::vector<std::string> envVec = buildEnv();
+	std::vector<char*> envp;
+	for (size_t i = 0; i < envVec.size(); i++)
+		envp.push_back(const_cast<char*>(envVec[i].c_str()));
+	envp.push_back(NULL);
 
-		close(inputPipe[0]);
-		close(outputPipe[1]);
+	char* av[] = {const_cast<char*>(_scriptPath.c_str()), NULL};
+	execve(_scriptPath.c_str(), av, &envp[0]);
+	perror("execve");
+	exit(1);
+}
 
-		if (_request.getMethod() == "POST" && !_request.getBody().empty())
-			write(inputPipe[1], _request.getBody().c_str(), _request.getBody().size());
-		close(inputPipe[1]);
+std::string CGIHandler::executeParentProcess(int inputPipe[], int outputPipe[], pid_t pid)
+{
+	int		timeout_ms = 5000;
+	struct	timeval start, now;
+	int 	status;
+	pid_t	resultPid;
 
-		char buffer[4096];
-		std::string result;
-		ssize_t bytes;
+	close(inputPipe[0]);
+	close(outputPipe[1]);
 
-		gettimeofday(&start, NULL);
-		while (true) {
-			fd_set readfds;
-			FD_ZERO(&readfds);
-			FD_SET(outputPipe[0], &readfds);
+	if (_request.getMethod() == "POST" && !_request.getBody().empty())
+		write(inputPipe[1], _request.getBody().c_str(), _request.getBody().size());
+	close(inputPipe[1]);
 
-			gettimeofday(&now, NULL);
-			long elapsed = (now.tv_sec - start.tv_sec) * 1000 + (now.tv_usec - start.tv_usec) / 1000;
-			long timeout_left = timeout_ms - elapsed;
-			if (timeout_left <= 0) {
-				kill(pid, SIGKILL);
-				waitpid(pid, &status, 0);
-				throw HttpErrorException(504, "in CGI: timeout exceeded.");
+	char buffer[4096];
+	std::string result;
+	ssize_t bytes;
+
+	gettimeofday(&start, NULL);
+	while (true) {
+		fd_set readfds;
+		FD_ZERO(&readfds);
+		FD_SET(outputPipe[0], &readfds);
+
+		gettimeofday(&now, NULL);
+		long elapsed = (now.tv_sec - start.tv_sec) * 1000 + (now.tv_usec - start.tv_usec) / 1000;
+		long timeout_left = timeout_ms - elapsed;
+		if (timeout_left <= 0) {
+			kill(pid, SIGKILL);
+			waitpid(pid, &status, 0);
+			throw HttpErrorException(504, "in CGI: timeout exceeded.");
+			break;
+		}
+
+		struct timeval tv;
+		tv.tv_sec = timeout_left / 1000;
+		tv.tv_usec = (timeout_left % 1000) * 1000;
+
+		int ready = select(outputPipe[0] + 1, &readfds, NULL, NULL, &tv);
+		if (ready > 0) {
+			bytes = read(outputPipe[0], buffer, sizeof(buffer));
+			if (bytes > 0)
+				result.append(buffer, bytes);
+			else if (bytes == 0)
 				break;
-			}
-
-			struct timeval tv;
-			tv.tv_sec = timeout_left / 1000;
-			tv.tv_usec = (timeout_left % 1000) * 1000;
-
-			int ready = select(outputPipe[0] + 1, &readfds, NULL, NULL, &tv);
-			if (ready > 0) {
-				bytes = read(outputPipe[0], buffer, sizeof(buffer));
-				if (bytes > 0)
-					result.append(buffer, bytes);
-				else if (bytes == 0)
-					break;
-				else {
-					throw HttpErrorException(500, "in CGI: read error.");
-					break;
-				}
-			}
-			else if (ready == 0) {
-				kill(pid, SIGKILL);
-				waitpid(pid, &status, 0);
-				return (HttpErrorException(500, "in CGI: timeout exceeded.").what());
-			}
 			else {
-				throw HttpErrorException(500, "in CGI: select error.");
+				throw HttpErrorException(500, "in CGI: read error.");
 				break;
 			}
 		}
-		close(outputPipe[0]);
-		while (1) {
-			resultPid = waitpid(pid, &status, WNOHANG);
-			if (resultPid != 0)
-				break;
-			usleep(100000);
+		else if (ready == 0) {
+			kill(pid, SIGKILL);
+			waitpid(pid, &status, 0);
+			return (HttpErrorException(500, "in CGI: timeout exceeded.").what());
 		}
-		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-			std::cerr << "CGI script exited abnormally." << std::endl;
-			std::cerr << "WIFEXITED = " << WIFEXITED(status) << std::endl;
-			std::cerr << "Exit code = " << WEXITSTATUS(status) << std::endl;
-			std::cerr << "Script output:\n" << result << std::endl;
-			throw HttpErrorException(500, "in CGI: waitpid error.");
+		else {
+			throw HttpErrorException(500, "in CGI: select error.");
+			break;
 		}
-		return (result);
 	}
+	close(outputPipe[0]);
+	while (1) {
+		resultPid = waitpid(pid, &status, WNOHANG);
+		if (resultPid != 0)
+			break;
+		usleep(100000);
+	}
+	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+		throw HttpErrorException(500, "in CGI: waitpid error.");
+	return (result);
 }
 
 std::vector<std::string> CGIHandler::buildEnv()
