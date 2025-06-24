@@ -27,7 +27,6 @@ OBJ     := $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRC))
 
 CXX     := c++
 CXXFLAGS := -Wall -Wextra -Werror -std=c++98 -g -I$(INCDIR)
-# CXXFLAGS := -g -I$(INCDIR)
 
 GREEN   := \033[1;32m
 CYAN    := \033[1;36m
@@ -37,10 +36,6 @@ BROOM   := 🧹
 SOAP    := 🧼
 
 all: $(NAME)
-
-# $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
-# 	@mkdir -p $(OBJDIR)
-# 	@$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	@mkdir -p $(dir $@)

@@ -23,7 +23,7 @@ class Location {
 		bool _autoindex;
 		std::vector<std::string> _cgiExtensions;
 		bool _cookiesEnabled;
-		size_t _client_max_body_size;
+		ssize_t _client_max_body_size;
 	
 	public:
 	
@@ -41,7 +41,7 @@ class Location {
 			bool autoindex,
 			std::vector<std::string> cgiExtensions,
 			bool cookiesEnabled,
-			size_t client_max_body_size
+			ssize_t client_max_body_size
 		);
 		~Location();
 		Location(const Location& other);
@@ -57,7 +57,7 @@ class Location {
 		const std::map<int, std::string>& getErrorPages() const;
 		const std::vector<std::string>& getCgiExtensions() const;
 		int getRedirectCode() const;
-		size_t getClientMaxBodySize() const;
+		ssize_t getClientMaxBodySize() const;
 		bool hasRedirect() const;
 		bool isAutoIndex() const;
 		bool isValidMethod(const std::string& method) const;

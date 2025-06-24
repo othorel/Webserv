@@ -40,7 +40,7 @@ void ConfigParser::parsefile(const std::string& filepath) {
 	std::string root;
 	std::map<int, std::string> error_pages;
 	std::map<std::string, Location> locations;
-	size_t client_max_body_size = 1024 * 1024;
+	ssize_t client_max_body_size = 1024 * 1024;
 	bool keep_alive = true;
 	int keep_alive_timeout = 10;
 	int keep_alive_max_requests = 100;
@@ -60,7 +60,7 @@ void ConfigParser::parsefile(const std::string& filepath) {
 	bool loc_autoindex = false;
 	std::vector<std::string> loc_cgi_extension;
 	bool loc_cookies_enabled = false;
-	size_t loc_client_max_body_size = -1;
+	ssize_t loc_client_max_body_size = -1;
 
 	while (std::getline(file, line)) {
 		line = trim(line);
@@ -107,6 +107,10 @@ void ConfigParser::parsefile(const std::string& filepath) {
 				inLocation = false;
 			}
 			else if (inServer) {
+				if (listen.first == 0 && listen.second.empty()) {
+					std::cout << "No listen directive found in server block, using default: 0.0.0.0:80" << std::endl;
+					listen = std::make_pair(80, "0.0.0.0");
+				}
 				ServerConfig server(listen, server_names, root, error_pages, locations, client_max_body_size, keep_alive, keep_alive_timeout, keep_alive_max_requests, session_name, session_timeout, session_enable);
 				validateServerNames(server.getServerNames());
 				validateRoot(server.getRoot());
@@ -279,9 +283,10 @@ void ConfigParser::parsefile(const std::string& filepath) {
 		throw ParseException("No server block defined in config file");
 }
 
-void	ConfigParser::debug() const
-{
-		std::cout << "Nombre de serveurs parsés : " << _serverConfigVector.size() << std::endl;
+void	ConfigParser::debug() const {
+		std::cout << std::endl;
+		std::cout << "Number of parsed servers: " << _serverConfigVector.size() << std::endl;
+		std::cout << std::endl;
 		for (size_t i = 0; i < _serverConfigVector.size(); ++i)
 			_serverConfigVector[i].printServerConfig(i);
 }

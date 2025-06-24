@@ -15,7 +15,7 @@ Location::Location(
 	bool autoindex,
 	std::vector<std::string> cgiExtensions,
 	bool cookiesEnabled,
-	size_t _client_max_body_size
+	ssize_t _client_max_body_size
 ) : _path(path),
 	_methods(methods),
 	_error_pages(error_pages),
@@ -135,6 +135,6 @@ const std::string& Location::getErrorPage(int code) const {
 	return (it->second);
 }
 
-size_t Location::getClientMaxBodySize() const {
+ssize_t Location::getClientMaxBodySize() const {
 	return (_client_max_body_size);
 }
