@@ -136,8 +136,9 @@ void	Server::dealClient(int fd, size_t & i)
 	if (std::find(_fdSocketVect.begin(), _fdSocketVect.end(), fd) != _fdSocketVect.end())
 	{
 		std::cout << std::endl;
+		std::cout << "\033[33m";
 		logTime();
-		std::cout << "[INFO] New connexion request" << std::endl;
+		std::cout << "[INFO] New connexion request" << "\033[0m" << std::endl;
 		acceptNewConnexion(fd);
 	}
 	else
@@ -157,13 +158,14 @@ void	Server::acceptNewConnexion(int fd)
 	_pollManager->addSocket(clientFd, POLLIN);
 	std::vector<ServerConfig> ActiveVect = ActiveServConfigVect(getLocalPort(fd), inet_ntoa(clientAddr.sin_addr));
 	_clientsMap[clientFd] = Connexion(clientFd, clientAddr, ActiveVect);
+	std::cout << "\033[32m";
 	logTime();
-	
 	std::cout << "[INFO] New client "
 			  << _clientsMap[clientFd].getClientPort()
 			  << " authorized on: "
 			  << _clientsMap[clientFd].getIP() << ":"
-			  << _clientsMap[clientFd].getLocalPort() << std::endl;
+			  << _clientsMap[clientFd].getLocalPort()
+			  << "\033[0m" << std::endl;
 }
 
 void	Server::handleEvent(int fdClient, size_t & i)
@@ -367,11 +369,13 @@ void	Server::addPair(std::pair<int, std::string> listen)
 
 void	Server::supressClient(int fdClient, size_t & i)
 {
+	std::cout << "\033[31m";
 	logTime();
 	std::cout << "[INFO] Client " << _clientsMap[fdClient].getClientPort()
 			  << " closed on: "
 			  << _clientsMap[fdClient].getIP() << ":"
-			  << _clientsMap[fdClient].getLocalPort() << "\n" << std::endl;
+			  << _clientsMap[fdClient].getLocalPort() << "\n" 
+			  << "\033[0m" << std::endl;
 	close(fdClient);
 	_pollManager->removeSocket(i);
 	_clientsMap.erase(fdClient);
@@ -413,9 +417,9 @@ void	Server::readLog(int fdClient)
 
 void	Server::announce() const
 {
-	std::cout << "\n\n";
+	std::cout << "\n\n" << "\033[32m";
 	logTime();
-	std::cout << "[INFO] Server successfully launched\n\n" << std::endl;
+	std::cout << "[INFO] Server successfully launched\n\n" << "\033[0m" << std::endl;
 }
 
 void	Server::logTime() const
