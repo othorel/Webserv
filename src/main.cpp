@@ -82,7 +82,6 @@ int	main(int argc, char **argv) {
 	try
 	{
 		ConfigParser parser(configFile);
-		parser.debug();
 		Server server(parser);
 		printBanner();
 		server.announce();
