@@ -75,6 +75,7 @@ void validateCgiExtension(const std::vector<std::string>& extensions) {
 	std::set<std::string> allowedExtensions;
 	allowedExtensions.insert(".pl");
 	allowedExtensions.insert(".py");
+	allowedExtensions.insert(".php");
 	for (std::vector<std::string>::const_iterator it = extensions.begin(); it != extensions.end(); it++) {
 		const std::string& ext = *it;
 		if (ext.empty() || ext[0] != '.')

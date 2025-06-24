@@ -1,8 +1,8 @@
 #ifndef COOKIEHANDLER_HPP
 # define COOKIEHANDLER_HPP
 
-# include "HttpResponse.hpp"
-# include "HttpRequest.hpp"
+# include "../http/HttpResponse.hpp"
+# include "../http/HttpRequest.hpp"
 # include "../config/Location.hpp"
 
 class CookieHandler

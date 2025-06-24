@@ -1,5 +1,0 @@
-- timeout pour la recption des headers, des fichiers, de lenvoi des fichiers
-- extensions cgi dans parsing
-- cgi valide dans location a recup pour porcessRequest
-
-- gestion des cookies
