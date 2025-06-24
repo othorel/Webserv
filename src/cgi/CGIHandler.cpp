@@ -250,7 +250,6 @@ std::string CGIHandler::execute()
 			}
 		}
 		close(outputPipe[0]);
-
 		while (1)
 		{
 			resultPid = waitpid(pid, &status, WNOHANG);
