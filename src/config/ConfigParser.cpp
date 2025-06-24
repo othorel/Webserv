@@ -283,9 +283,10 @@ void ConfigParser::parsefile(const std::string& filepath) {
 		throw ParseException("No server block defined in config file");
 }
 
-void	ConfigParser::debug() const
-{
-		std::cout << "Nombre de serveurs parsés : " << _serverConfigVector.size() << std::endl;
+void	ConfigParser::debug() const {
+		std::cout << std::endl;
+		std::cout << "Number of parsed servers: " << _serverConfigVector.size() << std::endl;
+		std::cout << std::endl;
 		for (size_t i = 0; i < _serverConfigVector.size(); ++i)
 			_serverConfigVector[i].printServerConfig(i);
 }
