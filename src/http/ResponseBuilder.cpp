@@ -1,8 +1,8 @@
 #include "../../include/http/ResponseBuilder.hpp"
 #include "../../include/http/HttpErrorException.hpp"
-#include "../../include/http/ProcessRequest.hpp"
+#include "../../include/process/ProcessRequest.hpp"
 #include "../../include/http/HttpUtils.hpp"
-#include "../../include/http/CookieHandler.hpp"
+#include "../../include/process/CookieHandler.hpp"
 
 /* ************************************************************************** */
 /*                              response builders                             */

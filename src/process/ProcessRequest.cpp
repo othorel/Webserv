@@ -6,15 +6,15 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <cstdio>
-#include "../../include/http/ProcessRequest.hpp"
-# include "../../include/http/HttpErrorException.hpp"
-# include "../../include/http/RequestParser.hpp"
-# include "../../include/http/HttpUtils.hpp"
+#include "../../include/process/ProcessRequest.hpp"
+#include "../../include/http/HttpErrorException.hpp"
+#include "../../include/http/RequestParser.hpp"
+#include "../../include/http/HttpUtils.hpp"
 #include "../../include/http/HttpRequest.hpp"
 #include "../../include/http/HttpResponse.hpp"
 #include "../../include/config/Location.hpp"
 #include "../../include/config/ServerConfig.hpp"
-#include "../../include/cgi/CGIHandler.hpp"
+#include "../../include/process/CGIHandler.hpp"
 
 static void checkDeleteValidity(const std::string & path);
 static std::string createIndexPath(std::string path, const Location & location);

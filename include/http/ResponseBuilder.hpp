@@ -1,7 +1,7 @@
 #ifndef RESPONSEBUILDER_HPP
 # define RESPONSEBUILDER_HPP
 
-# include "ProcessRequest.hpp"
+# include "../process/ProcessRequest.hpp"
 
 class ProcessRequest;
 

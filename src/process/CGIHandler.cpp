@@ -2,7 +2,7 @@
 #include <sstream>
 #include <signal.h>
 #include <poll.h>
-#include "../../include/cgi/CGIHandler.hpp"
+#include "../../include/process/CGIHandler.hpp"
 #include "../../include/http/HttpErrorException.hpp"
 #include "../../include/http/HttpResponse.hpp"
 #include "../../include/http/HttpUtils.hpp"

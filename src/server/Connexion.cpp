@@ -3,7 +3,7 @@
 #include "../../include/server/Connexion.hpp"
 #include "../../include/http/RequestParser.hpp"
 #include "../../include/http/HttpRequest.hpp"
-#include "../../include/http/ProcessRequest.hpp"
+#include "../../include/process/ProcessRequest.hpp"
 #include "../../include/config/Location.hpp"
 #include "../../include/config/ServerConfig.hpp"
 #include "../../include/http/HttpErrorException.hpp"

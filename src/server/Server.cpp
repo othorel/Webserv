@@ -5,7 +5,7 @@
 #include "../../include/config/ServerConfig.hpp"
 #include "../../include/config/ConfigParser.hpp"
 #include "../../include/http/RequestParser.hpp"
-#include "../../include/http/ProcessRequest.hpp"
+#include "../../include/process/ProcessRequest.hpp"
 #include "../../include/http/HttpErrorException.hpp"
 
 static void	strToLower(char *str);

@@ -4,12 +4,12 @@
 # include <exception>
 # include <map>
 # include <string>
-# include "../../include/http/HttpRequest.hpp"
-# include "../../include/http/HttpResponse.hpp"
-# include "../../include/http/ResponseBuilder.hpp"
-# include "../../include/config/Location.hpp"
-# include "../../include/config/ServerConfig.hpp"
-# include "../../include/http/File.hpp"
+# include "../http/HttpRequest.hpp"
+# include "../http/HttpResponse.hpp"
+# include "../http/ResponseBuilder.hpp"
+# include "../config/Location.hpp"
+# include "../config/ServerConfig.hpp"
+# include "File.hpp"
 
 # define BUFFER_SIZE 4096
 # define MAX_HEADERS_SIZE 8192
