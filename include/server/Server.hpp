@@ -15,6 +15,7 @@
 # include <unistd.h>
 # include <ctime>
 
+extern volatile sig_atomic_t g_stop;
 class ConfigParser;
 class ServerConfig;
 class Connexion;

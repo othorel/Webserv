@@ -97,14 +97,10 @@ ProcessRequest::ProcessRequest(const ProcessRequest & other) :
 
 void ProcessRequest::reset()
 {
-	if (_file) {
-		delete _file;
-		_file = NULL;
-	}
-	if (_request) {
-		delete _request;
-		_request = NULL;
-	}
+	delete _file;
+	_file = NULL;
+	delete _request;
+	_request = NULL;
 	_processStatus = WAITING_HEADERS;
 	_server = ServerConfig();
 	_location = Location();
@@ -134,10 +130,8 @@ ProcessRequest & ProcessRequest::operator=(const ProcessRequest & other)
 		_inputData = other._inputData;
 		_outputData = other._outputData;
 		_bytesSent = other._bytesSent;
-		if (_file)
-			delete _file;
-		if (_request)
-			delete _request;
+		delete _file;
+		delete _request;
 		if (!other._file)
 			_file = NULL;
 		else {
@@ -168,10 +162,8 @@ ProcessRequest & ProcessRequest::operator=(const ProcessRequest & other)
 
 ProcessRequest::~ProcessRequest()
 {
-	if (_file)
-		delete _file;
-	if (_request)
-		delete _request;
+	delete _file;
+	delete _request;
 }
 
 /* ************************************************************************** */
@@ -264,72 +256,77 @@ void ProcessRequest::waitBody()
 	if (!_request)
 		throw HttpErrorException(500, "in PR: Request is NULL.");
 
-	// if body is a file to upload
-	if (_file) {
-		_bytesSent += _inputData.size();
-		size_t remainingBytes = _request->getContentLength() - _file->getOffset();
-		size_t bytesToWrite = (_inputData.size() > remainingBytes) ? remainingBytes : _inputData.size();
+	if (_file)
+		writeBodyWithFile();
+	else
+		writeBodyWithoutFile();
+}
 
-		if (bytesToWrite) {
-			if (_file->WriteChunk(_inputData.c_str(), bytesToWrite) != bytesToWrite)
-				throw HttpErrorException(500, "in PR: bytes written not equal to bytes to write.");
-		}
-		_inputData.clear();
-		if (_bytesSent >= _request->getContentLength()) {
-			_file->closeFile();
+void ProcessRequest::writeBodyWithFile()
+{
+	_bytesSent += _inputData.size();
+	size_t remainingBytes = _request->getContentLength() - _file->getOffset();
+	size_t bytesToWrite = (_inputData.size() > remainingBytes) ? remainingBytes : _inputData.size();
 
-			std::string originalPath = _file->getPath();
-			std::string headerName   = _file->getName();
-			std::string newPath = originalPath;
-			if (!headerName.empty()) {
-				headerName = sanitizeFilenamePart(headerName);
-				newPath = originalPath + "-" + headerName;
-				rename(originalPath.c_str(), newPath.c_str());
-			}
-			std::string relativeFilePath = createRelativeFilePath(newPath);
-			std::map<std::string, std::string> headers;
-			headers["location"] = relativeFilePath;
-			headers["content-type"] = "text/html";
-			std::string body =
-				"<html><body><h1>201 Created</h1>\n"
-				"<p>The resource has been successfully created.</p>\n"
-				"<a href=\"" + relativeFilePath  + "\">See file</a>\n"
-				"</body></html>";
-			headers["content-length"] = HttpUtils::numberToString(body.length());
-			ResponseBuilder::buildResponse(this, 201, headers, body);
-			delete _file;
-			_file = NULL;
-			_processStatus = SENDING_HEADERS;
-			sendHeaders();
-		}
+	if (bytesToWrite) {
+		if (_file->WriteChunk(_inputData.c_str(), bytesToWrite) != bytesToWrite)
+			throw HttpErrorException(500, "in PR: bytes written not equal to bytes to write.");
 	}
-	// if body is not a file to upload
-	else {
-		size_t remainingBytes = _request->getContentLength() - _request->getBody().size();
+	_inputData.clear();
+	if (_bytesSent >= _request->getContentLength()) {
+		_file->closeFile();
 
-		std::string dataToAppend;
-		if (_inputData.size() <= remainingBytes)
-			dataToAppend = _inputData;
-		else
-			dataToAppend = _inputData.substr(0, remainingBytes);
-
-		_request->AppendBody(dataToAppend);
-
-		_inputData.clear();
-		
-		if (_request->getBody().size() >= _request->getContentLength()) {
-			if (isCgi(createPath())) {
-					std::string path = createPath();
-					CGIHandler cgi(*_request, path);
-					_httpResponse = cgi.getHttpResponse();
-					ResponseBuilder::addFinalHeaders(this);
-					_processStatus = SENDING_HEADERS;
-					sendHeaders();
-					return ;
-			}
-			_processStatus = SENDING_HEADERS;
-			sendHeaders();
+		std::string originalPath = _file->getPath();
+		std::string headerName   = _file->getName();
+		std::string newPath = originalPath;
+		if (!headerName.empty()) {
+			headerName = sanitizeFilenamePart(headerName);
+			newPath = originalPath + "-" + headerName;
+			rename(originalPath.c_str(), newPath.c_str());
 		}
+		std::string relativeFilePath = createRelativeFilePath(newPath);
+		std::map<std::string, std::string> headers;
+		headers["location"] = relativeFilePath;
+		headers["content-type"] = "text/html";
+		std::string body =
+			"<html><body><h1>201 Created</h1>\n"
+			"<p>The resource has been successfully created.</p>\n"
+			"<a href=\"" + relativeFilePath  + "\">See file</a>\n"
+			"</body></html>";
+		headers["content-length"] = HttpUtils::numberToString(body.length());
+		ResponseBuilder::buildResponse(this, 201, headers, body);
+		delete _file;
+		_file = NULL;
+		_processStatus = SENDING_HEADERS;
+		sendHeaders();
+	}
+}
+
+void ProcessRequest::writeBodyWithoutFile()
+{
+	size_t remainingBytes = _request->getContentLength() - _request->getBody().size();
+
+	std::string dataToAppend;
+	if (_inputData.size() <= remainingBytes)
+		dataToAppend = _inputData;
+	else
+		dataToAppend = _inputData.substr(0, remainingBytes);
+
+	_request->AppendBody(dataToAppend);
+	_inputData.clear();
+
+	if (_request->getBody().size() >= _request->getContentLength()) {
+		if (isCgi(createPath())) {
+				std::string path = createPath();
+				CGIHandler cgi(*_request, path);
+				_httpResponse = cgi.getHttpResponse();
+				ResponseBuilder::addFinalHeaders(this);
+				_processStatus = SENDING_HEADERS;
+				sendHeaders();
+				return ;
+		}
+		_processStatus = SENDING_HEADERS;
+		sendHeaders();
 	}
 }
 
@@ -340,7 +337,6 @@ void ProcessRequest::sendHeaders()
 		return ;
 	
 	_outputData = _httpResponse.toRawString();
-
 	if (_file != NULL)
 		_processStatus = SENDING_BODY;
 	else
@@ -352,20 +348,28 @@ void ProcessRequest::sendBody()
 {
 	if (_processStatus != SENDING_BODY)
 		return ;
-		
 	if (!_file)
 		throw HttpErrorException(500, "in PR: File is NULL.");
-	
+
 	char buffer[BUFFER_SIZE];
 	memset(buffer, 0, BUFFER_SIZE);
 
 	size_t result = _file->ReadChunk(buffer, BUFFER_SIZE);
-	if (result == 0 || _file->getOffset() >= static_cast<size_t>(_file->getSize()))
-	{
+	if (result == 0 || _file->getOffset() >= static_cast<size_t>(_file->getSize())) {
 		_file->closeFile();
 		_processStatus = DONE;
 	}
 	_outputData = std::string(buffer, result);
+}
+
+/* ************************************************************************** */
+/*                                  error builder                             */
+/* ************************************************************************** */
+
+void ProcessRequest::errorBuilder(int statusCode, bool secondTime)
+{
+	ResponseBuilder::errorBuilder(this, statusCode, secondTime);
+	_processStatus = SENDING_HEADERS;
 }
 
 /* ************************************************************************** */
@@ -376,7 +380,6 @@ void ProcessRequest::deleteHandler()
 {
 	if (!_request)
 		throw HttpErrorException(500, "in PR: Request is NULL.");
-
 	if (_processStatus != HANDLING_METHOD)
 		return ;
 
@@ -397,7 +400,6 @@ void ProcessRequest::getHandler()
 {
 	if (!_request)
 		throw HttpErrorException(500, "in PR: Request is NULL.");
-
 	if (_processStatus != HANDLING_METHOD)
 		return ;
 	
@@ -422,11 +424,8 @@ void ProcessRequest::getHandler()
 		else
 			throw HttpErrorException(403, "in PR: Invalid directory path.");
 	}
-
-	if (_file) {
-		delete _file;
-		_file = NULL;
-	}
+	delete _file;
+	_file = NULL;
 	try {
 		_file = new File(path);
 	}
@@ -627,16 +626,6 @@ bool ProcessRequest::closeConection()
 }
 
 /* ************************************************************************** */
-/*                              response builder                              */
-/* ************************************************************************** */
-
-void ProcessRequest::errorBuilder(int statusCode, bool secondTime)
-{
-	ResponseBuilder::errorBuilder(this, statusCode, secondTime);
-	_processStatus = SENDING_HEADERS;
-}
-
-/* ************************************************************************** */
 /*                            private utils methods                           */
 /* ************************************************************************** */
 
@@ -655,14 +644,6 @@ std::string ProcessRequest::createPath()
 	std::string relativePath = target.substr(locationPath.size());
 	HttpUtils::trimFinalSlash(root);
 	HttpUtils::trimSlashes(relativePath);
-
-	//debug
-	// std::cout	<< "PATH CREATION : \n"
-	// 			<< "location : " << locationPath << "\n"
-	// 			<< "target : " << target << "\n"
-	// 			<< "root : " << root << "\n"
-	// 			<< "relative path : " << relativePath << "\n"
-	// 			<< "final path : " << root + '/' + relativePath << std::endl;
 
 	return (root + '/' + relativePath);
 }

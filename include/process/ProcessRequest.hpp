@@ -55,6 +55,8 @@ class ProcessRequest
 		void waitHeaders();
 		void handleMethod();
 		void waitBody();
+		void writeBodyWithFile();
+		void writeBodyWithoutFile();
 		void sendHeaders();
 
 		void sendBody();

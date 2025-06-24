@@ -20,6 +20,7 @@ Server::Server()
 	_pollManager = NULL;
 	_serverConfigVect = NULL;
 }
+
 Server::Server(const ConfigParser & Parser) :
 	_pollManager(new PollManager()),
 	_serverConfigVect(&Parser.getServerConfigVector())
@@ -31,7 +32,6 @@ Server::Server(const ConfigParser & Parser) :
 		it++;
 	}
 	Setup();
-
 }
 
 Server::Server(const Server & toCopy)
@@ -102,7 +102,7 @@ void	Server::setServerConfig(const std::vector<ServerConfig> *servConfigVect)
 
 void	Server::StartEventLoop()
 {
-	while (1)
+	while (!g_stop)
 	{
 		_pollManager->pollExec(50);
 		for (size_t i = 0; i != _pollManager->getPollFdVector().size(); i++)
@@ -209,7 +209,6 @@ void	Server::handleEvent(int fdClient, size_t & i)
 			_clientsMap[fdClient].writeDataToSocket(processed);
 			processed = _clientsMap[fdClient].getProcessRequest().process(rawLine);
 			status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
-
 		}
 		
 		//CATCH AND WRITE RESPONSE
