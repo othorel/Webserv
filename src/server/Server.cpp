@@ -135,10 +135,8 @@ void	Server::dealClient(int fd, size_t & i)
 {
 	if (std::find(_fdSocketVect.begin(), _fdSocketVect.end(), fd) != _fdSocketVect.end())
 	{
-		std::cout << std::endl;
-		std::cout << "\033[33m";
 		logTime();
-		std::cout << "[INFO] New connexion request" << "\033[0m" << std::endl;
+		std::cout << "[INFO]\t\tNew connexion request" << std::endl;
 		acceptNewConnexion(fd);
 	}
 	else
@@ -160,7 +158,8 @@ void	Server::acceptNewConnexion(int fd)
 	_clientsMap[clientFd] = Connexion(clientFd, clientAddr, ActiveVect);
 	std::cout << "\033[32m";
 	logTime();
-	std::cout << "[INFO] New client "
+	
+	std::cout << "[INFO]\t\tNew client "
 			  << _clientsMap[clientFd].getClientPort()
 			  << " authorized on: "
 			  << _clientsMap[clientFd].getIP() << ":"
@@ -189,6 +188,16 @@ void	Server::handleEvent(int fdClient, size_t & i)
 		std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLine);
 		status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
 		(void)status;
+
+		// request log
+		if (!processed.empty()) {
+			std::string requestLine = "";
+			size_t pos = processed.find("\r\n");
+			if (pos != std::string::npos)
+				requestLine = processed.substr(0, pos);
+			logTime();
+			std::cout <<  "[REQUEST]\t\t" << requestLine << std::endl;
+		}
 		
 		if (_clientsMap[fdClient].getServConfig() == NULL)
 			initServerConfig(fdClient, _clientsMap[fdClient].keepAliveTimeOut, _clientsMap[fdClient].keepAliveMaxRequests);
@@ -210,7 +219,8 @@ void	Server::handleEvent(int fdClient, size_t & i)
 	}
 	catch (const HttpErrorException& e)
 	{
-		std::cerr << "HttpErrorException caught : " << e.getStatusCode() << ": "<< e.what() << std::endl;
+		logTime();
+		std::cout << "[EXCEPTION]\t" << e.getStatusCode() << ": "<< e.what() << std::endl;
 
 		handleError(e.getStatusCode(), fdClient, i);
 		return;
@@ -371,11 +381,10 @@ void	Server::supressClient(int fdClient, size_t & i)
 {
 	std::cout << "\033[31m";
 	logTime();
-	std::cout << "[INFO] Client " << _clientsMap[fdClient].getClientPort()
+	std::cout << "[INFO]\t\tClient " << _clientsMap[fdClient].getClientPort()
 			  << " closed on: "
 			  << _clientsMap[fdClient].getIP() << ":"
-			  << _clientsMap[fdClient].getLocalPort() << "\n" 
-			  << "\033[0m" << std::endl;
+			  << _clientsMap[fdClient].getLocalPort() << std::endl;
 	close(fdClient);
 	_pollManager->removeSocket(i);
 	_clientsMap.erase(fdClient);
@@ -396,19 +405,19 @@ void	Server::initServerConfig(int fd, int & keepAliveTimeOut, int & keepAliveMax
 void	Server::keepAliveTimeoutLog() const
 {
 	logTime();
-	std::cout << "[INFO] TIMEOUT, connection closed." << std::endl;
+	std::cout << "[INFO]\t\tTIMEOUT, connection closed." << std::endl;
 }
 
 void	Server::keepAliveNbRequestsMaxLog() const
 {
 	logTime();
-	std::cout << "[INFO] Too many requests on a keepalive connection, connection closed." << std::endl;
+	std::cout << "[INFO]\t\tToo many requests on a keepalive connection, connection closed." << std::endl;
 }
 
 void	Server::readLog(int fdClient)
 {
 	logTime();
-	std::cout << "[INFO] Reading from client "
+	std::cout << "[INFO]\t\tReading from client "
 		  << _clientsMap[fdClient].getClientPort()
 		  << " on: "
 		  << _clientsMap[fdClient].getIP() << ":"
@@ -419,7 +428,7 @@ void	Server::announce() const
 {
 	std::cout << "\n\n" << "\033[32m";
 	logTime();
-	std::cout << "[INFO] Server successfully launched\n\n" << "\033[0m" << std::endl;
+	std::cout << "[INFO]\t\tServer successfully launched\n\n" << std::endl;
 }
 
 void	Server::logTime() const

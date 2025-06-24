@@ -264,7 +264,6 @@ std::string CGIHandler::execute()
 			std::cerr << "Script output:\n" << result << std::endl;
 			throw HttpErrorException(500, "in CGI: waitpid error.");
 		}
-		std::cout << "IN CGI HANDLER, OUTPUT IS :\n" << result << std::endl;
 		return (result);
 	}
 }
