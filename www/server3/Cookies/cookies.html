@@ -39,7 +39,7 @@
 			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 			display: block;
 			margin: 20px auto;
-			max-width: 700px;
+			max-width: 400px;
 			width: 90%;
 			transition: transform 0.3s ease;
 		}
@@ -57,20 +57,21 @@
 			box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
 		}
 		.cookie-box {
-			margin-top: 30px;
-			margin-bottom: 30px; /* un peu d’espace en bas */
+			margin-top: 20px;
+			margin-bottom: 20px;
 		}
-		.cookie-box form button {
+		.cookie-box a {
+			display: inline-block;
 			background-color: chocolate;
-			border: none;
 			color: white;
-			padding: 10px 20px;
-			font-size: 16px;
+			font-size: 20px;
+			font-weight: bold;
+			padding: 12px 24px;
 			border-radius: 8px;
-			cursor: pointer;
+			text-decoration: none;
 			transition: background-color 0.3s;
 		}
-		.cookie-box form button:hover {
+		.cookie-box a:hover {
 			background-color: #a0522d;
 		}
 	</style>
@@ -79,12 +80,11 @@
 	<h1>Cookies 🍪</h1>
 	<p>This site uses cookies to enhance your experience. By continuing, you agree to our cookie policy.</p>
 
-	<img src="/img/cookie.jpg" alt="Cookie image" class="soft-frame" />
-	<br />
-
 	<div class="cookie-box">
-		<p><a href="/cgi-bin/test.php" style="color:chocolate; font-weight:bold;">connect</a></p>
+		<a href="/cgi-bin/test.php">Session log in</a>
 	</div>
+
+	<img src="/img/cookie.jpg" alt="Cookie image" class="soft-frame" />
 
 	<a href="/" class="homepage-button">
 		<div class="button-wrapper">
