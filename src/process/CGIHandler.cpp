@@ -198,6 +198,9 @@ std::string CGIHandler::executeParentProcess(int inputPipe[], int outputPipe[], 
 	}
 	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
 		throw HttpErrorException(500, "in CGI: waitpid error.");
+
+	std::cout << "IN CGI HANDLER :\n" << result << std::endl;
+
 	return (result);
 }
 
@@ -212,6 +215,10 @@ std::vector<std::string> CGIHandler::buildEnv()
 	env.push_back("SERVER_PROTOCOL=" + _request.getVersion());
 	env.push_back("SERVER_SOFTWARE=MiniWebServ/1.0");
 	env.push_back("REDIRECT_STATUS=200");
+	std::string cookie = "";
+	if (_request.hasHeader("cookie"))
+		cookie = _request.getHeaderValue("cookie");
+	env.push_back("HTTP_COOKIE=" + cookie);
 
 	std::map<std::string, std::string>::const_iterator it;
 	it =_request.getHeaders().find("content-type");
