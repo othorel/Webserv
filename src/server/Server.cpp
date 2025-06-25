@@ -182,7 +182,7 @@ void	Server::handleEvent(int fdClient, size_t & i)
 		// if (!checkKeepAliveTimeout(fdClient, i))
 		// 	return;
 		
-		readLog(fdClient); //debug
+		// readLog(fdClient);
 
 		//PROCESS HEADERS
 		std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLine);
@@ -378,12 +378,12 @@ void	Server::addPair(std::pair<int, std::string> listen)
 
 void	Server::supressClient(int fdClient, size_t & i)
 {
-	std::cout << "\033[31m";
+	std::cout << "\033[35m";
 	logTime();
 	std::cout << "[INFO]\t\tClient " << _clientsMap[fdClient].getClientPort()
 			  << " closed on: "
 			  << _clientsMap[fdClient].getIP() << ":"
-			  << _clientsMap[fdClient].getLocalPort() << std::endl;
+			  << _clientsMap[fdClient].getLocalPort() << "\033[0m" << std::endl;
 	close(fdClient);
 	_pollManager->removeSocket(i);
 	_clientsMap.erase(fdClient);
@@ -427,7 +427,7 @@ void	Server::announce() const
 {
 	std::cout << "\n\n" << "\033[32m";
 	logTime();
-	std::cout << "[INFO]\t\tServer successfully launched\n\n" << std::endl;
+	std::cout << "[INFO]\t\tServer successfully launched\n\n" << "\033[0m" <<std::endl;
 }
 
 void	Server::logTime() const

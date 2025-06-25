@@ -13,7 +13,7 @@
 #include "../include/http/HttpErrorException.hpp"
 #include "../include/config/ParseException.hpp"
 
-volatile sig_atomic_t g_stop = 0;
+volatile __sig_atomic_t g_stop = 0;
 
 void	printBanner()
 {
