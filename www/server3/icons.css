@@ -12,7 +12,17 @@ body{
 	height: auto;
 	pointer-events: none;
 	z-index: 10;
-  }
+}
+
+.zombies {
+	position: absolute;
+	top: 85%;
+	left: 10%;
+	width: 80%;
+	height: auto;
+	pointer-events: none;
+	z-index: 10;
+}
 
 .container {
 	position: relative;
