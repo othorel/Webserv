@@ -125,9 +125,11 @@ if ($session_id && file_exists($session_file)) {
     header("Content-Type: text/html");
     html_header("Bienvenue");
     echo "<p>Welcome <strong>$username</strong></p>";
+    echo "<br />\n";
     echo "<p>You are already logged in.</p>";
+    echo "<br />\n";
     echo "<p>Session ID : $session_id</p>";
-    echo '<img src="/img/cookie.jpg" alt="Cookie image" class="soft-frame" />';
+    echo "<br />\n";
     html_footer();
     exit;
 }
@@ -147,8 +149,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'])) {
     header("Content-Type: text/html");
     html_header("Session créée");
     echo "<p>Welcome <strong>$username</strong> !</p>";
+    echo "<br />\n";
     echo "<p>Session ID : $session_id</p>";
-    echo '<img src="/img/cookie.jpg" alt="Cookie image" class="soft-frame" />';
+    echo "<br />\n";
     html_footer();
     exit;
 }
