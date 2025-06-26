@@ -109,10 +109,8 @@ void	Server::StartEventLoop()
 		{
 			int		fd = _pollManager->getPollFdVector()[i].fd;
 			short	revents = _pollManager->getPollFdVector()[i].revents;
-			if (revents & POLLIN)
+			if (revents & POLLIN && fd == STDIN_FILENO)
 			{
-				if (fd == STDIN_FILENO)
-				{
 					char	buffer[256];
 					if (fgets(buffer, sizeof(buffer), stdin))
 					{
@@ -121,17 +119,16 @@ void	Server::StartEventLoop()
 						if (strcmp(buffer, "exit") == 0)
 							return;
 					}
-				}
-				else
-				{
-					dealClient(fd, i);
-				}
+			}
+			else if (revents & (POLLIN | POLLOUT))
+			{
+				dealClient(fd, i, revents);
 			}
 		}
 	}
 }
 
-void	Server::dealClient(int fd, size_t & i)
+void	Server::dealClient(int fd, size_t & i, short revents)
 {
 	if (std::find(_fdSocketVect.begin(), _fdSocketVect.end(), fd) != _fdSocketVect.end())
 	{
@@ -139,10 +136,12 @@ void	Server::dealClient(int fd, size_t & i)
 		std::cout << "[INFO]\t\tNew connexion request" << std::endl;
 		acceptNewConnexion(fd);
 	}
+	else if (revents & POLLIN)
+		handleEventPOLLIN(fd, i);
+	else if (revents & POLLOUT)
+		handleEventPOLLOUT(fd, i);
 	else
-	{
-		handleEvent(fd, i);
-	}
+		throw std::runtime_error("Revents error");
 }
 
 void	Server::acceptNewConnexion(int fd)
@@ -167,46 +166,60 @@ void	Server::acceptNewConnexion(int fd)
 			  << "\033[0m" << std::endl;
 }
 
-void	Server::handleEvent(int fdClient, size_t & i)
+void	Server::handleEventPOLLIN(int fdClient, size_t & i)
 {
-	int				status = 0;
 	std::string		rawLine;
 
 	try
 	{
 		readSocket(fdClient, rawLine, i);
 
-		//PROCESS HEADERS
-		std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLine);
-		status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
-		(void)status;
+		_clientsMap[fdClient]._processed = _clientsMap[fdClient].getProcessRequest().process(rawLine);
 
 		// request log
-		if (!processed.empty()) {
+		if (!_clientsMap[fdClient]._processed.empty())
+		{
 			std::string requestLine = "";
-			size_t pos = processed.find("\r\n");
+			size_t pos = _clientsMap[fdClient]._processed.find("\r\n");
 			if (pos != std::string::npos)
-				requestLine = processed.substr(0, pos);
+				requestLine = _clientsMap[fdClient]._processed.substr(0, pos);
 			logTime();
 			std::cout <<  "[REQUEST]\t\t" << requestLine << std::endl;
+			_pollManager->setState(fdClient, POLLOUT);
+			return;
 		}
-		
+	}
+	catch (const HttpErrorException& e)
+	{
+		logTime();
+		std::cout << "[EXCEPTION]\t" << e.getStatusCode() << ": "<< e.what() << std::endl;
+
+		handleError(e.getStatusCode(), fdClient, i);
+		return;
+	}
+}
+
+void	Server::handleEventPOLLOUT(int fdClient, size_t & i)
+{
+	int				status = 0;
+	std::string		rawLine;
+	try
+	{
 		if (_clientsMap[fdClient].getServConfig() == NULL)
 			_clientsMap[fdClient].setServConfig(&_clientsMap[fdClient].getProcessRequest().getServer());
-		//PROCESS HEADERS
-		
+
 		//CATCH AND WRITE RESPONSE
-		while (!processed.empty())
+		while (!_clientsMap[fdClient]._processed.empty())
 		{
-			_clientsMap[fdClient].writeDataToSocket(processed);
-			processed = _clientsMap[fdClient].getProcessRequest().process(rawLine);
+			_clientsMap[fdClient].writeDataToSocket(_clientsMap[fdClient]._processed);
+			_clientsMap[fdClient]._processed = _clientsMap[fdClient].getProcessRequest().process(rawLine);
 			status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
 		}
 		
 		//CATCH AND WRITE RESPONSE
 		
 		if (status == 5)
-			supressClient(fdClient, i);
+			supressClient(fdClient, i);			
 	}
 	catch (const HttpErrorException& e)
 	{

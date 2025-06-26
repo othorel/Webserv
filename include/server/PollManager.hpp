@@ -30,6 +30,9 @@ class PollManager
 		//Getters
 		std::vector<struct pollfd>	getPollFdVector(void) const;
 
+		//Setters
+		void						setState(int fd, short mask);
+
 	private:
 		std::vector<struct pollfd>	_fdPollVect;
 
