@@ -95,23 +95,6 @@ ProcessRequest::ProcessRequest(const ProcessRequest & other) :
 	}
 }
 
-void ProcessRequest::reset()
-{
-	delete _file;
-	_file = NULL;
-	delete _request;
-	_request = NULL;
-	_processStatus = WAITING_HEADERS;
-	_server = ServerConfig();
-	_location = Location();
-	_handler = NULL;
-	_httpResponse = HttpResponse();
-	_inputData.clear();
-	_outputData.clear();
-	_serverTimeout = 0;
-	_bytesSent = 0;
-}
-
 /* ************************************************************************** */
 /*                                    operators                               */
 /* ************************************************************************** */
@@ -603,25 +586,11 @@ const ServerConfig & ProcessRequest::getServer() const
 	return (_server);
 }
 
-int ProcessRequest::getServerTimeout() const
-{
-	return (_serverTimeout);
-}
-
 File * ProcessRequest::getFilePtr() const
 {
 	if (_file)
 		return (_file);
 	return (NULL);
-}
-
-bool ProcessRequest::closeConection()
-{
-	if (!_request || _server.getKeepAlive() == false || !_request->hasHeader("connection"))
-		return (false);
-	if (_request->getHeaderValue("connection") == "keep-alive")
-		return (false);
-	return (true);
 }
 
 /* ************************************************************************** */

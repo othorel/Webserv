@@ -116,18 +116,7 @@ void ResponseBuilder::addFinalHeaders(ProcessRequest * process)
 {
 	if (process->_location.isCookiesEnabled() && process->_request)
 		CookieHandler::handleCookie(process->_httpResponse, *process->_request);
-
-	if (process->_httpResponse.getHeaders().find("date") == process->_httpResponse.getHeaders().end())
-		process->_httpResponse.addHeader("date", HttpUtils::getCurrentDate());
-	if (process->getServer().getKeepAlive() == false || !process->_request || !process->_request->hasHeader("connection")
-		|| process->_request->getHeaders().find("connection") == process->_request->getHeaders().end())
-			process->_httpResponse.addHeader("connection", "close");
-	else {
-		if (process->_request->getHeaderValue("connection") == "keep-alive")
-			process->_httpResponse.addHeader("connection", "keep-alive");
-		else
-			process->_httpResponse.addHeader("connection", "close");
-	}
+	process->_httpResponse.addHeader("connection", "close");
 	if (process->_httpResponse.getHeaders().find("server") == process->_httpResponse.getHeaders().end()) {
 		std::ostringstream oss;
 		std::vector<std::string>::const_iterator cit = process->_server.getServerNames().begin();

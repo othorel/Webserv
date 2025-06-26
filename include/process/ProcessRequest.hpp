@@ -83,12 +83,9 @@ class ProcessRequest
 
 		ProcessStatus getProcessStatus() const;
 		const ServerConfig & getServer() const;
-		int getServerTimeout() const;
 		File * getFilePtr() const;
-		bool closeConection();
 		std::string process(std::string data);
 		void errorBuilder(int statusCode, bool secondTime = false);
-		void reset();
 
 };
 
