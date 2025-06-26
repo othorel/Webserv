@@ -174,15 +174,13 @@ void	Server::handleEvent(int fdClient, size_t & i)
 
 	try
 	{
-		// if (!checkKeepAliveNbRequests(fdClient, i))
-		// 	return;
+		if (!checkKeepAliveNbRequests(fdClient, i))
+		{
+			supressClient(fdClient, i);
+			return;
+		}
 			
 		readSocket(fdClient, rawLine, i);
-
-		// if (!checkKeepAliveTimeout(fdClient, i))
-		// 	return;
-		
-		// readLog(fdClient);
 
 		//PROCESS HEADERS
 		std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLine);
@@ -307,7 +305,6 @@ void	Server::handleEnd(int fd, size_t & i)
 	_clientsMap[fd].increaseNbRequests();
 	_clientsMap[fd].actualizeEndPreviousRequest();
 	_clientsMap[fd].getProcessRequest().reset();
-	supressClient(fd, i);
 }
 
 bool	Server::checkKeepAliveNbRequests(int fdClient, size_t & i)
