@@ -198,9 +198,6 @@ std::string CGIHandler::executeParentProcess(int inputPipe[], int outputPipe[], 
 	}
 	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
 		throw HttpErrorException(500, "in CGI: waitpid error.");
-
-	std::cout << "IN CGI HANDLER :\n" << result << std::endl;
-
 	return (result);
 }
 

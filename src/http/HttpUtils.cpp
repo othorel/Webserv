@@ -15,32 +15,6 @@
 /*                              static utils methods                          */
 /* ************************************************************************** */
 
-// Reads the file and returns a string with the data red
-std::string HttpUtils::readFile(const std::string & path)
-{
-	std::ifstream file(path.c_str());
-	if (!file) {
-		throw std::runtime_error("Could not open file " + path); }
-	std::ostringstream content;
-	content << file.rdbuf();
-	file.close();
-	return (content.str());
-}
-
-// Write data in a file
-void HttpUtils::writeFile(const std::string & filename, const std::string & data, size_t length)
-{
-	if (length > data.size()) {
-		throw std::runtime_error("Invalid data size. Could not write in file " + filename); }
-	std::ofstream file(filename.c_str(), std::ios::binary);
-	if (!file) {
-		throw std::runtime_error("Could not write in file " + filename); }
-	file.write(data.c_str(), length);
-	if (!file) {
-		throw std::runtime_error("An error occured while writing to the file " + filename); }
-	file.close();
-}
-
 // return true if the file is a directory
 bool HttpUtils::isDirectory(const std::string & path)
 {

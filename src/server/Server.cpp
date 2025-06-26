@@ -427,7 +427,7 @@ void	Server::announce() const
 {
 	std::cout << "\n\n" << "\033[32m";
 	logTime();
-	std::cout << "[INFO]\t\tServer successfully launched\n\n" << "\033[0m" <<std::endl;
+	std::cout << "[INFO]\t\tServer successfully launched" << "\033[0m" <<std::endl;
 }
 
 void	Server::logTime() const
