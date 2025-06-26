@@ -15,8 +15,6 @@ class HttpUtils
 
 	public:
 
-		static std::string readFile(const std::string & path);
-		static void writeFile(const std::string & filename, const std::string & body, size_t length);
 		static bool isDirectory(const std::string & path);
 		static bool isRegularFile(const std::string & path);
 		static bool fileExists(const std::string & path);
