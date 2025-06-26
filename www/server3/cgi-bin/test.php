@@ -116,7 +116,7 @@ function html_footer() {
 HTML;
 }
 
-// Cas 1 : session existante
+// Case 1: existing session
 if ($session_id && file_exists($session_file)) {
     $username = trim(file_get_contents($session_file));
 
@@ -132,7 +132,7 @@ if ($session_id && file_exists($session_file)) {
     exit;
 }
 
-// Cas 2 : Formulaire soumis
+// Case 2: sunmitted form
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'])) {
     $username = trim($_POST['username']);
     if (!is_dir($session_dir)) {
@@ -154,7 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'])) {
     exit;
 }
 
-// Cas 3 : formulaire
+// Case 3: form
 header("Content-Type: text/html");
 html_header("Créer une session");
 echo <<<HTML
