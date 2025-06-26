@@ -221,12 +221,10 @@ void ProcessRequest::waitHeaders()
 		_request = parser.release();
 		_inputData = bodyPart;
 		selectServer();
-
-		if (_request->getContentLength() > selectMaxBodySize())
-			throw HttpErrorException(413, "in PR: Content-Length too large.");
-		
 		_serverTimeout = _server.getSessionTimeout();
 		selectLocation();
+		if (_request->getContentLength() > selectMaxBodySize())
+			throw HttpErrorException(413, "in PR: Content-Length too large.");
 		_processStatus = HANDLING_METHOD;
 		handleMethod();
 	}
@@ -587,8 +585,8 @@ const std::string & ProcessRequest::selectRoot()
 size_t ProcessRequest::selectMaxBodySize()
 {
 	if (_location.getClientMaxBodySize() >= 0)
-		return (_location.getClientMaxBodySize());
-	return (_server.getClientMaxBodySize());
+		return (static_cast<size_t>(_location.getClientMaxBodySize()));
+	return (static_cast<size_t>(_server.getClientMaxBodySize()));
 }
 
 /* ************************************************************************** */
