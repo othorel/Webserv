@@ -619,11 +619,11 @@ File * ProcessRequest::getFilePtr() const
 
 bool ProcessRequest::closeConection()
 {
-	if (!_request || !_request->hasHeader("connection"))
+	if (!_request || _server.getKeepAlive() == false || !_request->hasHeader("connection"))
 		return (false);
-	if (_request->getHeaderValue("connection") == "close")
-		return (true);
-	return (false);
+	if (_request->getHeaderValue("connection") == "keep-alive")
+		return (false);
+	return (true);
 }
 
 /* ************************************************************************** */
