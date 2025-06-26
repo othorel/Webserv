@@ -67,3 +67,20 @@ std::vector<struct pollfd>	PollManager::getPollFdVector(void) const
 	return (_fdPollVect);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+///                                 SETTERS                                  ///
+////////////////////////////////////////////////////////////////////////////////
+
+void	PollManager::setState(int fd, short mask)
+{
+	if (mask != POLLIN && mask != POLLOUT)
+		return;
+	std::vector<struct pollfd>::iterator	it = _fdPollVect.begin();
+	while (it != _fdPollVect.end())
+	{
+		if (it->fd == fd)
+			it->events = mask;
+		it++;
+	}
+}
+

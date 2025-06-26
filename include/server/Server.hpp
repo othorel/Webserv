@@ -61,9 +61,10 @@ class Server
 		void										addPair(std::pair<int, std::string> listen);
 
 		// Runtime
-		void										dealClient(int fd, size_t & i);
+		void										dealClient(int fd, size_t & i, short revents);
 		void										acceptNewConnexion(int fd);
-		void										handleEvent(int fdClient, size_t & i);
+		void										handleEventPOLLIN(int fdClient, size_t & i);
+		void										handleEventPOLLOUT(int fdClient, size_t & i);
 		void										handleError(int errorCode, int fdClient, size_t & i);
 		void										supressClient(int fdClient, size_t & i);
 		void										readSocket(int fd, std::string & rawLine, size_t & i);

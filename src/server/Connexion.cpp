@@ -15,6 +15,7 @@
 Connexion::Connexion(){}
 
 Connexion::Connexion(int fd, sockaddr_in addr, const std::vector<ServerConfig> _serverConfigVect) :
+_processed(""),
 _fd(fd),
 _addr(addr),
 _servConfig(NULL),
@@ -46,6 +47,7 @@ Connexion &Connexion::operator=(const Connexion & other)
 		this->_bufferOut = other._bufferOut;
 		this->_processRequest = other._processRequest;
 		this->_servConfig = other._servConfig;
+		this->_processed = other._processed;
 	}
 	return (*this);
 }
@@ -176,5 +178,4 @@ void	Connexion::setServConfig(const ServerConfig *serverconfig)
 {
 	_servConfig = serverconfig;
 }
-
 

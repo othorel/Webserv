@@ -55,6 +55,8 @@ class Connexion
 		void							readDataFromSocket(std::string &line);
 		void							writeDataToSocket(const std::string & response);
 		bool							endTransmission(std::string line);
+
+		std::string						_processed;
 		
 
 	private:
