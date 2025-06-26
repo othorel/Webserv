@@ -72,7 +72,10 @@ void ResponseBuilder::errorBuilder(ProcessRequest * process, int statusCode, boo
 	// there is no file
 	else {
 		body = "<html><body><h1>" + HttpUtils::numberToString(statusCode) + " " +
-			HttpUtils::httpStatusMessage(statusCode) + "</h1></body></html>";
+			HttpUtils::httpStatusMessage(statusCode) + "</h1>\n"
+			"</body>\n"
+			 "<footer><a href=\"/\">Home</a></footer>\n"
+			"</html>";
 		bodyLen = body.size();
 	}
 	headers["content-type"] = mimeType;
@@ -113,17 +116,7 @@ void ResponseBuilder::addFinalHeaders(ProcessRequest * process)
 {
 	if (process->_location.isCookiesEnabled() && process->_request)
 		CookieHandler::handleCookie(process->_httpResponse, *process->_request);
-
-	if (process->_httpResponse.getHeaders().find("date") == process->_httpResponse.getHeaders().end())
-		process->_httpResponse.addHeader("date", HttpUtils::getCurrentDate());
-	// if (process->_httpResponse.getHeaders().find("connection") == process->_httpResponse.getHeaders().end()) {
-	// 	if (_request && _request->hasHeader("connection") && _request->getHeaderValue("connection") == "close")
-	// 		process->_httpResponse.addHeader("connection", "close");
-	// 	else
-	// 		process->_httpResponse.addHeader("connection", "keep-alive");
-	// }
 	process->_httpResponse.addHeader("connection", "close");
-
 	if (process->_httpResponse.getHeaders().find("server") == process->_httpResponse.getHeaders().end()) {
 		std::ostringstream oss;
 		std::vector<std::string>::const_iterator cit = process->_server.getServerNames().begin();

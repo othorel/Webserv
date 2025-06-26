@@ -15,16 +15,11 @@
 Connexion::Connexion(){}
 
 Connexion::Connexion(int fd, sockaddr_in addr, const std::vector<ServerConfig> _serverConfigVect) :
-keepAliveTimeOut(0),
-keepAliveMaxRequests(0),
 _fd(fd),
 _addr(addr),
 _servConfig(NULL),
-_processRequest(_serverConfigVect),
-_endPreviousRequest(0),
-_nbRequests(0)
+_processRequest(_serverConfigVect)
 {
-	_startTime = std::time(NULL);
 	_bytesIn = 0;
 	_bytesOut = 0;
 }
@@ -45,15 +40,12 @@ Connexion &Connexion::operator=(const Connexion & other)
 	{
 		this->_fd = other._fd;
 		this->_addr = other._addr;
-		this->_startTime = other._startTime;
 		this->_bytesIn = other._bytesIn;
 		this->_bytesOut = other._bytesOut;
 		this->_bufferIn = other._bufferIn;
 		this->_bufferOut = other._bufferOut;
 		this->_processRequest = other._processRequest;
 		this->_servConfig = other._servConfig;
-		this->_endPreviousRequest = other._endPreviousRequest;
-		this->_nbRequests = other._nbRequests;
 	}
 	return (*this);
 }
@@ -126,11 +118,6 @@ std::string	Connexion::getBufferOut() const
 	return (_bufferOut);
 }
 
-std::time_t	Connexion::getStartTime() const
-{
-	return (_startTime);
-}
-
 ssize_t	Connexion::getBytesIn() const
 {
 	return (_bytesIn);
@@ -161,16 +148,6 @@ const ProcessRequest	&Connexion::getProcessRequest() const
 	return (_processRequest);
 }
 
-int	Connexion::getEndPreviousRequest() const
-{
-	return (_endPreviousRequest);
-}
-
-int	Connexion::getNbRequests() const
-{
-	return (_nbRequests);
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 ///                                 SETTERS                                  ///
 ////////////////////////////////////////////////////////////////////////////////
@@ -198,16 +175,6 @@ void	Connexion::setBufferOut(std::string buffer)
 void	Connexion::setServConfig(const ServerConfig *serverconfig)
 {
 	_servConfig = serverconfig;
-}
-
-void	Connexion::increaseNbRequests()
-{
-	_nbRequests++;
-}
-
-void	Connexion::actualizeEndPreviousRequest()
-{
-	_endPreviousRequest = std::time(NULL);
 }
 
 

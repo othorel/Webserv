@@ -20,6 +20,7 @@ Server::Server()
 	_pollManager = NULL;
 	_serverConfigVect = NULL;
 }
+
 Server::Server(const ConfigParser & Parser) :
 	_pollManager(new PollManager()),
 	_serverConfigVect(&Parser.getServerConfigVector())
@@ -31,7 +32,6 @@ Server::Server(const ConfigParser & Parser) :
 		it++;
 	}
 	Setup();
-
 }
 
 Server::Server(const Server & toCopy)
@@ -102,7 +102,7 @@ void	Server::setServerConfig(const std::vector<ServerConfig> *servConfigVect)
 
 void	Server::StartEventLoop()
 {
-	while (1)
+	while (!g_stop)
 	{
 		_pollManager->pollExec(50);
 		for (size_t i = 0; i != _pollManager->getPollFdVector().size(); i++)
@@ -174,15 +174,7 @@ void	Server::handleEvent(int fdClient, size_t & i)
 
 	try
 	{
-		// if (!checkKeepAliveNbRequests(fdClient, i))
-		// 	return;
-			
 		readSocket(fdClient, rawLine, i);
-
-		// if (!checkKeepAliveTimeout(fdClient, i))
-		// 	return;
-		
-		readLog(fdClient); //debug
 
 		//PROCESS HEADERS
 		std::string	processed = _clientsMap[fdClient].getProcessRequest().process(rawLine);
@@ -200,7 +192,7 @@ void	Server::handleEvent(int fdClient, size_t & i)
 		}
 		
 		if (_clientsMap[fdClient].getServConfig() == NULL)
-			initServerConfig(fdClient, _clientsMap[fdClient].keepAliveTimeOut, _clientsMap[fdClient].keepAliveMaxRequests);
+			_clientsMap[fdClient].setServConfig(&_clientsMap[fdClient].getProcessRequest().getServer());
 		//PROCESS HEADERS
 		
 		//CATCH AND WRITE RESPONSE
@@ -209,13 +201,12 @@ void	Server::handleEvent(int fdClient, size_t & i)
 			_clientsMap[fdClient].writeDataToSocket(processed);
 			processed = _clientsMap[fdClient].getProcessRequest().process(rawLine);
 			status = _clientsMap[fdClient].getProcessRequest().getProcessStatus();
-
 		}
 		
 		//CATCH AND WRITE RESPONSE
 		
 		if (status == 5)
-			handleEnd(fdClient, i);
+			supressClient(fdClient, i);
 	}
 	catch (const HttpErrorException& e)
 	{
@@ -298,41 +289,6 @@ std::vector<ServerConfig> Server::ActiveServConfigVect(int Port, std::string IP)
 	return vect;
 }
 
-void	Server::handleEnd(int fd, size_t & i)
-{
-	if (_clientsMap[fd].getProcessRequest().closeConection() == true)
-	{
-		supressClient(fd, i);
-		return;
-	}
-	_clientsMap[fd].increaseNbRequests();
-	_clientsMap[fd].actualizeEndPreviousRequest();
-	_clientsMap[fd].getProcessRequest().reset();
-	supressClient(fd, i);
-}
-
-bool	Server::checkKeepAliveNbRequests(int fdClient, size_t & i)
-{
-	if (_clientsMap[fdClient].getServConfig() != NULL && (_clientsMap[fdClient].getNbRequests() >= _clientsMap[fdClient].keepAliveMaxRequests))
-	{
-		keepAliveNbRequestsMaxLog();
-		supressClient(fdClient, i);
-		return (false);
-	}
-	return (true);
-}
-
-bool	Server::checkKeepAliveTimeout(int fdClient, size_t & i)
-{
-	if (_clientsMap[fdClient].getServConfig() != NULL && (static_cast<int>(std::time(NULL)) - _clientsMap[fdClient].getEndPreviousRequest() >= _clientsMap[fdClient].keepAliveTimeOut))
-	{
-		keepAliveTimeoutLog();
-		supressClient(fdClient, i);
-		return (false);
-	}
-	return (true);
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 ///                           INITIALIZATION                                 ///
 ////////////////////////////////////////////////////////////////////////////////
@@ -379,40 +335,21 @@ void	Server::addPair(std::pair<int, std::string> listen)
 
 void	Server::supressClient(int fdClient, size_t & i)
 {
-	std::cout << "\033[31m";
+	std::cout << "\033[35m";
 	logTime();
 	std::cout << "[INFO]\t\tClient " << _clientsMap[fdClient].getClientPort()
 			  << " closed on: "
 			  << _clientsMap[fdClient].getIP() << ":"
-			  << _clientsMap[fdClient].getLocalPort() << std::endl;
+			  << _clientsMap[fdClient].getLocalPort() << "\033[0m" << std::endl;
 	close(fdClient);
 	_pollManager->removeSocket(i);
 	_clientsMap.erase(fdClient);
 	i--;
 }
 
-void	Server::initServerConfig(int fd, int & keepAliveTimeOut, int & keepAliveMaxRequests)
-{
-	_clientsMap[fd].setServConfig(&_clientsMap[fd].getProcessRequest().getServer());
-	keepAliveTimeOut = _clientsMap[fd].getProcessRequest().getServer().getKeepAliveTimeout();
-	keepAliveMaxRequests = _clientsMap[fd].getProcessRequest().getServer().getKeepAliveMaxRequests();
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 ///                                 LOGS                                     ///
 ////////////////////////////////////////////////////////////////////////////////
-
-void	Server::keepAliveTimeoutLog() const
-{
-	logTime();
-	std::cout << "[INFO]\t\tTIMEOUT, connection closed." << std::endl;
-}
-
-void	Server::keepAliveNbRequestsMaxLog() const
-{
-	logTime();
-	std::cout << "[INFO]\t\tToo many requests on a keepalive connection, connection closed." << std::endl;
-}
 
 void	Server::readLog(int fdClient)
 {
@@ -428,7 +365,7 @@ void	Server::announce() const
 {
 	std::cout << "\n\n" << "\033[32m";
 	logTime();
-	std::cout << "[INFO]\t\tServer successfully launched\n\n" << std::endl;
+	std::cout << "[INFO]\t\tServer successfully launched" << "\033[0m" <<std::endl;
 }
 
 void	Server::logTime() const
