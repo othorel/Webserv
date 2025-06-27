@@ -115,7 +115,7 @@ Inspired by Nginx-style blocks, each config file can define:
 
 ---
 
-🧪 Testing
+## 🧪 Testing
 
 ✅ Tested with
   - ✅ Web browsers: Chrome, Firefox
@@ -132,7 +132,7 @@ Inspired by Nginx-style blocks, each config file can define:
 
 ---
 
-📸 Screenshots www
+## 📸 Screenshots www
 
 <p align="center">
   <img src="https://github.com/othorel/Webserv/blob/main/img/index.png" />
@@ -140,7 +140,7 @@ Inspired by Nginx-style blocks, each config file can define:
 
 ---
 
-👨‍💻 Authors (login@42)
+## 👨‍💻 Authors (login@42)
 
 - olthorel
 - chdonnat 
@@ -148,7 +148,7 @@ Inspired by Nginx-style blocks, each config file can define:
 
 ---
 
-📜 License
+## 📜 License
 
 This project is for educational purposes as part of the 42 Network curriculum.
 
