@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="us">
+
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -19,6 +20,7 @@
 			min-height: 100vh;
 			color: #fff;
 		}
+
 		h1 {
 			font-family: 'Creepster', cursive;
 			color: chocolate;
@@ -26,6 +28,7 @@
 			text-shadow: 2px 2px 6px #000, 0 10px 10px rgba(210, 105, 30, 0.5);
 			margin-bottom: 30px;
 		}
+
 		p {
 			font-size: 20px;
 			margin-bottom: 30px;
@@ -34,6 +37,7 @@
 			padding: 20px;
 			border-radius: 10px;
 		}
+
 		.soft-frame {
 			border-radius: 15px;
 			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
@@ -43,21 +47,26 @@
 			width: 90%;
 			transition: transform 0.3s ease;
 		}
+
 		.soft-frame:hover {
 			transform: scale(1.05);
 		}
+
 		.homepage-button img {
 			width: 200px;
 			border-radius: 8px;
 			transition: transform 0.3s ease, box-shadow 0.3s ease;
 		}
+
 		.homepage-button:hover img {
 			transform: scale(1.1);
 		}
+
 		.cookie-box {
 			margin-top: 20px;
 			margin-bottom: 20px;
 		}
+
 		.cookie-box a {
 			display: inline-block;
 			background-color: chocolate;
@@ -69,18 +78,18 @@
 			text-decoration: none;
 			transition: background-color 0.3s;
 		}
+
 		.cookie-box a:hover {
 			background-color: #a0522d;
 		}
 	</style>
 </head>
+
 <body>
 	<h1>Cookies 🍪</h1>
 	<p>This site uses cookies to enhance your experience. By continuing, you agree to our cookie policy.</p>
 
-	<div class="cookie-box">
-		<a href="/cgi-bin/test.php">Session log in</a>
-	</div>
+	<div class="cookie-box" id="cookie-box"></div>
 
 	<img src="/img/cookie.jpg" alt="Cookie image" class="soft-frame" />
 
@@ -89,5 +98,23 @@
 			<img src="/img/back_home.png" alt="Retour à l'accueil" />
 		</div>
 	</a>
+
+	<script>
+		const ua = navigator.userAgent;
+		const container = document.getElementById("cookie-box");
+
+		let href = "";
+
+		if (ua.includes("Mac")) {
+			href = "/cgi-bin/script_mac.php";
+		} else if (ua.includes("Linux")) {
+			href = "/cgi-bin/script_linux.php";
+		}
+
+		if (href) {
+			container.innerHTML = '<a href="' + href + '">Session log in</a>';
+		}
+	</script>
 </body>
+
 </html>
