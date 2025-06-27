@@ -1,6 +1,6 @@
 # 🌐 Webserv
 
-> A non-blocking HTTP/1.1 server written in C++98 – 42 Project
+- A non-blocking HTTP/1.1 server written in C++98 – 42 Project
 
 <p align="center">
   <img src="https://github.com/othorel/Webserv/blob/main/img/webserv.png" />
@@ -112,5 +112,44 @@ Inspired by Nginx-style blocks, each config file can define:
 <p align="center">
   <img src="https://github.com/othorel/Webserv/blob/main/img/config.png" />
 </p>
+
+---
+
+🧪 Testing
+
+✅ Tested with
+  - ✅ Web browsers: Chrome, Firefox
+  - ✅ CLI tools: curl, telnet, netcat
+  - ✅ Load testing: Python scripts with multiple concurrent requests
+  - ✅ Behavior comparison with NGINX
+
+💡 Recommended tests
+  - Large file uploads
+  - Simultaneous clients
+  - Invalid/malformed HTTP requests
+  - CGI scripts output and timeouts
+  - Configuration edge cases
+
+---
+
+📸 Screenshots www
+
+<p align="center">
+  <img src="https://github.com/othorel/Webserv/blob/main/img/index.png" />
+</p>
+
+---
+
+👨‍💻 Authors (login@42)
+
+- olthorel
+- chdonnat 
+- lmatkows
+
+---
+
+📜 License
+
+This project is for educational purposes as part of the 42 Network curriculum.
 
 ---
