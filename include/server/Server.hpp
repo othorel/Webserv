@@ -15,7 +15,13 @@
 # include <unistd.h>
 # include <ctime>
 
-extern volatile __sig_atomic_t g_stop;
+
+# ifdef __APPLE__
+	extern volatile sig_atomic_t g_stop;
+# else
+	extern volatile __sig_atomic_t g_stop;
+# endif
+
 class ConfigParser;
 class ServerConfig;
 class Connexion;

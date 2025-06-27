@@ -13,7 +13,11 @@
 #include "../include/http/HttpErrorException.hpp"
 #include "../include/config/ParseException.hpp"
 
-volatile __sig_atomic_t g_stop = 0;
+#ifdef __APPLE__
+	volatile sig_atomic_t g_stop = 0;
+#else
+	volatile __sig_atomic_t g_stop = 0;
+#endif
 
 void	printBanner()
 {
